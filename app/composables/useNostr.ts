@@ -375,6 +375,7 @@ export const useNostr = () => {
     connect,
     postNote,
     loadNotes,
+    normalizeKey,
     currentUserInfo,
     RELAYS,
   };
