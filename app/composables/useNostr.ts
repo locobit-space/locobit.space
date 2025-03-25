@@ -14,7 +14,6 @@ const RELAYS = [
   "wss://relay.damus.io",
   "wss://nos.lol",
   "wss://nostr-pub.wellorder.net",
-  "wss://relay.snort.social",
 ];
 
 type NostrUser = {
@@ -335,6 +334,7 @@ export const useNostr = () => {
     isLoading,
     error,
     latestTimestamp,
+    pool,
     getUserInfo,
     checkNewNotes,
     loadNotesOnce,
@@ -343,5 +343,6 @@ export const useNostr = () => {
     connect,
     postNote,
     loadNotes,
+    RELAYS
   };
 };
