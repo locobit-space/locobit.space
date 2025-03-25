@@ -1,76 +1,51 @@
 <template>
   <main>
-    <UContainer>
-      <div class="py-8">
-        <h1 class="text-3xl font-bold mb-6">Nostr Social</h1>
-        <UButton @click="checkNewNotes" color="gray">Check New Notes</UButton>
+    <div class="py-8">
+      <UButton @click="checkNewNotes" color="gray">Check New Notes</UButton>
 
-        <!-- User Authentication Section -->
-        <div v-if="!user" class="mb-6">
-          <UAlert title="Not Connected" color="yellow" class="mb-4">
-            You need to create or login with your Nostr keys to interact
-          </UAlert>
-          <UButton @click="createNewUser" color="blue" class="mr-2"
-            >Create New User</UButton
-          >
-          <UButton @click="importKeyModal = true" color="gray"
-            >Import Private Key</UButton
-          >
+      <!-- User Authentication Section -->
+      <div v-if="!user" class="mb-6">
+        <UAlert title="Not Connected" color="yellow" class="mb-4">
+          You need to create or login with your Nostr keys to interact
+        </UAlert>
+        <UButton @click="createNewUser" color="blue" class="mr-2"
+          >Create New User</UButton
+        >
+        <UButton @click="importKeyModal = true" color="gray"
+          >Import Private Key</UButton
+        >
+      </div>
+
+      <div v-else class="mb-6">
+        <UAlert
+          :title="`Connected as ${displayUser}`"
+          color="green"
+          class="mb-4"
+        >
+          Your public key: {{ user.publicKey }}
+        </UAlert>
+        <UButton @click="logout" color="red">Logout</UButton>
+      </div>
+
+      <!-- Feed -->
+      <div>
+        <h2 class="text-xl font-semibold mb-4">Recent Notes</h2>
+
+        <UButton @click="refreshNotes" color="gray" class="mb-4">
+          Refresh Notes
+        </UButton>
+
+        <div v-if="isLoading" class="flex justify-center my-8">Loading</div>
+
+        <div v-if="notes.length === 0 && !isLoading" class="text-center py-8">
+          <p class="text-gray-500">No notes found. Be the first to post!</p>
         </div>
-
-        <div v-else class="mb-6">
-          <UAlert
-            :title="`Connected as ${displayUser}`"
-            color="green"
-            class="mb-4"
-          >
-            Your public key: {{ user.publicKey }}
-          </UAlert>
-          <UButton @click="logout" color="red">Logout</UButton>
-        </div>
-
-        <!-- Post Creation -->
-        <div v-if="user" class="mb-8">
-          <UCard class="mb-4">
-            <UTextarea
-              v-model="newPost"
-              placeholder="What's on your mind?"
-              class="mb-4"
-              rows="3"
-            />
-            <div class="flex justify-end">
-              <UButton
-                @click="submitPost"
-                :loading="isPosting"
-                :disabled="!newPost.trim() || isPosting"
-                color="blue"
-              >
-                Post
-              </UButton>
-            </div>
-          </UCard>
-        </div>
-
-        <!-- Feed -->
-        <div>
-          <h2 class="text-xl font-semibold mb-4">Recent Notes</h2>
-
-          <UButton @click="refreshNotes" color="gray" class="mb-4">
-            Refresh Notes
-          </UButton>
-
-          <div v-if="isLoading" class="flex justify-center my-8">Loading</div>
-
-          <div v-if="notes.length === 0 && !isLoading" class="text-center py-8">
-            <p class="text-gray-500">No notes found. Be the first to post!</p>
-          </div>
-          <!-- {{ notes }} -->
-          <div>
-            <NoteCard v-for="note in notes" :key="note.id" :note="note" />
-          </div>
+        <!-- {{ notes }} -->
+        <div class="space-y-4 divide-y divide-slate-100">
+          <NoteCard v-for="note in notes" :key="note.id" :note="note" />
         </div>
       </div>
-    </UContainer>
+    </div>
 
     <!-- Import Key Modal -->
     <UModal v-model:open="importKeyModal">
@@ -126,14 +101,9 @@ const {
   isLoading,
   checkNewNotes,
   loadNotesOnce,
-  getUserInfo
+  getUserInfo,
 } = useNostr();
 const toast = useToast();
-
-
-
-const newPost = ref("");
-const isPosting = ref(false);
 
 const importKeyModal = ref(false);
 const importKey = ref("");
@@ -175,18 +145,6 @@ const logout = () => {
   localStorage.removeItem("nostrUser");
   user.value = null;
   toast.add({ title: "Logged out", color: "red" });
-};
-
-const submitPost = async () => {
-  if (!newPost.value.trim()) return;
-  isPosting.value = true;
-  const success = await postNote(newPost.value);
-  isPosting.value = false;
-  if (success) {
-    newPost.value = "";
-    toast.add({ title: "Note posted!", color: "green" });
-    loadNotesOnce();
-  }
 };
 
 const refreshNotes = () => {

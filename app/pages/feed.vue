@@ -36,31 +36,7 @@
         <div class="grid grid-cols-12 gap-6">
           <!-- Sidebar Navigation -->
           <div class="col-span-3 bg-gray-50 rounded-xl p-4">
-            <nav class="space-y-2">
-              <UButton 
-                v-for="item in sidebarNavItems" 
-                :key="item.label"
-                :icon="item.icon"
-                color="gray"
-                variant="ghost"
-                block
-                class="justify-start"
-              >
-                {{ item.label }}
-              </UButton>
-  
-              <UDivider label="Actions" class="my-4" />
-  
-              <UButton 
-                v-if="user"
-                icon="i-heroicons-plus-circle" 
-                color="primary" 
-                block 
-                @click="() => {}"
-              >
-                Create Post
-              </UButton>
-            </nav>
+            
           </div>
   
           <!-- Main Feed Area -->
@@ -177,25 +153,6 @@
   import { ref, computed, onMounted, watch, nextTick } from "vue";
   import { useToast } from "#imports";
   
-  // Sidebar Navigation Items
-  const sidebarNavItems = [
-    { 
-      label: 'Home', 
-      icon: 'i-heroicons-home' 
-    },
-    { 
-      label: 'Profile', 
-      icon: 'i-heroicons-user-circle' 
-    },
-    { 
-      label: 'Messages', 
-      icon: 'i-heroicons-chat-bubble-left-right' 
-    },
-    { 
-      label: 'Notifications', 
-      icon: 'i-heroicons-bell' 
-    }
-  ]
   
   // User Dropdown Items
   const userDropdownItems = [

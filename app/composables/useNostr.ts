@@ -9,19 +9,13 @@ import {
 import { SimplePool } from "nostr-tools/pool";
 import { nip19 } from "nostr-tools";
 import { hexToBytes, bytesToHex } from "@noble/hashes/utils";
+import type { NostrUser, UserInfo } from "~~/types";
 
 const RELAYS = [
   "wss://relay.damus.io",
   "wss://nos.lol",
   "wss://nostr-pub.wellorder.net",
 ];
-
-type NostrUser = {
-  privateKey: string; // hex string
-  publicKey: string; // hex string
-  nsec?: string; // optional NIP-19 encoded private key
-  npub?: string; // optional NIP-19 encoded public key
-};
 
 export const useNostr = () => {
   const user = ref<NostrUser | null>(null);
@@ -31,6 +25,7 @@ export const useNostr = () => {
 
   const pool = new SimplePool();
   const latestTimestamp = ref(0);
+  const currentUserInfo = useState<UserInfo>("currentUserInfo");
 
   // --- Session Restore on Load ---
   onMounted(() => {
@@ -113,15 +108,37 @@ export const useNostr = () => {
     }
   };
 
+  const extractHashtags = (content: string): string[] => {
+    // Regular expression to find hashtags
+    const hashtagRegex = /#(\w+)/g;
+
+    // Extract unique hashtags
+    const hashtags = [
+      ...new Set(
+        Array.from(content.matchAll(hashtagRegex), (match) => match[1]!)
+      ),
+    ];
+
+    return hashtags;
+  };
+
   // --- Post a note ---
   const postNote = async (content: string) => {
     if (!user.value) return false;
     isLoading.value = true;
 
+    // find # in content all exp: Hello #laostr #nostr #nostrdev
+    // Extract hashtags from the content
+    const contentHashtags = extractHashtags(content);
+    const tagsArray = contentHashtags.map((hashtag) => ["t", hashtag]);
+
     const eventTemplate = {
       kind: 1,
       created_at: Math.floor(Date.now() / 1000),
-      tags: [],
+      tags: [
+        // ['t', 'laostr']
+        ...tagsArray,
+      ],
       content,
     };
 
@@ -218,115 +235,130 @@ export const useNostr = () => {
     );
   };
 
-  // Define types for better code clarity
-  type NostrProfile = {
-    name?: string;
-    display_name?: string;
-    about?: string;
-    picture?: string;
-    nip05?: string;
-    banner?: string;
-    lud16?: string; // Lightning address
-    website?: string;
-    [key: string]: any; // For any additional profile fields
-  };
-
-  type UserInfo = {
-    pubkey: string;
-    name: string;
-    display_name: string;
-    about: string;
-    picture: string;
-    nip05: string;
-    banner: string;
-    lud16: string;
-    website: string;
-    lastUpdated: number | null;
-    verified: boolean;
-  };
-
-  /**
-   * Converts an npub to a hex pubkey or returns the original if already hex
-   * @param key - npub or hex pubkey
-   * @returns hex pubkey
-   */
+  // Utility: Normalize pubkey (npub or hex)
   const normalizeKey = (key: string): string => {
+    key = key.trim().toLowerCase();
+
     if (key.startsWith("npub")) {
       try {
         const { data } = nip19.decode(key);
         return data as string;
-      } catch (e) {
-        throw new Error(`Invalid npub: ${key}`);
+      } catch {
+        console.warn(`Invalid npub: ${key}`);
+        return key;
       }
     }
-    // Assume it's already a hex pubkey if not npub
-    return key;
+
+    if (key.startsWith("0x")) key = key.slice(2);
+
+    const hexRegex = /^[0-9a-f]{64}$/;
+    if (hexRegex.test(key)) return key;
+
+    throw new Error(`Invalid public key format: ${key}`);
   };
 
-  /**
-   * Fetches user profile information from Nostr relays
-   * @param pubkey - The user's public key
-   * @param timeout - Timeout in milliseconds (default: 5000ms)
-   * @returns UserInfo object or null if not found
-   */
+  // Utility: Convert hex pubkey to npub
+  const hexToNpub = (hex: string): string => {
+    try {
+      return nip19.npubEncode(hex);
+    } catch (e) {
+      console.error("Failed to convert hex to npub:", e);
+      return hex;
+    }
+  };
+
+  // Main Function
   const getUserInfo = async (
     _pubkey: string,
-    timeout: number = 5000
+    timeout: number = 10000,
+    maxRelays: number = 10,
+    debug: boolean = false
   ): Promise<UserInfo | null> => {
-    // Create a pool if not provided
+    const pubkey = normalizeKey(_pubkey);
+
+    // Fetch from relays
+    const fetchFromRelays = async (): Promise<any | null> => {
+      const shuffledRelays = RELAYS.sort(() => 0.5 - Math.random()).slice(
+        0,
+        maxRelays
+      );
+      if (debug) console.log(`🔍 Querying relays:`, shuffledRelays);
+
+      const fetchPromises = shuffledRelays.map(async (relay) => {
+        try {
+          const event = await pool.get([relay], {
+            kinds: [0],
+            authors: [pubkey],
+          });
+          return event || null;
+        } catch (error) {
+          if (debug) console.warn(`⚠️ Relay failed (${relay}):`, error);
+          return null;
+        }
+      });
+
+      const results = await Promise.allSettled(fetchPromises);
+      const successful = results
+        .filter((r) => r.status === "fulfilled" && r.value)
+        .map((r) => (r as PromiseFulfilledResult<any>).value);
+
+      return successful[0] || null;
+    };
+
+    // Timeout mechanism
+    const timeoutPromise = new Promise<null>((_, reject) =>
+      setTimeout(() => reject(new Error("⏳ Fetch timeout")), timeout)
+    );
+
+    let event: any = null;
 
     try {
-      // Set up a timeout promise
-      const timeoutPromise = new Promise<null>((_, reject) => {
-        setTimeout(() => reject(new Error("Fetch timeout")), timeout);
-      });
+      event = await Promise.race([fetchFromRelays(), timeoutPromise]);
+    } catch (err) {
+      if (debug) console.error("🚨 Relay fetch error:", err);
+    }
 
-      // Convert npub to hex pubkey if needed
-      const pubkey = normalizeKey(_pubkey);
+    // No data
+    if (!event || !event.content) {
+      console.log(`❌ No profile data found for pubkey: ${pubkey}`);
+      return null;
+    }
 
-      // Set up the fetch promise
-      const fetchPromise = pool.get(RELAYS, {
-        kinds: [0], // kind 0 = metadata
-        authors: [pubkey],
-      });
+    // Parse profile JSON
+    try {
+      const profile = JSON.parse(event.content);
+      const verified = !!profile.nip05; // Simplified NIP-05 verification
 
-      // Race between fetch and timeout
-      const event = await Promise.race([fetchPromise, timeoutPromise]);
-      console.log(event);
+      const userInfo: UserInfo = {
+        pubkey,
+        name: profile.name || "",
+        display_name: profile.display_name || profile.name || "",
+        about: profile.about || "",
+        picture: profile.picture || "",
+        nip05: profile.nip05 || "",
+        banner: profile.banner || "",
+        lud16: profile.lud16 || "",
+        website: profile.website || "",
+        lastUpdated: event.created_at || null,
+        verified,
+      };
 
-      if (!event || !event.content) {
-        console.log(`No profile data found for pubkey: ${pubkey}`);
-        return null;
-      }
-
-      try {
-        const profile = JSON.parse(event.content) as NostrProfile;
-
-        // Check NIP-05 verification (this is a simplification, actual verification requires additional steps)
-        const verified = !!profile.nip05;
-
-        return {
-          pubkey,
-          name: profile.name || "",
-          display_name: profile.display_name || profile.name || "",
-          about: profile.about || "",
-          picture: profile.picture || "",
-          nip05: profile.nip05 || "",
-          banner: profile.banner || "",
-          lud16: profile.lud16 || "",
-          website: profile.website || "",
-          lastUpdated: event.created_at || null,
-          verified,
-        };
-      } catch (parseError) {
-        console.error("Failed to parse profile content:", parseError);
-        return null;
-      }
-    } catch (e) {
-      console.error("Failed to load user profile:", e);
+      if (debug) console.log("✅ Loaded profile:", userInfo);
+      return userInfo;
+    } catch (parseError) {
+      console.error("❌ Failed to parse profile JSON:", parseError);
       return null;
     }
   };
+
+  onMounted(async () => {
+    if (user.value) {
+      const data = await getUserInfo(user.value.publicKey);
+      if (data) {
+        currentUserInfo.value = data;
+      }
+    }
+  });
 
   return {
     user,
@@ -343,6 +375,7 @@ export const useNostr = () => {
     connect,
     postNote,
     loadNotes,
-    RELAYS
+    currentUserInfo,
+    RELAYS,
   };
 };
