@@ -80,7 +80,10 @@ import { ref, onMounted } from "vue";
 import { useNostr } from "~/composables/useNostr";
 
 const route = useRoute();
-const { getUserInfo, pool, normalizeKey, RELAYS } = useNostr();
+
+const { $nostr } = useNuxtApp();
+const { pool } = $nostr;
+const { getUserInfo, normalizeKey, RELAYS } = useNostr();
 
 const pubkey = ref("");
 const profile = ref(null);
@@ -107,7 +110,9 @@ onMounted(async () => {
       new Map(notes.map((note) => [note.id, note])).values()
     );
 
-    profileNotes.value = uniqueNotes.sort((a, b) => b.created_at - a.created_at);
+    profileNotes.value = uniqueNotes.sort(
+      (a, b) => b.created_at - a.created_at
+    );
   } catch (error) {
     console.error("Profile fetch error:", error);
   } finally {

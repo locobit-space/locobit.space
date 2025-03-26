@@ -101,7 +101,7 @@ const {
   isLoading,
   checkNewNotes,
   loadNotesOnce,
-  getUserInfo,
+  getUserInfo
 } = useNostr();
 const toast = useToast();
 
@@ -112,17 +112,6 @@ const keyInput = ref(null);
 const displayUser = computed(() =>
   user.value ? shortenKey(user.value.publicKey) : ""
 );
-
-onMounted(async () => {
-  await connect();
-  refreshNotes();
-});
-
-watch(importKeyModal, (open) => {
-  if (open) {
-    nextTick(() => keyInput.value?.focus());
-  }
-});
 
 const createNewUser = () => {
   createUser();
@@ -150,4 +139,16 @@ const logout = () => {
 const refreshNotes = () => {
   loadNotesOnce();
 };
+
+watch(importKeyModal, (open) => {
+  if (open) {
+    nextTick(() => keyInput.value?.focus());
+  }
+});
+
+onMounted(async () => {
+  // await connect();
+  refreshNotes();
+});
+
 </script>

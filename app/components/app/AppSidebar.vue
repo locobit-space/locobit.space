@@ -75,16 +75,12 @@
 
 <script setup lang="ts">
 // Sidebar Navigation Items
-const sidebarNavItems = [
+const { user, currentUserInfo } = useNostr();
+const sidebarNavItems = computed(() => [
   {
     label: "Home",
     icon: "i-heroicons-home",
     to: "/",
-  },
-  {
-    label: "Profile",
-    icon: "i-heroicons-user-circle",
-    to: "/profile",
   },
   {
     label: "Messages",
@@ -92,13 +88,31 @@ const sidebarNavItems = [
     to: "/messages",
   },
   {
+    label: "Journals",
+    icon: "i-heroicons-book-open",
+    to: "/journals",
+  },
+  {
+    label: "Bookmarks",
+    icon: "i-heroicons-bookmark",
+    to: "/bookmarks",
+  },
+  {
     label: "Notifications",
     icon: "i-heroicons-bell",
     to: "/notifications",
   },
-];
-
-const { user, currentUserInfo } = useNostr();
+  {
+    label: "Profile",
+    icon: "i-heroicons-user-circle",
+    to: `/profile/${user.value?.npub}`,
+  },
+  {
+    label: "Settings",
+    icon: "i-heroicons-cog-6-tooth",
+    to: "/settings",
+  },
+]);
 
 const accounts = computed(() => [
   {

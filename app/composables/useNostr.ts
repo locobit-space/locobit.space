@@ -4,9 +4,7 @@ import { ref, onMounted } from "vue";
 import {
   generateSecretKey,
   getPublicKey,
-  finalizeEvent,
 } from "nostr-tools/pure";
-import { SimplePool } from "nostr-tools/pool";
 import { nip19 } from "nostr-tools";
 import { hexToBytes, bytesToHex } from "@noble/hashes/utils";
 import type { NostrUser, UserInfo } from "~~/types";
@@ -17,13 +15,17 @@ const RELAYS = [
   "wss://nostr-pub.wellorder.net",
 ];
 
+// const pool = new SimplePool();
+
 export const useNostr = () => {
   const user = ref<NostrUser | null>(null);
   const notes = ref<any[]>([]);
   const isLoading = ref(false);
   const error = ref<any>(null);
 
-  const pool = new SimplePool();
+  const { $nostr } = useNuxtApp();
+  const { finalizeEvent, pool } = $nostr;
+
   const latestTimestamp = ref(0);
   const currentUserInfo = useState<UserInfo>("currentUserInfo");
 
@@ -366,7 +368,6 @@ export const useNostr = () => {
     isLoading,
     error,
     latestTimestamp,
-    pool,
     getUserInfo,
     checkNewNotes,
     loadNotesOnce,
