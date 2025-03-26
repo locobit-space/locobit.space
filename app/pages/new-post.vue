@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- Post Creation -->
-    <div v-if="currentUserInfo" class="mb-8 p-4">
+    <div v-if="user" class="mb-8 p-4">
       <article class="mb-4 flex gap-2">
         <span>
           <UAvatar :src="currentUserInfo?.picture" />
@@ -30,7 +30,7 @@
 
 <script setup lang="ts">
 const toast = useToast();
-const { currentUserInfo, loadNotesOnce, postNote } = useNostr();
+const { currentUserInfo, loadNotesOnce, postNote, user } = useNostr();
 
 const newPost = ref("");
 const isPosting = ref(false);

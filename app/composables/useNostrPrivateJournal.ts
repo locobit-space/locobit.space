@@ -5,7 +5,10 @@ import { nip04 } from "nostr-tools";
 
 // Extend your existing useNostr.ts with these new functions
 export const useNostrPrivateJournal = () => {
-  const { user, error, isLoading, pool, RELAYS } = useNostr();
+  const { $nostr } = useNuxtApp();
+  const { pool } = $nostr;
+
+  const { user, error, isLoading, RELAYS } = useNostr();
   const journalNotes = ref<any[]>([]);
 
   // Kind 30001 is a standard for private notes/bookmarks
@@ -17,9 +20,7 @@ export const useNostrPrivateJournal = () => {
    * @param date ISO date string for organizing entries
    * @returns boolean success status
    */
-  const createJournalEntry = async (
-    content: string
-  ) => {
+  const createJournalEntry = async (content: string, date: string) => {
     if (!user.value) return false;
     isLoading.value = true;
 
@@ -35,12 +36,15 @@ export const useNostrPrivateJournal = () => {
       // get the current date timestamp
       const id = Math.floor(Date.now() / 1000);
 
+      console.log(date);
+
       const eventTemplate = {
         kind: PRIVATE_NOTE_KIND,
         created_at: Math.floor(Date.now() / 1000),
         tags: [
           ["d", `${id}`], // Use 'd' tag for dates to allow for replacement/editing
-          ["title", "Journal Entry"],
+          // ["title", "Journal Entry"],
+          ["date", date],
           ["t", "journal"], // add a tag for filtering
         ],
         content: encryptedContent,
@@ -67,7 +71,11 @@ export const useNostrPrivateJournal = () => {
    * @param content New content for the entry
    * @returns boolean success status
    */
-  const updateJournalEntry = async (id: string, content: string) => {
+  const updateJournalEntry = async (
+    id: string,
+    content: string,
+    date: string
+  ) => {
     if (!user.value) return false;
     isLoading.value = true;
 
@@ -84,7 +92,8 @@ export const useNostrPrivateJournal = () => {
         created_at: Math.floor(Date.now() / 1000),
         tags: [
           ["d", id], // Same 'd' tag value for replacement
-          ["title", "Journal Entry"],
+          // ["title", "Journal Entry"],
+          ["date", date],
           ["t", "journal"],
         ],
         content: encryptedContent,

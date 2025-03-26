@@ -28,7 +28,7 @@
       <div class="px-4 pt-16 pb-4">
         <div class="flex items-center space-x-2">
           <h2 class="text-xl font-bold">
-            {{ profile.display_name || profile.name }}
+            {{ profile.display_name || profile.name || 'N/A' }}
           </h2>
           <span v-if="profile.verified" class="text-blue-500" title="Verified">
             ✓

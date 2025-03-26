@@ -6,9 +6,9 @@
       </NuxtLink>
       <div class="flex-1">
         <div class="flex justify-between items-center mb-2">
-          <NuxtLink :to="`/profile/${note.pubkey}`" class="font-bold">{{
-            userInfo?.display_name
-          }}</NuxtLink>
+          <NuxtLink :to="`/profile/${note.pubkey}`" class="font-bold">
+            {{ userInfo?.display_name || "N/A" }}
+          </NuxtLink>
           <span class="text-sm text-gray-500">{{ formattedDate }}</span>
         </div>
         <!-- <div class="text-wrap break-all">
@@ -41,9 +41,13 @@
         <!-- Note Content with Hashtag Parsing -->
         <div class="text-wrap break-all">
           <template v-for="(part, index) in parsedContent" :key="index">
-            <span v-if="part.type === 'text'" class="break-words">
+            <NuxtLink
+              :to="`/notes/${note.id}`"
+              v-if="part.type === 'text'"
+              class="break-words"
+            >
               {{ part.value }}
-            </span>
+            </NuxtLink>
             <NuxtLink
               v-else-if="part.type === 'hashtag'"
               :to="`/hashtag/${part.value.slice(1)}`"
@@ -111,7 +115,14 @@
             icon="i-heroicons-chat-bubble-left-right"
             :label="commentCount > 0 ? `${commentCount}` : ''"
           />
-          <UButton color="neutral" variant="ghost" icon="heroicons:bookmark" />
+          <UButton
+            color="neutral"
+            variant="ghost"
+            :icon="
+              isBookmarked ? 'heroicons:bookmark-solid' : 'heroicons:bookmark'
+            "
+            @click="bookmarkNote"
+          />
         </div>
       </div>
     </div>
@@ -162,26 +173,57 @@ const { user, postNote, RELAYS } = useNostr();
 const likeNote = async () => {
   if (!user.value) return;
 
-  // Check if the user has already liked the note
-  const hasLiked = noteItems.value.some((item) => item.kind === 7);
+  const pubkey = user.value.publicKey;
+  const noteId = props.note.id;
 
+  // Find user's latest reaction for this note
+  const existing = noteItems.value.find(
+    (item) =>
+      item.kind === 7 &&
+      item.pubkey === pubkey &&
+      item.tags.some((tag) => tag[0] === "e" && tag[1] === noteId)
+  );
+
+  // Determine new reaction based on current one
+  const newContent = existing?.content === "+" ? "-" : "+";
+
+  // Optional: toggle off if clicked twice on the same reaction
+  const isUnliking = existing && existing.content === newContent;
+
+  if (isUnliking) {
+    // Remove the existing like
+    noteItems.value = noteItems.value.filter((item) => item.id !== existing.id);
+    toast.add({ title: "You unliked this note" });
+    return;
+  }
+
+  // Build new reaction event
   const event = {
-    kind: 7, // kind 7 = "reaction"
-    content: hasLiked ? "-" : "+", // standard for "like"
+    kind: 7,
+    content: newContent,
     tags: [
-      ["e", props.note.id],
-      ["p", props.note.pubkey],
+      ["e", noteId],
+      ["p", pubkey],
     ],
     created_at: Math.floor(Date.now() / 1000),
   };
 
   const { $nostr } = useNuxtApp();
   const signed = $nostr.finalizeEvent(event, hexToBytes(user.value.privateKey));
-  noteItems.value.push(signed);
+
+  // Remove old one if exists (e.g. switching from + to -)
+  if (existing) {
+    noteItems.value = noteItems.value.filter((item) => item.id !== existing.id);
+  }
+
+  noteItems.value.push(signed); // Add the new one
 
   try {
     await Promise.any($nostr.pool.publish(RELAYS, signed));
-    toast.add({ title: "You liked this note" });
+    toast.add({
+      title:
+        newContent === "+" ? "You liked this note" : "You disliked this note",
+    });
   } catch (err) {
     console.error("Like failed", err);
   }
@@ -193,14 +235,66 @@ const replyToNote = () => {
   });
 };
 
+const nostrBookmarks = ref<string[]>([]);
+
+const loadBookmarks = () => {
+  const stored = localStorage.getItem("nostrBookmarks");
+  nostrBookmarks.value = stored ? JSON.parse(stored) : [];
+};
+
+// Load on init
+loadBookmarks();
+
 const bookmarkNote = () => {
-  const bookmarks = JSON.parse(localStorage.getItem("nostrBookmarks") || "[]");
-  if (!bookmarks.includes(props.note.id)) {
-    bookmarks.push(props.note.id);
-    localStorage.setItem("nostrBookmarks", JSON.stringify(bookmarks));
+  const id = props.note.id;
+  const index = nostrBookmarks.value.indexOf(id);
+
+  if (index === -1) {
+    nostrBookmarks.value.push(id);
     toast.add({ title: "Note bookmarked" });
   } else {
-    toast.add({ title: "Already bookmarked", color: "neutral" });
+    nostrBookmarks.value.splice(index, 1);
+    toast.add({ title: "Note unbookmarked", color: "neutral" });
+  }
+
+  // Save back to localStorage
+  localStorage.setItem("nostrBookmarks", JSON.stringify(nostrBookmarks.value));
+
+  syncBookmarksToNostr();
+};
+
+const isBookmarked = computed(() => {
+  return nostrBookmarks.value.includes(props.note.id);
+});
+
+const syncBookmarksToNostr = async () => {
+  if (!user.value) return;
+
+  const { $nostr } = useNuxtApp();
+  const pubkey = user.value?.publicKey;
+  if (!pubkey) return;
+
+  const event = {
+    kind: 30001,
+    created_at: Math.floor(Date.now() / 1000),
+    content: "",
+    tags: [
+      ["d", "bookmarks"],
+      ["title", "Bookmarks"],
+      ["t", "bookmark"],
+      ...nostrBookmarks.value.map((id) => ["e", id]),
+    ],
+    pubkey,
+  };
+
+  const signed = $nostr.finalizeEvent(event, hexToBytes(user.value.privateKey));
+
+  try {
+    await Promise.any($nostr.pool.publish(RELAYS, signed));
+    // Optional success toast here if you want
+  } catch (err) {
+    console.error("Failed to sync bookmarks to Nostr", err);
+    toast.add({ title: "Bookmark sync failed", color: "error" });
   }
 };
 
@@ -214,7 +308,6 @@ const getNoteLikes = async (noteId: string): Promise<number> => {
       limit: 100, // adjust based on how many likes you expect
     });
 
-    console.log(events);
     noteItems.value = events;
 
     // Count "+" reactions (likes)
@@ -230,10 +323,28 @@ const getNoteLikes = async (noteId: string): Promise<number> => {
 };
 
 const likeCount = computed(() => {
-  // filter without -
-  return noteItems.value.filter(
-    (item) => item.kind === 7 && item.content !== "-"
+  const reactions = noteItems.value.filter(
+    (item) =>
+      item.kind === 7 &&
+      item.tags.some((tag) => tag[0] === "e" && tag[1] === props.note.id)
+  );
+
+  // Map to store the latest reaction per pubkey
+  const latestByUser = new Map();
+
+  for (const item of reactions) {
+    const existing = latestByUser.get(item.pubkey);
+    if (!existing || item.created_at > existing.created_at) {
+      latestByUser.set(item.pubkey, item);
+    }
+  }
+
+  // Only count those where the latest reaction is "+"
+  const count = Array.from(latestByUser.values()).filter(
+    (item) => item.content === "+"
   ).length;
+
+  return count;
 });
 
 const commentCount = computed(() => {
@@ -253,11 +364,11 @@ const mediaUrls = computed(() => {
   const videoMatches = props.note.content.match(videoUrlRegex) || [];
 
   const mediaList = [
-    ...imageMatches.map((url) => ({
+    ...imageMatches.map((url: string) => ({
       type: "image",
       url: url,
     })),
-    ...videoMatches.map((url) => ({
+    ...videoMatches.map((url: string) => ({
       type: "video",
       url: url,
       videoType: `video/${url.split(".").pop()}`,
@@ -331,7 +442,7 @@ const linkUrls = computed(() => {
 
   // Filter out media URLs
   return allUrls.filter(
-    (url) => !mediaUrls.value.some((media) => media.url === url)
+    (url: string) => !mediaUrls.value.some((media) => media.url === url)
   );
 });
 
@@ -351,7 +462,7 @@ onMounted(async () => {
   getNoteLikes(noteId);
 
   const previews = await Promise.all(
-    linkUrls.value.map(async (url) => {
+    linkUrls.value.map(async (url: string) => {
       const preview = await fetchUrlPreview(url);
       return preview;
     })

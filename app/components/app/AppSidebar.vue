@@ -115,7 +115,7 @@ const sidebarNavItems = computed(() => [
 ]);
 
 const accounts = computed(() => [
-  {
+  user.value?.npub && {
     ...currentUserInfo.value,
   },
 ]);

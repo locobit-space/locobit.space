@@ -1,6 +1,6 @@
 <template>
   <main>
-    <div class="py-8">
+    <div class="py-8 max-w-3xl mx-auto">
       <UButton @click="checkNewNotes" color="gray">Check New Notes</UButton>
 
       <!-- User Authentication Section -->
