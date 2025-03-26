@@ -1,13 +1,10 @@
 // composables/useNostr.ts
 
 import { ref, onMounted } from "vue";
-import {
-  generateSecretKey,
-  getPublicKey,
-} from "nostr-tools/pure";
+import { generateSecretKey, getPublicKey } from "nostr-tools/pure";
 import { nip19 } from "nostr-tools";
 import { hexToBytes, bytesToHex } from "@noble/hashes/utils";
-import type { NostrUser, UserInfo } from "~~/types";
+import type { NostrUser, Note, UserInfo } from "~~/types";
 
 const RELAYS = [
   "wss://relay.damus.io",
@@ -19,7 +16,7 @@ const RELAYS = [
 
 export const useNostr = () => {
   const user = ref<NostrUser | null>(null);
-  const notes = ref<any[]>([]);
+  const notes = useState<Note[]>("notes", () => [])
   const isLoading = ref(false);
   const error = ref<any>(null);
 
@@ -193,7 +190,7 @@ export const useNostr = () => {
 
   const loadNotesOnce = async () => {
     isLoading.value = true;
-    notes.value = [];
+    // notes.value = [];
 
     try {
       const events = await pool.querySync(RELAYS, {
@@ -201,7 +198,8 @@ export const useNostr = () => {
         limit: 20,
       });
 
-      notes.value = events.sort((a, b) => b.created_at - a.created_at);
+      const items = events.sort((a, b) => b.created_at - a.created_at);
+      notes.value = [...items, ...notes.value];
       latestTimestamp.value = notes.value[0]?.created_at ?? 0;
     } catch (e) {
       error.value = e;
