@@ -35,7 +35,11 @@
           Refresh Notes
         </UButton>
 
-        <div v-if="isLoading" class="flex justify-center my-8">Loading</div>
+        <div v-if="isLoading" class="">
+          <article class="flex flex-col gap-4">
+            <NoteSkeleton v-for="i in 3" :key="i" />
+          </article>
+        </div>
 
         <div v-if="notes.length === 0 && !isLoading" class="text-center py-8">
           <p class="text-gray-500">No notes found. Be the first to post!</p>
@@ -101,7 +105,7 @@ const {
   isLoading,
   checkNewNotes,
   loadNotesOnce,
-  getUserInfo
+  getUserInfo,
 } = useNostr();
 const toast = useToast();
 
@@ -150,5 +154,4 @@ onMounted(async () => {
   // await connect();
   refreshNotes();
 });
-
 </script>

@@ -7,9 +7,11 @@ import { hexToBytes, bytesToHex } from "@noble/hashes/utils";
 import type { NostrUser, Note, UserInfo } from "~~/types";
 
 const RELAYS = [
+  'wss://yabu.me',
   "wss://relay.damus.io",
   "wss://nos.lol",
   "wss://nostr-pub.wellorder.net",
+
 ];
 
 // const pool = new SimplePool();
@@ -53,6 +55,11 @@ export const useNostr = () => {
     };
 
     if (import.meta.client) {
+
+      // user user list
+      const items = JSON.parse(localStorage.getItem("userList") || "[]");
+      items.push(user.value);
+      localStorage.setItem("userList", JSON.stringify(items));
       localStorage.setItem("nostrUser", JSON.stringify(user.value));
     }
 

@@ -100,6 +100,10 @@
                   {{ getExcerpt(entry.decryptedContent) }}
                 </p>
 
+                <!-- {{ entry.tags }} -->
+
+                <EncryptedAttachmentList :event="entry" />
+
                 <!-- Attachments Section -->
                 <div
                   v-if="entry.attachments && entry.attachments.length"
@@ -176,11 +180,13 @@
             />
           </UFormField>
 
+          <JournalFileUploader ref="fileUploaderRef" />
+
           <div class="flex justify-end mt-4 space-x-2">
             <UButton
               v-if="isEditing"
               @click="toggleNewEntry"
-              color="gray"
+              color="neutral"
               icon="i-heroicons-x-mark"
               variant="ghost"
             >
@@ -259,13 +265,7 @@ const formState = ref({
   content: "",
 });
 
-// Load journal entries on mount
-onMounted(async () => {
-  if (user.value) {
-    console.log(user.value);
-    await loadJournalEntries();
-  }
-});
+const fileUploaderRef = ref();
 
 // Methods
 const toggleNewEntry = () => {
@@ -277,10 +277,52 @@ const toggleNewEntry = () => {
   isEditing.value = !isEditing.value;
 };
 
+const { uploadEncryptedFile } = useUploadToPhp();
+
+const generateSafeFilename = (originalName: string) => {
+  const ext = originalName.split('.').pop() || 'bin';
+  const hash = crypto.randomUUID().replace(/-/g, '');
+  return `${hash}.${ext}`;
+};
+
 const saveEntry = async () => {
   if (!formState.value.content.trim()) {
     return;
   }
+
+  // 🧠 Get uploaded encrypted files
+  const files = fileUploaderRef.value?.uploadedFiles || [];
+  const attachmentTags: string[][] = [];
+
+  for (const file of files) {
+    // Convert the encrypted data back to a Uint8Array
+    const keyBytes = Uint8Array.from(atob(file.key), (c) => c.charCodeAt(0));
+    const nonceBytes = Uint8Array.from(atob(file.nonce), (c) =>
+      c.charCodeAt(0)
+    );
+    const encrypted = file.encrypted; // this should already be Uint8Array
+
+    // If encrypted content not stored in `file`, you'd need to persist it or re-encrypt here
+
+    const encryptedBlob = new Blob([encrypted], { type: file.type });
+    console.log("Encrypted blob size:", encryptedBlob.size);
+
+    const newFilename = generateSafeFilename(file.name);
+    const fileUrl = await uploadEncryptedFile(encryptedBlob, newFilename);
+
+    attachmentTags.push(
+      ["url", fileUrl],
+      ["m", file.type],
+      ["size", file.size.toString()],
+      ["file-name", file.name],
+      ["xkey", file.key],
+      ["xnonce", file.nonce]
+    );
+  }
+
+  console.log(attachmentTags);
+
+  // return;
 
   let success;
   if (currentEntry.value) {
@@ -294,7 +336,8 @@ const saveEntry = async () => {
     // Create new entry
     success = await createJournalEntry(
       formState.value.content,
-      formState.value.date
+      formState.value.date,
+      attachmentTags
     );
   }
 
@@ -412,4 +455,12 @@ const downloadAttachment = (attachment) => {
   console.log("Download attachment:", attachment);
   // In a real app, you'd use fetch or axios to download the file
 };
+
+// Load journal entries on mount
+onMounted(async () => {
+  if (user.value) {
+    console.log(user.value);
+    await loadJournalEntries();
+  }
+});
 </script>

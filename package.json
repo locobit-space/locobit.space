@@ -10,6 +10,7 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "@noble/ciphers": "^1.2.1",
     "@nuxt/eslint": "1.2.0",
     "@nuxt/icon": "1.11.0",
     "@nuxt/image": "1.10.0",

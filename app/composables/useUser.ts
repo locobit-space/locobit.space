@@ -1,6 +1,6 @@
 import type { Note } from "~~/types";
 
-export const useNotes = () => {
+export const useUser = () => {
   const { $nostr } = useNuxtApp();
   const { RELAYS, user } = useNostr();
 

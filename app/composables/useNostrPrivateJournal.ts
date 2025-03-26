@@ -2,6 +2,8 @@ import { finalizeEvent } from "nostr-tools/pure";
 import { hexToBytes } from "@noble/hashes/utils";
 // Add these imports to your existing useNostr.ts
 import { nip04 } from "nostr-tools";
+import { xchacha20poly1305 } from "@noble/ciphers/chacha";
+import { randomBytes } from "@noble/hashes/utils";
 
 // Extend your existing useNostr.ts with these new functions
 export const useNostrPrivateJournal = () => {
@@ -20,7 +22,11 @@ export const useNostrPrivateJournal = () => {
    * @param date ISO date string for organizing entries
    * @returns boolean success status
    */
-  const createJournalEntry = async (content: string, date: string) => {
+  const createJournalEntry = async (
+    content: string,
+    date: string,
+    extraTags: string[][] = [] // Optional tags like file attachments
+  ) => {
     if (!user.value) return false;
     isLoading.value = true;
 
@@ -46,6 +52,7 @@ export const useNostrPrivateJournal = () => {
           // ["title", "Journal Entry"],
           ["date", date],
           ["t", "journal"], // add a tag for filtering
+          ...extraTags,
         ],
         content: encryptedContent,
       };
@@ -194,8 +201,11 @@ export const useNostrPrivateJournal = () => {
    * @returns boolean success status
    */
   const removeJournalEntry = async (id: string) => {
+    console.log(id);
     if (!user.value) return false;
     isLoading.value = true;
+
+    console.log("Removing entry:", id);
 
     try {
       const eventTemplate = {
@@ -222,11 +232,55 @@ export const useNostrPrivateJournal = () => {
       isLoading.value = false;
       return true;
     } catch (e) {
+      console.error("Failed to remove entry:", e);
       error.value = e;
       isLoading.value = false;
       return false;
     }
   };
+
+  // Encrypt file buffer
+  async function encryptFile(file: File) {
+    const key = randomBytes(32); // 256-bit key
+    const nonce = randomBytes(24); // 192-bit nonce
+
+    const buffer = await file.arrayBuffer();
+    const cipher = xchacha20poly1305(key, nonce);
+    const encrypted = cipher.encrypt(new Uint8Array(buffer));
+
+    return {
+      encrypted,
+      key: Buffer.from(key).toString("base64"),
+      nonce: Buffer.from(nonce).toString("base64"),
+      mime: file.type,
+      size: file.size,
+      name: file.name,
+    };
+  }
+
+  async function decryptFile(
+    url: string,
+    base64Key: string,
+    base64Nonce: string
+  ) {
+    const key = Uint8Array.from(atob(base64Key), (c) => c.charCodeAt(0));
+    const nonce = Uint8Array.from(atob(base64Nonce), (c) => c.charCodeAt(0));
+
+    const response = await fetch(url);
+    const buffer = await response.arrayBuffer();
+
+    console.log("Fetched encrypted file size:", buffer.byteLength);
+
+    if (buffer.byteLength < 16) {
+      throw new Error("Encrypted file is too small to contain a valid tag.");
+    }
+
+    const encrypted = new Uint8Array(buffer);
+    const cipher = xchacha20poly1305(key, nonce);
+    const decrypted = cipher.decrypt(encrypted);
+
+    return new Blob([decrypted]);
+  }
 
   return {
     journalNotes,
@@ -235,5 +289,7 @@ export const useNostrPrivateJournal = () => {
     removeJournalEntry,
     loadJournalEntries,
     getJournalEntryByDate,
+    encryptFile,
+    decryptFile,
   };
 };
