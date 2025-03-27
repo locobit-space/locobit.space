@@ -102,8 +102,10 @@ onMounted(async () => {
     const notes = await pool.querySync(RELAYS, {
       kinds: [1],
       authors: [hexPubkey],
-      limit: 20,
+      limit: 20
     });
+
+    console.log(notes);
 
     // remove duplication id
     const uniqueNotes = Array.from(

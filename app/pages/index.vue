@@ -48,6 +48,12 @@
         <div class="space-y-4 divide-y divide-slate-100">
           <NoteCard v-for="note in notes" :key="note.id" :note="note" />
         </div>
+
+        <div v-if="isLoading" class="">
+          <article class="flex flex-col gap-4">
+            <NoteSkeleton v-for="i in 3" :key="i" />
+          </article>
+        </div>
       </div>
     </div>
 
@@ -106,6 +112,7 @@ const {
   checkNewNotes,
   loadNotesOnce,
   getUserInfo,
+  loadOlderNotes,
 } = useNostr();
 const toast = useToast();
 
@@ -144,6 +151,22 @@ const refreshNotes = () => {
   loadNotesOnce();
 };
 
+const setupInfiniteScroll = () => {
+  window.addEventListener("scroll", handleScroll);
+
+  onUnmounted(() => {
+    window.removeEventListener("scroll", handleScroll);
+  });
+};
+
+const handleScroll = async () => {
+  const bottomOfWindow =
+    window.innerHeight + window.scrollY >= document.body.offsetHeight - 300; // 300px before bottom
+  if (bottomOfWindow && !isLoading.value) {
+    await loadOlderNotes();
+  }
+};
+
 watch(importKeyModal, (open) => {
   if (open) {
     nextTick(() => keyInput.value?.focus());
@@ -151,7 +174,7 @@ watch(importKeyModal, (open) => {
 });
 
 onMounted(async () => {
-  // await connect();
   refreshNotes();
+  setupInfiniteScroll();
 });
 </script>

@@ -7,25 +7,24 @@ import { hexToBytes, bytesToHex } from "@noble/hashes/utils";
 import type { NostrUser, Note, UserInfo } from "~~/types";
 
 const RELAYS = [
-  'wss://yabu.me',
+  "wss://yabu.me",
   "wss://relay.damus.io",
   "wss://nos.lol",
   "wss://nostr-pub.wellorder.net",
-
 ];
 
 // const pool = new SimplePool();
 
 export const useNostr = () => {
   const user = ref<NostrUser | null>(null);
-  const notes = useState<Note[]>("notes", () => [])
+  const notes = useState<Note[]>("notes", () => []);
   const isLoading = ref(false);
   const error = ref<any>(null);
 
   const { $nostr } = useNuxtApp();
   const { finalizeEvent, pool } = $nostr;
 
-  const latestTimestamp = ref(0);
+  const latestTimestamp = useState<number>("latestTimestamp", () => 0);
   const currentUserInfo = useState<UserInfo>("currentUserInfo");
 
   // --- Session Restore on Load ---
@@ -55,7 +54,6 @@ export const useNostr = () => {
     };
 
     if (import.meta.client) {
-
       // user user list
       const items = JSON.parse(localStorage.getItem("userList") || "[]");
       items.push(user.value);
@@ -195,18 +193,49 @@ export const useNostr = () => {
     }
   };
 
-  const loadNotesOnce = async () => {
+  const loadNotesOnce = async (
+    options: {
+      hashtag?: string;
+      limit?: number;
+      offset?: number;
+    } = {}
+  ) => {
     isLoading.value = true;
-    // notes.value = [];
+
+    // Destructure options with default values
+    const { hashtag, limit = 20, offset = 0 } = options;
 
     try {
-      const events = await pool.querySync(RELAYS, {
+      // Prepare filter query
+      const filter: any = {
         kinds: [1],
-        limit: 20,
-      });
+        limit,
+      };
 
-      const items = events.sort((a, b) => b.created_at - a.created_at);
-      notes.value = [...items, ...notes.value];
+      // Add hashtag filter if provided
+      if (hashtag) {
+        filter["#t"] = [hashtag];
+      }
+
+      const events = await pool.querySync(RELAYS, filter);
+
+      // Sort events by created_at timestamp (most recent first)
+      const sortedEvents = events.sort((a, b) => b.created_at - a.created_at);
+
+      // Apply offset if specified
+      const paginatedEvents = sortedEvents.slice(offset, offset + limit);
+
+      // Merge with existing notes, avoiding duplicates
+      const uniqueEvents = [
+        ...paginatedEvents,
+        ...notes.value.filter(
+          (existingNote) =>
+            !paginatedEvents.some((newNote) => newNote.id === existingNote.id)
+        ),
+      ];
+
+      // Update notes and timestamp
+      notes.value = uniqueEvents;
       latestTimestamp.value = notes.value[0]?.created_at ?? 0;
     } catch (e) {
       error.value = e;
@@ -358,6 +387,63 @@ export const useNostr = () => {
     }
   };
 
+  const loadOlderNotes = async (
+    options: {
+      hashtag?: string;
+      limit?: number;
+    } = {}
+  ) => {
+    // If no notes, return
+    if (notes.value.length === 0) return false;
+
+    // Destructure options with default values
+    const { hashtag, limit = 20 } = options;
+
+    // Get the timestamp of the oldest note
+    const oldestTimestamp =
+      notes.value[notes.value.length - 1]?.created_at || 0;
+
+    try {
+      // Prepare filter query
+      const filter: any = {
+        kinds: [1],
+        limit,
+        until: oldestTimestamp - 1, // Fetch notes older than the oldest note
+      };
+
+      // Add hashtag filter if provided
+      if (hashtag) {
+        filter["#t"] = [hashtag];
+      }
+
+      isLoading.value = true;
+      // Query for older events
+      const olderEvents = await pool.querySync(RELAYS, filter);
+
+      // Sort older events by creation time (oldest first)
+      const sortedOlderEvents = olderEvents.sort(
+        (a, b) => a.created_at - b.created_at
+      );
+
+      // Append older events to existing notes, avoiding duplicates
+      const uniqueOlderEvents = sortedOlderEvents.filter(
+        (newNote) =>
+          !notes.value.some((existingNote) => existingNote.id === newNote.id)
+      );
+
+      // Update notes (append to the end)
+      notes.value = [...notes.value, ...uniqueOlderEvents];
+
+      // Return if any new notes were loaded
+      return uniqueOlderEvents.length > 0;
+    } catch (e) {
+      error.value = e;
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
   onMounted(async () => {
     if (user.value) {
       const data = await getUserInfo(user.value.publicKey);
@@ -382,6 +468,7 @@ export const useNostr = () => {
     postNote,
     loadNotes,
     normalizeKey,
+    loadOlderNotes,
     currentUserInfo,
     RELAYS,
   };

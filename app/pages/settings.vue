@@ -1,7 +1,7 @@
 <template>
-  <div class="flex w-full divide-x divide-slate-100 h-dvh">
+  <div class="flex w-full divide-x h-screen divide-slate-100">
     <aside>
-      <nav class="space-y-1 w-64 p-4 px-2 h-screen sticky top-0">
+      <nav class="space-y-1 w-64 p-4 px-2 sticky top-0">
         <UButton
           v-for="item in items"
           :key="item.label"
@@ -16,7 +16,7 @@
         </UButton>
       </nav>
     </aside>
-    <main class="flex-1 flex flex-col overflow-y-scroll">
+    <main class="flex-1 flex flex-col">
       <NuxtPage />
     </main>
   </div>
