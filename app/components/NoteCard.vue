@@ -130,9 +130,10 @@
 </template>
 
 <script setup lang="ts">
+import type { Event } from "nostr-tools";
 import { hexToBytes } from "@noble/hashes/utils";
 import { computed } from "vue";
-import type { Note, UserInfo } from "~~/types";
+import type { UserInfo } from "~~/types";
 const { shortenKey, formatDate } = useHelpers();
 const { getUserInfo } = useNostr();
 const props = defineProps({
@@ -298,7 +299,7 @@ const syncBookmarksToNostr = async () => {
   }
 };
 
-const noteItems = ref<Note[]>([]);
+const noteItems = ref<Event[]>([]);
 
 const getNoteLikes = async (noteId: string): Promise<number> => {
   try {

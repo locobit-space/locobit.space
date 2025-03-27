@@ -31,13 +31,22 @@
         content: 'w-full md:max-w-xs',
       }"
     >
-      <div class="flex mt-4 items-center gap-2 cursor-pointer">
+      <div v-if="user" class="flex mt-4 items-center gap-2 cursor-pointer">
         <UAvatar :src="currentUserInfo?.picture" />
         <span>
           {{ currentUserInfo?.display_name || "Nostr User" }}
         </span>
       </div>
-
+      <div v-else>
+        <UButton
+          icon="i-heroicons-user"
+          variant="ghost"
+          class="w-full"
+          color="primary"
+        >
+          Login
+        </UButton>
+      </div>
       <template #content>
         <div>
           <h1 class="text-lg px-4 py-2 font-bold">Switch Account</h1>
@@ -50,7 +59,9 @@
               <span>
                 <UAvatar :src="currentUserInfo?.picture" />
               </span>
-              <span class="flex-grow">{{ account.display_name }}</span>
+              <span class="flex-grow">
+                {{ account.display_name || "Nostr User" }}
+              </span>
               <span v-if="index === 0">
                 <Icon name="i-heroicons-check" />
               </span>
@@ -114,11 +125,13 @@ const sidebarNavItems = computed(() => [
   },
 ]);
 
-const accounts = computed(() => [
-  user.value?.npub && {
-    ...currentUserInfo.value,
-  },
-]);
+const accounts = computed(() =>
+  [
+    user.value?.publicKey && {
+      ...currentUserInfo.value,
+    },
+  ].filter(Boolean)
+);
 </script>
 
 <style scoped></style>

@@ -242,13 +242,12 @@
 </template>
 
 <script setup lang="ts">
-const { user } = useNostr();
+const { user, isLoading } = useNostr();
 const {
   journalNotes,
   createJournalEntry,
   updateJournalEntry,
   loadJournalEntries,
-  isLoading,
   removeJournalEntry,
 } = useNostrPrivateJournal();
 
@@ -280,8 +279,8 @@ const toggleNewEntry = () => {
 const { uploadEncryptedFile } = useUploadToPhp();
 
 const generateSafeFilename = (originalName: string) => {
-  const ext = originalName.split('.').pop() || 'bin';
-  const hash = crypto.randomUUID().replace(/-/g, '');
+  const ext = originalName.split(".").pop() || "bin";
+  const hash = crypto.randomUUID().replace(/-/g, "");
   return `${hash}.${ext}`;
 };
 
@@ -459,7 +458,6 @@ const downloadAttachment = (attachment) => {
 // Load journal entries on mount
 onMounted(async () => {
   if (user.value) {
-    console.log(user.value);
     await loadJournalEntries();
   }
 });

@@ -4,7 +4,8 @@ import { ref, onMounted } from "vue";
 import { generateSecretKey, getPublicKey } from "nostr-tools/pure";
 import { nip19 } from "nostr-tools";
 import { hexToBytes, bytesToHex } from "@noble/hashes/utils";
-import type { NostrUser, Note, UserInfo } from "~~/types";
+import type { NostrUser, UserInfo } from "~~/types";
+import type { Event } from "nostr-tools";
 
 const RELAYS = [
   "wss://yabu.me",
@@ -17,7 +18,7 @@ const RELAYS = [
 
 export const useNostr = () => {
   const user = ref<NostrUser | null>(null);
-  const notes = useState<Note[]>("notes", () => []);
+  const notes = useState<Event[]>("notes", () => []);
   const isLoading = ref(false);
   const error = ref<any>(null);
 
@@ -193,8 +194,10 @@ export const useNostr = () => {
     }
   };
 
+  // Extend the loadNotesOnce function to support following filter
   const loadNotesOnce = async (
     options: {
+      filter?: "for-you" | "following" | "hashtag";
       hashtag?: string;
       limit?: number;
       offset?: number;
@@ -203,26 +206,51 @@ export const useNostr = () => {
     isLoading.value = true;
 
     // Destructure options with default values
-    const { hashtag, limit = 20, offset = 0 } = options;
+    const { filter = "for-you", hashtag, limit = 20, offset = 0 } = options;
 
     try {
       // Prepare filter query
-      const filter: any = {
-        kinds: [1],
+      const filterQuery: any = {
+        kinds: [1], // Regular notes
         limit,
       };
 
-      // Add hashtag filter if provided
-      if (hashtag) {
-        filter["#t"] = [hashtag];
+      // User's public key (replace with actual user key retrieval)
+      const userPubkey = user.value?.publicKey;
+
+      // Different filtering logic based on selected filter
+      switch (filter) {
+        case "following":
+          if (!userPubkey) {
+            throw new Error("User not logged in");
+          }
+
+          // Fetch user's follow list (kind 3 events)
+          const followList = await fetchFollowList(userPubkey);
+
+          // Filter notes from followed users
+          filterQuery.authors = followList;
+          break;
+
+        case "hashtag":
+          if (hashtag) {
+            filterQuery["#t"] = [hashtag];
+          }
+          break;
+
+        case "for-you":
+        default:
+          // No additional filtering for 'for you' feed
+          break;
       }
 
-      const events = await pool.querySync(RELAYS, filter);
+      // Query events from relays
+      const events = await pool.querySync(RELAYS, filterQuery);
 
       // Sort events by created_at timestamp (most recent first)
       const sortedEvents = events.sort((a, b) => b.created_at - a.created_at);
 
-      // Apply offset if specified
+      // Apply pagination
       const paginatedEvents = sortedEvents.slice(offset, offset + limit);
 
       // Merge with existing notes, avoiding duplicates
@@ -241,6 +269,35 @@ export const useNostr = () => {
       error.value = e;
     } finally {
       isLoading.value = false;
+    }
+  };
+
+  // Helper function to fetch follow list
+  const fetchFollowList = async (pubkey: string): Promise<string[]> => {
+    try {
+      // Fetch kind 3 events (contact list) for the user
+      const contactListEvents = await $nostr.pool.querySync(RELAYS, {
+        kinds: [3],
+        authors: [pubkey],
+        limit: 1, // Get the most recent contact list
+      });
+
+      // If no contact list found, return empty array
+      if (contactListEvents.length === 0) return [];
+
+      // Get the most recent contact list event
+      const latestContactList = contactListEvents[0];
+      if (!latestContactList) return [];
+
+      // Extract followed pubkeys from tags
+      const followedPubkeys = latestContactList.tags
+        .filter((tag) => tag[0] === "p") // Filter person tags
+        .map((tag) => tag[1]); // Extract pubkey
+
+      return followedPubkeys as string[];
+    } catch (error) {
+      console.error("Failed to fetch follow list:", error);
+      return [];
     }
   };
 

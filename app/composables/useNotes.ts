@@ -1,4 +1,4 @@
-import type { Note } from "~~/types";
+import type { Event } from "nostr-tools";
 
 export const useNotes = () => {
   const { $nostr } = useNuxtApp();
@@ -12,7 +12,7 @@ export const useNotes = () => {
     timeout: number = 10000,
     maxRelays: number = 10,
     debug: boolean = false
-  ): Promise<Note | null> => {
+  ): Promise<Event | null> => {
     // Normalize and validate note ID (assuming it's the event ID)
     if (!/^[0-9a-f]{64}$/.test(noteId)) {
       throw new Error(
@@ -30,7 +30,7 @@ export const useNotes = () => {
       console.log(`🔍 Querying relays for note detail:`, shuffledRelays);
 
     // Fetch note from relays
-    const fetchFromRelays = async (): Promise<Note | null> => {
+    const fetchFromRelays = async (): Promise<Event | null> => {
       const fetchPromises = shuffledRelays.map(async (relay) => {
         try {
           const event = await pool.get([relay], {
@@ -47,7 +47,7 @@ export const useNotes = () => {
       const results = await Promise.allSettled(fetchPromises);
       const successful = results
         .filter((r) => r.status === "fulfilled" && r.value)
-        .map((r) => (r as PromiseFulfilledResult<Note>).value);
+        .map((r) => (r as PromiseFulfilledResult<Event>).value);
 
       return successful[0] || null;
     };
@@ -57,7 +57,7 @@ export const useNotes = () => {
       setTimeout(() => reject(new Error("⏳ Fetch timeout")), timeout)
     );
 
-    let noteDetail: Note | null = null;
+    let noteDetail: Event | null = null;
 
     try {
       noteDetail = await Promise.race([fetchFromRelays(), timeoutPromise]);
