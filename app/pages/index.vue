@@ -1,46 +1,47 @@
 <template>
   <main>
     <nav
-      class="sticky top-0   backdrop-blur bg-white/30 border-b border-white/20 z-50"
+      class="sticky top-0 backdrop-blur bg-white/30 border-b border-white/20 z-50"
     >
       <AppHeader />
     </nav>
     <div class="py-8 max-w-3xl mx-auto">
-      <UButton @click="checkNewNotes" color="gray">Check New Notes</UButton>
-
       <!-- User Authentication Section -->
-      <div v-if="!user" class="mb-6">
-        <UAlert title="Not Connected" color="yellow" class="mb-4">
-          You need to create or login with your Nostr keys to interact
-        </UAlert>
-        <UButton @click="createNewUser" color="blue" class="mr-2"
-          >Create New User</UButton
-        >
-        <UButton @click="importKeyModal = true" color="gray"
-          >Import Private Key</UButton
-        >
-      </div>
+      <section class="hidden">
+        <UButton @click="checkNewNotes" color="gray">Check New Notes</UButton>
 
-      <div v-else class="mb-6">
-        <UAlert
-          :title="`Connected as ${displayUser}`"
-          color="green"
-          class="mb-4"
-        >
-          Your public key: {{ user.publicKey }}
-        </UAlert>
-        <UButton @click="logout" color="red">Logout</UButton>
-      </div>
+        <div v-if="!user" class="mb-6">
+          <UAlert title="Not Connected" color="yellow" class="mb-4">
+            You need to create or login with your Nostr keys to interact
+          </UAlert>
+          <UButton @click="createNewUser" color="blue" class="mr-2"
+            >Create New User</UButton
+          >
+          <UButton @click="importKeyModal = true" color="gray">
+            Import Private Key
+          </UButton>
+        </div>
 
-      <!-- Feed -->
-      <div>
-        <h2 class="text-xl font-semibold mb-4">Recent Notes</h2>
+        <div v-else class="mb-6">
+          <UAlert
+            :title="`Connected as ${displayUser}`"
+            color="green"
+            class="mb-4"
+          >
+            Your public key: {{ user.publicKey }}
+          </UAlert>
+
+          <UButton @click="logout" color="red">Logout</UButton>
+        </div>
 
         <UButton @click="refreshNotes" color="gray" class="mb-4">
           Refresh Notes
         </UButton>
+      </section>
 
-        <div v-if="isLoading" class="">
+      <!-- Feed -->
+      <div>
+        <div v-if="isLoading" class="px-4">
           <article class="flex flex-col gap-4">
             <NoteSkeleton v-for="i in 3" :key="i" />
           </article>
@@ -54,7 +55,7 @@
           <NoteCard v-for="note in notes" :key="note.id" :note="note" />
         </div>
 
-        <div v-if="isLoading" class="">
+        <div v-if="isLoading" class="px-4">
           <article class="flex flex-col gap-4">
             <NoteSkeleton v-for="i in 3" :key="i" />
           </article>

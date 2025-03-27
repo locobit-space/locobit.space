@@ -1,17 +1,17 @@
 <template>
-  <div class="max-w-3xl mx-auto p-4">
+  <div class="max-w-3xl w-full mx-auto p-4">
     <article v-if="!loading">
       <NoteCard v-if="noteDetail.id" :note="noteDetail" />
     </article>
 
-    <div v-else class="text-center py-4">
+    <div v-else class="py-4">
       <NoteSkeleton />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { Note } from "~~/types";
+import type { Event } from "nostr-tools";
 
 const toast = useToast();
 const { id } = useRoute().params;
@@ -19,7 +19,7 @@ const { getNoteDetail } = useNotes();
 
 const loading = ref(false);
 
-const noteDetail = ref<Note>({
+const noteDetail = ref<Event>({
   id: "",
   pubkey: "",
   created_at: 0,

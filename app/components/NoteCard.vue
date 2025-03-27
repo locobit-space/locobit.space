@@ -44,7 +44,7 @@
             <NuxtLink
               :to="`/notes/${note.id}`"
               v-if="part.type === 'text'"
-              class="break-words"
+              class="break-words break-all"
             >
               {{ part.value }}
             </NuxtLink>
