@@ -444,28 +444,23 @@ export const useNostr = () => {
     }
   };
 
-  const loadOlderNotes = async (
+  async function getNotes(
     options: {
       hashtag?: string;
       limit?: number;
+      until?: number;
     } = {}
-  ) => {
-    // If no notes, return
-    if (notes.value.length === 0) return false;
-
-    // Destructure options with default values
-    const { hashtag, limit = 20 } = options;
-
-    // Get the timestamp of the oldest note
-    const oldestTimestamp =
-      notes.value[notes.value.length - 1]?.created_at || 0;
-
+  ) {
     try {
+     
+      // Destructure options with default values
+      const { hashtag, limit = 20, until } = options;
+
       // Prepare filter query
       const filter: any = {
         kinds: [1],
         limit,
-        until: oldestTimestamp - 1, // Fetch notes older than the oldest note
+        until, // Fetch notes older than the oldest note
       };
 
       // Add hashtag filter if provided
@@ -488,8 +483,62 @@ export const useNostr = () => {
           !notes.value.some((existingNote) => existingNote.id === newNote.id)
       );
 
+      return uniqueOlderEvents;
+    } catch (error) {
+      throw new Error(`[useNostr]: Failed to fetch older notes: ${error}`);
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  const loadOlderNotes = async (
+    options: {
+      hashtag?: string;
+      limit?: number;
+    } = {}
+  ) => {
+    // If no notes, return
+    if (notes.value.length === 0) return false;
+
+    // Destructure options with default values
+    const { hashtag, limit = 20 } = options;
+
+    // Get the timestamp of the oldest note
+    const oldestTimestamp =
+      notes.value[notes.value.length - 1]?.created_at || 0;
+
+    // Prepare filter query
+    const filter: any = {
+      kinds: [1],
+      limit,
+      until: oldestTimestamp - 1, // Fetch notes older than the oldest note
+    };
+
+    // Add hashtag filter if provided
+    if (hashtag) {
+      filter["#t"] = [hashtag];
+    }
+
+    try {
+      isLoading.value = true;
+      // Query for older events
+      const olderEvents = await pool.querySync(RELAYS, filter);
+
+      // Sort older events by creation time (oldest first)
+      const sortedOlderEvents = olderEvents.sort(
+        (a, b) => a.created_at - b.created_at
+      );
+
+      // Append older events to existing notes, avoiding duplicates
+      const uniqueOlderEvents = sortedOlderEvents.filter(
+        (newNote) =>
+          !notes.value.some((existingNote) => existingNote.id === newNote.id)
+      );
+
       // Update notes (append to the end)
       notes.value = [...notes.value, ...uniqueOlderEvents];
+
+      console.log({ olderEvents, uniqueOlderEvents });
 
       // Return if any new notes were loaded
       return uniqueOlderEvents.length > 0;
@@ -516,6 +565,8 @@ export const useNostr = () => {
     isLoading,
     error,
     latestTimestamp,
+    currentUserInfo,
+    RELAYS,
     getUserInfo,
     checkNewNotes,
     loadNotesOnce,
@@ -526,7 +577,6 @@ export const useNostr = () => {
     loadNotes,
     normalizeKey,
     loadOlderNotes,
-    currentUserInfo,
-    RELAYS,
+    getNotes,
   };
 };

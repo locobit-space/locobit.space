@@ -94,6 +94,16 @@ const sidebarNavItems = computed(() => [
     to: "/",
   },
   {
+    label: "Shorts",
+    icon: "simple-icons:youtubeshorts",
+    to: "/shorts",
+  },
+  {
+    label: "Search",
+    icon: "system-uicons:search",
+    to: "/search",
+  },
+  {
     label: "Messages",
     icon: "i-heroicons-chat-bubble-left-right",
     to: "/messages",
@@ -120,7 +130,7 @@ const sidebarNavItems = computed(() => [
   },
   {
     label: "Settings",
-    icon: "i-heroicons-cog-6-tooth",
+    icon: "i-heroicons-cog",
     to: "/settings",
   },
 ]);

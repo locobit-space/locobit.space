@@ -5,7 +5,16 @@ export const useNotes = () => {
   const { pool } = $nostr;
   const { RELAYS } = useNostr();
 
-  // Add this function to the useNostr composable
+  const bookmarks = useState<string[]>("bookmarkedVideos", () => []);
+
+  const toggleBookmark = (videoId: string) => {
+    const index = bookmarks.value.indexOf(videoId);
+    if (index > -1) {
+      bookmarks.value.splice(index, 1);
+    } else {
+      bookmarks.value.push(videoId);
+    }
+  };
 
   const getNoteDetail = async (
     noteId: string,
@@ -13,14 +22,12 @@ export const useNotes = () => {
     maxRelays: number = 10,
     debug: boolean = false
   ): Promise<Event | null> => {
-    // Normalize and validate note ID (assuming it's the event ID)
     if (!/^[0-9a-f]{64}$/.test(noteId)) {
       throw new Error(
         "Invalid note ID format. Must be a 64-character hex string."
       );
     }
 
-    // Shuffle relays to distribute load
     const shuffledRelays = RELAYS.sort(() => 0.5 - Math.random()).slice(
       0,
       maxRelays
@@ -29,13 +36,12 @@ export const useNotes = () => {
     if (debug)
       console.log(`🔍 Querying relays for note detail:`, shuffledRelays);
 
-    // Fetch note from relays
     const fetchFromRelays = async (): Promise<Event | null> => {
       const fetchPromises = shuffledRelays.map(async (relay) => {
         try {
           const event = await pool.get([relay], {
             ids: [noteId],
-            kinds: [1], // Kind 1 is for text notes
+            kinds: [1],
           });
           return event || null;
         } catch (error) {
@@ -52,7 +58,6 @@ export const useNotes = () => {
       return successful[0] || null;
     };
 
-    // Timeout mechanism
     const timeoutPromise = new Promise<null>((_, reject) =>
       setTimeout(() => reject(new Error("⏳ Fetch timeout")), timeout)
     );
@@ -65,7 +70,6 @@ export const useNotes = () => {
       if (debug) console.error("🚨 Note detail fetch error:", err);
     }
 
-    // No data found
     if (!noteDetail) {
       if (debug) console.log(`❌ No note found with ID: ${noteId}`);
       return null;
@@ -76,9 +80,76 @@ export const useNotes = () => {
     return noteDetail;
   };
 
-  // Update the return object to include the new method
+  const mediaExtensions = [
+    ".mp4",
+    ".mov",
+    ".webm",
+    ".avi",
+    ".jpg",
+    ".jpeg",
+    ".png",
+    ".gif",
+    ".webp",
+  ];
+
+  const isMediaUrl = (url: string) =>
+    mediaExtensions.some((ext) => url.toLowerCase().includes(ext));
+
+  const extractMediaUrlsFromContent = (content: string): string[] => {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    return (content.match(urlRegex) || []).filter(isMediaUrl);
+  };
+
+  const extractMediaUrlsFromTags = (tags: string[][]): string[] => {
+    return tags
+      .filter((tag) => tag[0] === "imeta" && tag[1]?.includes("url"))
+      .map((tag) => {
+        const match = tag[1].match(/https?:\/\/[^ ]+/);
+        return match?.[0] ?? "";
+      })
+      .filter(Boolean)
+      .filter(isMediaUrl);
+  };
+
+  const filterMediaNotes = (events: Event[]): Event[] => {
+    return events.filter((event) => {
+      const contentHasMedia =
+        extractMediaUrlsFromContent(event.content).length > 0;
+      const tagsHaveMedia = extractMediaUrlsFromTags(event.tags).length > 0;
+      return contentHasMedia || tagsHaveMedia;
+    });
+  };
+
+  const mapNotesToMediaList = (events: Event[]) => {
+    const mediaNotes = filterMediaNotes(events);
+
+    return mediaNotes.flatMap((event) => {
+      const mediaUrls = [
+        ...extractMediaUrlsFromContent(event.content),
+        ...extractMediaUrlsFromTags(event.tags),
+      ];
+
+      const creator = `@${event.pubkey.slice(0, 8)}`;
+      const title = event.content.split("\n")[0].slice(0, 100); // first line as title
+
+      return mediaUrls.map((url) => ({
+        id: event.id,
+        url,
+        title,
+        creator,
+        likes: Math.floor(Math.random() * 500), // You can replace with real data
+        comments: Math.floor(Math.random() * 100), // or pull from tag/meta if supported
+        created_at: event.created_at,
+      }));
+    });
+  };
+
+
   return {
-    // ... existing methods
     getNoteDetail,
+    toggleBookmark,
+    bookmarks,
+    filterMediaNotes,
+    mapNotesToMediaList
   };
 };
