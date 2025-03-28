@@ -3,7 +3,7 @@
     <aside class="px-4 sticky top-0 h-screen w-60">
       <AppSidebar class="" />
     </aside>
-    <main class="flex-1 flex flex-col overflow-y-auto">
+    <main class="flex-1 flex flex-col">
       <slot />
     </main>
   </div>

@@ -1,5 +1,5 @@
 <template>
-  <div class="flex w-full divide-x h-screen divide-slate-100">
+  <div class="flex w-full divide-x divide-slate-100">
     <aside>
       <nav class="space-y-1 w-64 p-4 px-2 sticky top-0">
         <UButton

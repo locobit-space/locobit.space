@@ -167,9 +167,30 @@
     <UModal v-model:open="isEditing" class="my-4">
       <template #content>
         <UCard>
-          <UFormField label="Date">
-            <UInput v-model="formState.date" type="date" :max="today" />
-          </UFormField>
+          <nav class="flex gap-2">
+            <UFormField label="Date" class="flex-grow">
+              <UInput v-model="formState.date" type="date" :max="today" />
+            </UFormField>
+            <div class="flex justify-end mt-4 space-x-2">
+              <UButton
+                v-if="isEditing"
+                @click="toggleNewEntry"
+                color="neutral"
+                icon="i-heroicons-x-mark"
+                variant="ghost"
+              >
+                Cancel
+              </UButton>
+              <UButton
+                type="submit"
+                color="primary"
+                :loading="isLoading"
+                @click="saveEntry"
+              >
+                {{ currentEntry ? "Update Entry" : "Save Entry" }}
+              </UButton>
+            </div>
+          </nav>
 
           <UFormField label="Your Thoughts" class="mt-4">
             <UTextarea
@@ -181,32 +202,12 @@
           </UFormField>
 
           <JournalFileUploader ref="fileUploaderRef" />
-
-          <div class="flex justify-end mt-4 space-x-2">
-            <UButton
-              v-if="isEditing"
-              @click="toggleNewEntry"
-              color="neutral"
-              icon="i-heroicons-x-mark"
-              variant="ghost"
-            >
-              Cancel
-            </UButton>
-            <UButton
-              type="submit"
-              color="primary"
-              :loading="isLoading"
-              @click="saveEntry"
-            >
-              {{ currentEntry ? "Update Entry" : "Save Entry" }}
-            </UButton>
-          </div>
         </UCard>
       </template>
     </UModal>
 
     <!-- Modal for viewing full entry -->
-    <UModal v-model:open="showModal" :ui="{ width: 'md:max-w-2xl' }">
+    <UModal v-model:open="showModal">
       <template #content>
         <UCard>
           <template #header>

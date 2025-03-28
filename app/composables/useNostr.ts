@@ -19,7 +19,7 @@ const RELAYS = [
 export const useNostr = () => {
   const user = ref<NostrUser | null>(null);
   const notes = useState<Event[]>("notes", () => []);
-  const isLoading = ref(false);
+  const isLoading = useState<boolean>("isLoading", () => false);
   const error = ref<any>(null);
 
   const { $nostr } = useNuxtApp();
@@ -227,7 +227,7 @@ export const useNostr = () => {
 
           // Fetch user's follow list (kind 3 events)
           const followList = await fetchFollowList(userPubkey);
-
+          console.log(followList);
           // Filter notes from followed users
           filterQuery.authors = followList;
           break;

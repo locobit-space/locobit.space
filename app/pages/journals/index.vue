@@ -1,6 +1,6 @@
 <!-- pages/journal.vue -->
 <template>
-  <div class="max-w-3xl mx-auto p-4">
+  <div class="max-w-3xl mx-auto w-full p-4">
     <div class="mb-6">
       <h1 class="text-3xl font-bold mb-2">Your Private Journal</h1>
       <p class="text-gray-600 dark:text-gray-400">

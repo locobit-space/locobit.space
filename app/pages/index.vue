@@ -1,9 +1,9 @@
 <template>
-  <main>
+  <main class="">
     <nav
       class="sticky top-0 backdrop-blur bg-white/30 border-b border-white/20 z-50"
     >
-      <AppHeader />
+      <AppHeader class="" />
     </nav>
     <div class="py-8 max-w-3xl mx-auto">
       <!-- User Authentication Section -->

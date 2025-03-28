@@ -22,7 +22,7 @@ const { id } = useRoute().params;
 const { loadOlderNotes, isLoading, notes, loadNotesOnce } = useNostr();
 onMounted(() => {
   if (id) {
-    loadNotesOnce({ hashtag: id as string });
+    loadNotesOnce({ hashtag: id as string, filter: "hashtag" });
   }
 });
 </script>

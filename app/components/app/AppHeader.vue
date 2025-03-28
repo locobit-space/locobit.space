@@ -26,7 +26,7 @@
 const items = useState("itemsHeader", () => [
   { label: "For You", key: "for-you" },
   { label: "Following", key: "following" },
-  { label: "#laostr", key: "laostr" },
+  { label: "#laostr", key: "hashtag" },
 ]);
 
 const { loadNotesOnce, isLoading } = useNostr();
@@ -34,7 +34,7 @@ const isActive = ref("for-you");
 
 const handleFilter = (key: string) => {
   isActive.value = key;
-  loadNotesOnce({ hashtag: key, filter: "hashtag" });
+  loadNotesOnce({ hashtag: key === "hashtag" ? "laostr" : "", filter: key });
 };
 </script>
 
