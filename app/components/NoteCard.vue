@@ -5,7 +5,9 @@
         <UAvatar :src="userInfo?.picture" />
       </NuxtLink>
       <div class="flex-1">
-        <div class="flex justify-between items-center mb-2">
+        <div
+          class="flex justify-between md:items-center flex-col md:flex-row mb-2"
+        >
           <NuxtLink :to="`/profile/${note.pubkey}`" class="font-bold">
             {{ userInfo?.display_name || "N/A" }}
           </NuxtLink>
@@ -16,8 +18,8 @@
         </div> -->
 
         <!-- Media Display -->
-        <div v-if="mediaUrls.length" class="mb-3 grid grid-cols-2 gap-2">
-          <template v-for="(media, index) in mediaUrls" :key="index">
+        <section class="mb-3 grid grid-cols-2 gap-2">
+          <div v-for="(media, index) in mediaUrls" :key="index">
             <!-- Image Display -->
             <img
               v-if="media.type === 'image'"
@@ -35,8 +37,28 @@
               <source :src="media.url" :type="media.videoType" />
               Your browser does not support the video tag.
             </video>
-          </template>
-        </div>
+
+            <!-- Generic embed handling -->
+            <iframe
+              v-else-if="media.type === 'embed'"
+              :src="media.embedUrl"
+              :title="`${media.embedType} video`"
+              frameborder="0"
+              allowfullscreen
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              class="media-embed"
+            >
+            </iframe>
+
+            <div v-if="media.type === 'embed'" class="media-caption">
+              {{
+                media.embedType.charAt(0).toUpperCase() +
+                media.embedType.slice(1)
+              }}
+              video
+            </div>
+          </div>
+        </section>
 
         <!-- Note Content with Hashtag Parsing -->
         <div class="text-wrap break-all">
@@ -51,7 +73,7 @@
             <NuxtLink
               v-else-if="part.type === 'hashtag'"
               :to="`/hashtag/${part.value.slice(1)}`"
-              class="text-blue-600 hover:underline"
+              class="text-primary-600 hover:underline"
             >
               {{ part.value }}
             </NuxtLink>
@@ -134,7 +156,7 @@ import type { Event } from "nostr-tools";
 import { hexToBytes } from "@noble/hashes/utils";
 import { computed } from "vue";
 import type { UserInfo } from "~~/types";
-const { shortenKey, formatDate } = useHelpers();
+const { shortenKey, formatDateTime } = useHelpers();
 const { getUserInfo } = useNostr();
 const props = defineProps({
   note: { type: Object, required: true },
@@ -147,7 +169,7 @@ const userInfo = ref<UserInfo>({
   name: "",
 });
 const shortKey = computed(() => shortenKey(props.note.pubkey));
-const formattedDate = computed(() => formatDate(props.note.created_at));
+const formattedDate = computed(() => formatDateTime(props.note.created_at));
 
 function loadUserInfo() {
   getUserInfo(props.note.pubkey).then((user) => {
@@ -194,7 +216,6 @@ const likeNote = async () => {
   if (isUnliking) {
     // Remove the existing like
     noteItems.value = noteItems.value.filter((item) => item.id !== existing.id);
-    toast.add({ title: "You unliked this note" });
     return;
   }
 
@@ -221,10 +242,6 @@ const likeNote = async () => {
 
   try {
     await Promise.any($nostr.pool.publish(RELAYS, signed));
-    toast.add({
-      title:
-        newContent === "+" ? "You liked this note" : "You disliked this note",
-    });
   } catch (err) {
     console.error("Like failed", err);
   }
@@ -295,7 +312,6 @@ const syncBookmarksToNostr = async () => {
     // Optional success toast here if you want
   } catch (err) {
     console.error("Failed to sync bookmarks to Nostr", err);
-    toast.add({ title: "Bookmark sync failed", color: "error" });
   }
 };
 
@@ -356,25 +372,157 @@ const rePostCount = computed(() => {
   return noteItems.value.filter((item) => item.kind === 6).length;
 });
 
-// Media URL extraction
+// Media URL extraction with support for multiple platforms
 const mediaUrls = computed(() => {
+  // Collection of platform patterns
+  const platforms = [
+    {
+      name: "youtube",
+      regex:
+        /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]+)(?:\S*)/gi,
+      embedUrl: (id: string) => `https://www.youtube.com/embed/${id}`,
+      thumbnailUrl: (id: string) =>
+        `https://img.youtube.com/vi/${id}/hqdefault.jpg`,
+    },
+    {
+      name: "vimeo",
+      regex:
+        /(?:https?:\/\/)?(?:www\.)?vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/(?:[^\/]*)\/videos\/|album\/(?:\d+)\/video\/|)(\d+)(?:$|\/|\?)/gi,
+      embedUrl: (id: string) => `https://player.vimeo.com/video/${id}`,
+    },
+    {
+      name: "rumble",
+      regex:
+        /(?:https?:\/\/)?(?:www\.)?rumble\.com\/([a-zA-Z0-9_-]+)(?:\.html)?(?:\S*)/gi,
+      embedUrl: (id: string) => `https://rumble.com/embed/${id}/`,
+    },
+    {
+      name: "dailymotion",
+      regex:
+        /(?:https?:\/\/)?(?:www\.)?dailymotion\.com\/video\/([a-zA-Z0-9_-]+)(?:\S*)/gi,
+      embedUrl: (id: string) => `https://www.dailymotion.com/embed/video/${id}`,
+    },
+    {
+      name: "twitch",
+      regex:
+        /(?:https?:\/\/)?(?:www\.)?twitch\.tv\/(?:videos\/)?([a-zA-Z0-9_-]+)(?:\S*)/gi,
+      embedUrl: (id: string) => {
+        // Check if it's a video or channel
+        if (/^\d+$/.test(id)) {
+          return `https://player.twitch.tv/?video=${id}&parent=${window.location.hostname}`;
+        } else {
+          return `https://player.twitch.tv/?channel=${id}&parent=${window.location.hostname}`;
+        }
+      },
+    },
+    {
+      name: "tiktok",
+      regex:
+        /(?:https?:\/\/)?(?:www\.)?tiktok\.com\/@[^\/]+\/video\/(\d+)(?:\S*)/gi,
+      embedUrl: (id: string) => `https://www.tiktok.com/embed/v2/${id}`,
+    },
+    {
+      name: "facebook",
+      regex:
+        /(?:https?:\/\/)?(?:www\.|web\.|m\.)?facebook\.com\/(?:watch\/?\?v=|video\.php\?v=|video\.php\?id=|.*?\/videos\/(?:[^\/]+\/)?)(\d+)(?:\S*)/gi,
+      embedUrl: (id: string) =>
+        `https://www.facebook.com/plugins/video.php?href=https://www.facebook.com/watch/?v=${id}&show_text=0`,
+    },
+    {
+      name: "instagram",
+      regex:
+        /(?:https?:\/\/)?(?:www\.)?instagram\.com\/(?:p|reel)\/([a-zA-Z0-9_-]+)(?:\S*)/gi,
+      embedUrl: (id: string) => `https://www.instagram.com/p/${id}/embed/`,
+    },
+    {
+      name: "bitchute",
+      regex:
+        /(?:https?:\/\/)?(?:www\.)?bitchute\.com\/video\/([a-zA-Z0-9_-]+)(?:\S*)/gi,
+      embedUrl: (id: string) => `https://www.bitchute.com/embed/${id}/`,
+    },
+    {
+      name: "odysee",
+      regex:
+        /(?:https?:\/\/)?(?:www\.)?odysee\.com\/(?:\$\/)?([a-zA-Z0-9_-]+:[a-zA-Z0-9_-]+)(?:\S*)/gi,
+      embedUrl: (id: string) => `https://odysee.com/$/embed/${id}`,
+    },
+    {
+      name: "peertube",
+      regex:
+        /(?:https?:\/\/)?([a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+)\/(?:videos\/)?watch\/([a-zA-Z0-9_-]+)(?:\S*)/gi,
+      // Special handler for PeerTube as it needs both domain and ID
+      customHandler: (match: any) => {
+        const domain = match[1];
+        const videoId = match[2];
+        return {
+          type: "embed",
+          embedType: "peertube",
+          videoId: videoId,
+          domain: domain,
+          embedUrl: `https://${domain}/videos/embed/${videoId}`,
+        };
+      },
+    },
+  ];
+
+  // Direct media file URLs
   const imageUrlRegex = /(https?:\/\/\S+\.(?:jpg|jpeg|png|gif|webp))/gi;
   const videoUrlRegex = /(https?:\/\/\S+\.(?:mp4|mov|avi|webm))/gi;
 
-  const imageMatches = props.note.content.match(imageUrlRegex) || [];
-  const videoMatches = props.note.content.match(videoUrlRegex) || [];
+  // Process regular media files
+  const mediaList: Array<any> = [];
 
-  const mediaList = [
-    ...imageMatches.map((url: string) => ({
+  // Add direct image files
+  const imageMatches = props.note.content.match(imageUrlRegex) || [];
+  imageMatches.forEach((url: string) => {
+    mediaList.push({
       type: "image",
       url: url,
-    })),
-    ...videoMatches.map((url: string) => ({
+    });
+  });
+
+  // Add direct video files
+  const videoMatches = props.note.content.match(videoUrlRegex) || [];
+  videoMatches.forEach((url: string) => {
+    mediaList.push({
       type: "video",
       url: url,
       videoType: `video/${url.split(".").pop()}`,
-    })),
-  ];
+    });
+  });
+
+  // Process each platform
+  platforms.forEach((platform) => {
+    if (platform.customHandler) {
+      // For platforms that need special handling (like PeerTube)
+      let match;
+      platform.regex.lastIndex = 0; // Reset regex state
+      while ((match = platform.regex.exec(props.note.content)) !== null) {
+        const mediaItem = platform.customHandler(match);
+        mediaList.push(mediaItem);
+      }
+    } else {
+      // Standard platform processing
+      let match;
+      platform.regex.lastIndex = 0; // Reset regex state
+      while ((match = platform.regex.exec(props.note.content)) !== null) {
+        const videoId = match[1];
+        let mediaItem = {
+          type: "embed",
+          embedType: platform.name,
+          videoId: videoId,
+          embedUrl: platform.embedUrl(videoId || ""),
+        };
+
+        // Add thumbnail URL if available
+        if (platform.thumbnailUrl) {
+          mediaItem.thumbnailUrl = platform.thumbnailUrl(videoId || "");
+        }
+
+        mediaList.push(mediaItem);
+      }
+    }
+  });
 
   return mediaList;
 });
@@ -382,6 +530,11 @@ const mediaUrls = computed(() => {
 // Content parsing for hashtags and media removal
 const parsedContent = computed(() => {
   let content = props.note.content;
+
+  // check if is Repost
+  if (props.note.kind === 6) {
+    content = JSON.parse(content as string).content || "";
+  }
 
   // Remove all media URLs from content
   mediaUrls.value.forEach((media) => {

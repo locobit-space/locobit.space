@@ -1,4 +1,5 @@
 import type { Event } from "nostr-tools";
+import { mediaExtensions } from "~/lib";
 
 export const useNotes = () => {
   const { $nostr } = useNuxtApp();
@@ -43,6 +44,7 @@ export const useNotes = () => {
             ids: [noteId],
             kinds: [1],
           });
+          console.log(event)
           return event || null;
         } catch (error) {
           if (debug) console.warn(`⚠️ Relay failed (${relay}):`, error);
@@ -71,26 +73,14 @@ export const useNotes = () => {
     }
 
     if (!noteDetail) {
-      if (debug) console.log(`❌ No note found with ID: ${noteId}`);
+      if (debug) console.log(`No note found with ID: ${noteId}`);
       return null;
     }
 
-    if (debug) console.log("✅ Loaded note detail:", noteDetail);
+    if (debug) console.log("Loaded note detail:", noteDetail);
 
     return noteDetail;
   };
-
-  const mediaExtensions = [
-    ".mp4",
-    ".mov",
-    ".webm",
-    ".avi",
-    ".jpg",
-    ".jpeg",
-    ".png",
-    ".gif",
-    ".webp",
-  ];
 
   const isMediaUrl = (url: string) =>
     mediaExtensions.some((ext) => url.toLowerCase().includes(ext));
@@ -130,7 +120,7 @@ export const useNotes = () => {
       ];
 
       const creator = `@${event.pubkey.slice(0, 8)}`;
-      const title = event.content.split("\n")[0].slice(0, 100); // first line as title
+      const title = event.content?.split("\n")[0].slice(0, 100); // first line as title
 
       return mediaUrls.map((url) => ({
         id: event.id,
@@ -144,12 +134,11 @@ export const useNotes = () => {
     });
   };
 
-
   return {
+    bookmarks,
     getNoteDetail,
     toggleBookmark,
-    bookmarks,
     filterMediaNotes,
-    mapNotesToMediaList
+    mapNotesToMediaList,
   };
 };

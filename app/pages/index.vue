@@ -4,12 +4,46 @@
       class="sticky top-0 backdrop-blur bg-white/30 border-b border-white/20 z-50"
     >
       <AppHeader class="" />
+
+      <!-- <UButton @click="checkNewNotes" color="gray">Check New Notes</UButton> -->
     </nav>
     <div class="py-8 max-w-3xl mx-auto">
+      <!-- Floating Check New Notes button that appears when scrolling down -->
+      <div
+        v-if="showScrollButton"
+        class="fixed top-16 left-1/2 transform -translate-x-1/2 transition-opacity duration-300"
+        :class="showScrollButton ? 'opacity-100' : 'opacity-0'"
+      >
+        <UButton
+          color="neutral"
+          class="shadow-md z-50 rounded-2xl"
+          :icon="
+            isLoading
+              ? 'svg-spinners:180-ring-with-bg'
+              : 'system-uicons:refresh'
+          "
+          @click="
+            () => {
+              checkNewNotes();
+              scrollToTop();
+            }
+          "
+        >
+          Check New Notes
+        </UButton>
+      </div>
+
+      <UButton
+        color="gray"
+        icon="i-heroicons-arrow-up"
+        class="shadow-md fixed right-4 h-10 w-10 bottom-24 flex items-center justify-center rounded-full z-50"
+        size="xl"
+        @click="scrollToTop"
+      >
+      </UButton>
+
       <!-- User Authentication Section -->
       <section class="hidden">
-        <UButton @click="checkNewNotes" color="gray">Check New Notes</UButton>
-
         <div v-if="!user" class="mb-6">
           <UAlert title="Not Connected" color="yellow" class="mb-4">
             You need to create or login with your Nostr keys to interact
@@ -113,11 +147,9 @@ const {
   user,
   setupUser,
   postNote,
-  connect,
   isLoading,
   checkNewNotes,
   loadNotesOnce,
-  getUserInfo,
   loadOlderNotes,
 } = useNostr();
 const toast = useToast();
@@ -125,6 +157,7 @@ const toast = useToast();
 const importKeyModal = ref(false);
 const importKey = ref("");
 const keyInput = ref(null);
+const showScrollButton = ref(false); // New ref to control button visibility
 
 const displayUser = computed(() =>
   user.value ? shortenKey(user.value.publicKey) : ""
@@ -157,6 +190,14 @@ const refreshNotes = () => {
   loadNotesOnce();
 };
 
+// New function to scroll to top
+const scrollToTop = () => {
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth",
+  });
+};
+
 const setupInfiniteScroll = () => {
   window.addEventListener("scroll", handleScroll);
 
@@ -166,6 +207,14 @@ const setupInfiniteScroll = () => {
 };
 
 const handleScroll = async () => {
+  // Show button after scrolling down 200px
+  if (window.scrollY > 200) {
+    showScrollButton.value = true;
+  } else {
+    showScrollButton.value = false;
+  }
+
+  // Load more notes when near bottom
   const bottomOfWindow =
     window.innerHeight + window.scrollY >= document.body.offsetHeight - 300; // 300px before bottom
   if (bottomOfWindow && !isLoading.value) {
@@ -179,7 +228,7 @@ watch(importKeyModal, (open) => {
   }
 });
 
-onMounted(async () => {
+onMounted(() => {
   refreshNotes();
   setupInfiniteScroll();
 });

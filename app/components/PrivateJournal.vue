@@ -32,7 +32,30 @@
           </div>
         </template>
 
-        <article
+        <figure v-if="isLoading">
+          <USkeleton class="h-6 mb-4 w-48" />
+          <ul class="space-y-3">
+            <li v-for="item in 3" :key="item" class="flex flex-col space-y-5">
+              <div class="flex space-x-2">
+                <span>
+                  <USkeleton class="h-10 w-10 rounded-xl" />
+                </span>
+                <article class="flex-grow space-y-1">
+                  <USkeleton
+                    class="h-4"
+                    :style="{ width: `${randomWidth(30, 40)}%` }"
+                  />
+                  <USkeleton
+                    class="h-4"
+                    :style="{ width: `${randomWidth()}%` }"
+                  />
+                </article>
+              </div>
+            </li>
+          </ul>
+        </figure>
+
+        <figure
           v-for="(dateGroup, index) in groupedEntries"
           :key="index"
           class="transition-colors"
@@ -73,13 +96,13 @@
             </UButton>
           </div> -->
 
-          <div class="py-3">
-            <h2 class="text-lg font-semibold text-gray-700">
-              {{ formatGroupDate(dateGroup.date) }}
-            </h2>
-          </div>
+          <section class="divide-y divide-gray-100">
+            <div class="py-3">
+              <h2 class="text-lg font-semibold text-gray-700">
+                {{ formatGroupDate(dateGroup.date) }}
+              </h2>
+            </div>
 
-          <div class="divide-y divide-gray-100">
             <div
               v-for="entry in dateGroup.entries"
               :key="entry.id"
@@ -158,8 +181,8 @@
                 />
               </div>
             </div>
-          </div>
-        </article>
+          </section>
+        </figure>
       </div>
     </section>
 
@@ -244,6 +267,7 @@
 
 <script setup lang="ts">
 const { user, isLoading } = useNostr();
+const { formatDate } = useHelpers();
 const {
   journalNotes,
   createJournalEntry,
@@ -266,6 +290,11 @@ const formState = ref({
 });
 
 const fileUploaderRef = ref();
+
+const randomWidth = (min = 20, max = 100) => {
+  // Random width between min and 100
+  return Math.floor(Math.random() * (100 - min + 1) + min);
+};
 
 // Methods
 const toggleNewEntry = () => {
@@ -375,24 +404,14 @@ const editFromModal = () => {
 };
 
 // Utility functions
-const formatDate = (dateStr) => {
-  if (!dateStr) return "";
-  const date = new Date(dateStr);
-  return new Intl.DateTimeFormat("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  }).format(date);
-};
 
-const formatTimestamp = (timestamp) => {
+const formatTimestamp = (timestamp: number) => {
   if (!timestamp) return "";
   const date = new Date(timestamp * 1000);
   return date.toLocaleString();
 };
 
-const getExcerpt = (text) => {
+const getExcerpt = (text: string) => {
   if (!text) return "";
   return text.length > 100 ? text.substring(0, 100) + "..." : text;
 };

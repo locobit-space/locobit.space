@@ -1,2 +1,32 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
+
+@theme static {
+  /* --font-sans: 'Public Sans', sans-serif;
+  
+    --breakpoint-3xl: 1920px; */
+
+  --color-keppel-50: #f1fcf8;
+  --color-keppel-100: #cff8ed;
+  --color-keppel-200: #a0efdb;
+  --color-keppel-300: #68e0c6;
+  --color-keppel-400: #39c8ae;
+  --color-keppel-500: #21b098;
+  --color-keppel-600: #178a79;
+  --color-keppel-700: #176e63;
+  --color-keppel-800: #175850;
+  --color-keppel-900: #174a43;
+  --color-keppel-950: #072c29;
+
+  --color-amethyst-50: #f7f3ff;
+  --color-amethyst-100: #f0eafd;
+  --color-amethyst-200: #e3d7fd;
+  --color-amethyst-300: #cfb7fb;
+  --color-amethyst-400: #b88ff6;
+  --color-amethyst-500: #964eef;
+  --color-amethyst-600: #9640e7;
+  --color-amethyst-700: #852ed3;
+  --color-amethyst-800: #7026b1;
+  --color-amethyst-900: #5d2191;
+  --color-amethyst-950: #3a1362;
+}

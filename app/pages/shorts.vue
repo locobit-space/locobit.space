@@ -1,108 +1,113 @@
 <template>
-  <div
-    class="h-screen w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth touch-none max-w-lg mx-auto"
-    @scroll="handleScroll"
-    @touchstart="handleTouchStart"
-    @touchmove="handleTouchMove"
-    @touchend="handleTouchEnd"
-    ref="scrollContainer"
-  >
-    <div
-      v-for="(video, index) in videos"
-      :key="video.id"
-      class="h-screen w-full snap-start relative flex-shrink-0"
+  <div class="h-screen flex flex-col">
+    <section>xx</section>
+    <section
+      class="w-full flex-1 overflow-y-scroll snap-y snap-mandatory scroll-smooth touch-none max-w-lg mx-auto"
+      @scroll="handleScroll"
+      @touchstart="handleTouchStart"
+      @touchmove="handleTouchMove"
+      @touchend="handleTouchEnd"
+      ref="scrollContainer"
     >
       <div
-        class="h-full w-full bg-black flex items-center justify-center relative"
+        v-for="(video, index) in videos"
+        :key="video.id"
+        class="h-screen w-full snap-start relative flex-shrink-0"
       >
-        <template v-if="isVideoUrl(video.url)">
-          <video
-            :ref="(el) => (mediaRefs[index] = el)"
-            :src="video.url"
-            class="object-cover w-full h-full"
-            :class="{ paused: !isPlaying(index) }"
-            @click="togglePlay(index)"
-            @ended="handleMediaEnd(index)"
-            @error="handleMediaError(index)"
-            preload="none"
-            playsinline
-          />
-        </template>
-        <template v-else>
-          <img
-            :src="video.url"
-            class="object-cover w-full h-full"
-            @click="handleImageClick(index)"
-            alt="Media Content"
-            loading="lazy"
-          />
-        </template>
-
-        <!-- Play Button Overlay -->
         <div
-          v-if="isVideoUrl(video.url) && !isPlaying(index)"
-          class="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm z-10"
-          @click="togglePlay(index)"
+          class="h-full w-full bg-black flex items-center justify-center relative"
         >
-          <Icon
-            name="material-symbols:play-circle-outline"
-            size="45"
-            class="text-primary-500 hover:scale-110 transition-transform"
-          />
-        </div>
+          <template v-if="isVideoUrl(video.url)">
+            <video
+              :ref="(el) => (mediaRefs[index] = el)"
+              :src="video.url"
+              class="object-cover w-full h-full"
+              :class="{ paused: !isPlaying(index) }"
+              @click="togglePlay(index)"
+              @ended="handleMediaEnd(index)"
+              @error="handleMediaError(index)"
+              preload="none"
+              playsinline
+            />
+          </template>
+          <template v-else>
+            <img
+              :src="video.url"
+              class="object-cover w-full h-full"
+              @click="handleImageClick(index)"
+              alt="Media Content"
+              loading="lazy"
+            />
+          </template>
 
-        <!-- Interaction Buttons -->
-        <div class="absolute right-4 bottom-1/3 flex flex-col space-y-4 z-20">
-          <button
-            class="bg-white/30 p-2 rounded-full flex items-center justify-center"
-            @click="toggleLike(video.id)"
+          <!-- Play Button Overlay -->
+          <div
+            v-if="isVideoUrl(video.url) && !isPlaying(index)"
+            class="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm z-10"
+            @click="togglePlay(index)"
           >
             <Icon
-              name="mdi:heart"
-              :class="[
-                'w-6 h-6',
-                likedVideos.includes(video.id) ? 'text-red-500' : 'text-white',
-              ]"
+              name="material-symbols:play-circle-outline"
+              size="45"
+              class="text-primary-500 hover:scale-110 transition-transform"
             />
-            <span class="text-white ml-2 text-sm">{{ video.likes }}</span>
-          </button>
+          </div>
 
-          <button
-            class="bg-white/30 p-2 rounded-full flex items-center justify-center"
-            @click="openComments(video.id)"
-          >
-            <Icon name="mdi:comment" class="w-6 h-6 text-white" />
-            <span class="text-white ml-2 text-sm">{{ video.comments }}</span>
-          </button>
+          <!-- Interaction Buttons -->
+          <div class="absolute right-4 bottom-1/3 flex flex-col space-y-4 z-20">
+            <button
+              class="bg-white/30 p-2 rounded-full flex items-center justify-center"
+              @click="toggleLike(video.id)"
+            >
+              <Icon
+                name="mdi:heart"
+                :class="[
+                  'w-6 h-6',
+                  likedVideos.includes(video.id)
+                    ? 'text-red-500'
+                    : 'text-white',
+                ]"
+              />
+              <span class="text-white ml-2 text-sm">{{ video.likes }}</span>
+            </button>
 
-          <button
-            class="bg-white/30 p-2 rounded-full flex items-center justify-center"
-            @click="shareVideo(video.id)"
-          >
-            <Icon name="mdi:share" class="w-6 h-6 text-white" />
-          </button>
+            <button
+              class="bg-white/30 p-2 rounded-full flex items-center justify-center"
+              @click="openComments(video.id)"
+            >
+              <Icon name="mdi:comment" class="w-6 h-6 text-white" />
+              <span class="text-white ml-2 text-sm">{{ video.comments }}</span>
+            </button>
 
-          <button
-            class="bg-white/30 p-2 rounded-full flex items-center justify-center"
-            @click="toggleBookmark(video.id)"
-          >
-            <Icon
-              name="mdi:bookmark"
-              :class="[
-                'w-6 h-6',
-                bookmarks.includes(video.id) ? 'text-red-500' : 'text-white',
-              ]"
-            />
-          </button>
-        </div>
+            <button
+              class="bg-white/30 p-2 rounded-full flex items-center justify-center"
+              @click="shareVideo(video.id)"
+            >
+              <Icon name="mdi:share" class="w-6 h-6 text-white" />
+            </button>
 
-        <!-- Video Info -->
-        <div class="absolute bottom-10 left-4 text-white z-20">
-          <h3 class="text-lg font-bold">{{ video.title }}</h3>
-          <p class="text-sm">{{ video.creator }}</p>
+            <button
+              class="bg-white/30 p-2 rounded-full flex items-center justify-center"
+              @click="toggleBookmark(video.id)"
+            >
+              <Icon
+                name="mdi:bookmark"
+                :class="[
+                  'w-6 h-6',
+                  bookmarks.includes(video.id) ? 'text-red-500' : 'text-white',
+                ]"
+              />
+            </button>
+          </div>
+
+          <!-- Video Info -->
+          <div class="absolute bottom-10 left-4 text-white z-20">
+            <h3 class="text-lg font-bold">{{ video.title }}</h3>
+            <p class="text-sm">{{ video.creator }}</p>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
   </div>
 </template>
 
@@ -288,11 +293,11 @@ async function loadMedia() {
   );
 
   videos.value.push(...newMediaItems);
+  console.log(videos.value);
 }
 
-onMounted(async () => {
+onMounted(() => {
   loadMedia();
-
   nextTick(() => {
     const firstMedia = mediaRefs.value[0];
     if (firstMedia instanceof HTMLVideoElement) {

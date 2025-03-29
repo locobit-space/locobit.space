@@ -8,10 +8,10 @@ import type { NostrUser, UserInfo } from "~~/types";
 import type { Event } from "nostr-tools";
 
 const RELAYS = [
-  "wss://yabu.me",
+  // "wss://yabu.me",
   "wss://relay.damus.io",
-  "wss://nos.lol",
-  "wss://nostr-pub.wellorder.net",
+  // "wss://nos.lol",
+  // "wss://nostr-pub.wellorder.net",
 ];
 
 // const pool = new SimplePool();
@@ -408,12 +408,12 @@ export const useNostr = () => {
     try {
       event = await Promise.race([fetchFromRelays(), timeoutPromise]);
     } catch (err) {
-      if (debug) console.error("🚨 Relay fetch error:", err);
+      if (debug) console.warn("🚨 Relay fetch error:", err);
     }
 
     // No data
     if (!event || !event.content) {
-      console.log(`❌ No profile data found for pubkey: ${pubkey}`);
+      console.log(`No profile data found for pubkey: ${pubkey}`);
       return null;
     }
 
@@ -452,7 +452,6 @@ export const useNostr = () => {
     } = {}
   ) {
     try {
-     
       // Destructure options with default values
       const { hashtag, limit = 20, until } = options;
 
@@ -537,8 +536,6 @@ export const useNostr = () => {
 
       // Update notes (append to the end)
       notes.value = [...notes.value, ...uniqueOlderEvents];
-
-      console.log({ olderEvents, uniqueOlderEvents });
 
       // Return if any new notes were loaded
       return uniqueOlderEvents.length > 0;

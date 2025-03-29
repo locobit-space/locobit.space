@@ -22,10 +22,10 @@
         v-if="user"
         icon="i-heroicons-plus-circle"
         color="primary"
-        to="/new-post"
+        to="/create-note"
         block
       >
-        Create Post
+        Create Note
       </UButton>
 
       <!-- switch account -->
