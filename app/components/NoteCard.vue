@@ -8,8 +8,15 @@
         <div
           class="flex justify-between md:items-center flex-col md:flex-row mb-2"
         >
-          <NuxtLink :to="`/profile/${note.pubkey}`" class="font-bold">
-            {{ userInfo?.display_name || "N/A" }}
+          <NuxtLink :to="`/profile/${note.pubkey}`" class="flex flex-col">
+            <span class="font-bold">
+              {{ userInfo?.display_name || "N/A" }}
+              <Icon v-if="userInfo?.verified" name="ic:round-verified" class="text-primary-500 w-4 h-4" />
+            </span>
+            <small class="text-xs text-gray-500">
+              @{{ userInfo?.name || "N/A" }}
+              </small
+            >
           </NuxtLink>
           <span class="text-sm text-gray-500">{{ formattedDate }}</span>
         </div>
@@ -533,7 +540,9 @@ const parsedContent = computed(() => {
 
   // check if is Repost
   if (props.note.kind === 6) {
-    content = JSON.parse(content as string).content || "";
+    if (props.note.content) {
+      content = JSON.parse(content as string).content || "";
+    }
   }
 
   // Remove all media URLs from content

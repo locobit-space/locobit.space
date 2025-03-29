@@ -225,7 +225,6 @@ export const useNostr = () => {
 
           // Fetch user's follow list (kind 3 events)
           const followList = await fetchFollowList(userPubkey);
-          console.log(followList);
           // Filter notes from followed users
           filterQuery.authors = followList;
           break;
