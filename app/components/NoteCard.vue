@@ -1,5 +1,5 @@
 <template>
-  <div class="mb-4 p-4">
+  <div class="mb-4">
     <div class="flex items-start gap-4">
       <NuxtLink :to="`/profile/${note.pubkey}`">
         <UAvatar :src="userInfo?.picture" />

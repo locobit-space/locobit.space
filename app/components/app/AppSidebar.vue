@@ -91,7 +91,7 @@
     </nav>
 
     <nav
-      class="md:hidden z-10 fixed bottom-0 bg-white w-full items-center justify-between flex"
+      class="md:hidden z-10 fixed bottom-0 backdrop-blur-2xl bg-white/30 w-full items-center justify-between flex"
     >
       <UButton
         v-for="item in itemForMobile"
@@ -101,6 +101,7 @@
         variant="ghost"
         block
         size="xl"
+        class="text-2xl py-3"
         :to="item.to"
       >
         <span class="hidden md:block">

@@ -1,10 +1,6 @@
 <template>
   <div>
-    <div v-if="loading" class="text-center py-4">
-      <span>Loading profile...</span>
-    </div>
-
-    <div class="max-w-xl mx-auto bg-white shadow-xs rounded-lg overflow-hidden">
+    <CommonContainer class="bg-white shadow-xs rounded-lg overflow-hidden">
       <div class="relative">
         <USkeleton v-if="loading" class="h-48 rounded-lg" />
         <img
@@ -22,7 +18,7 @@
             v-else
             :src="profile?.picture || '/default-avatar.png'"
             alt="Profile Picture"
-            class="w-24 h-24 rounded-full object-cover"
+            class="w-24 backdrop-blur bg-white/50 h-24 rounded-full object-cover"
           />
         </div>
       </div>
@@ -77,18 +73,25 @@
           </div>
         </div>
       </div>
-    </div>
+    </CommonContainer>
 
-    <nav class="max-w-xl mx-auto sticky backdrop-blur bg-white/30 top-0">
-      <CommonTab :tabs="tabs" class="mt-8" />
-    </nav>
+    <CommonContainer class="sticky backdrop-blur bg-white/30 top-0">
+      <CommonTab :tabs="tabs" v-model="tab" class="mt-8"> </CommonTab>
+    </CommonContainer>
 
-    <div v-if="profileNotes.length" class="mt-8 max-w-xl mx-auto">
-      <h3 class="text-xl font-semibold mb-4">Notes</h3>
-      <div v-for="note in profileNotes" :key="note.id">
-        <NoteCard :note="note" />
+    <CommonContainer v-show="tab === 'notes'">
+      <div v-if="loading" class="pt-4">
+        <article class="flex flex-col gap-4">
+          <NoteSkeleton v-for="i in 3" :key="i" />
+        </article>
       </div>
-    </div>
+
+      <div v-if="profileNotes.length" class="md:px-0 py-4">
+        <div v-for="note in profileNotes" :key="note.id">
+          <NoteCard :note="note" />
+        </div>
+      </div>
+    </CommonContainer>
   </div>
 </template>
 
@@ -102,6 +105,7 @@ const { $nostr } = useNuxtApp();
 const { pool } = $nostr;
 const { getUserInfo, normalizeKey, RELAYS } = useNostr();
 
+const tab = ref("notes");
 const tabs = ref([
   {
     label: "Notes",
@@ -153,8 +157,8 @@ onMounted(async () => {
     profileNotes.value = uniqueNotes.sort(
       (a, b) => b.created_at - a.created_at
     );
-    
-    console.log(uniqueNotes)
+
+    console.log(uniqueNotes);
   } catch (error) {
     console.error("Profile fetch error:", error);
   } finally {

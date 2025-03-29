@@ -4,10 +4,8 @@
       class="sticky top-0 backdrop-blur bg-white/30 border-b border-white/20 z-50"
     >
       <AppHeader class="" />
-
-      <!-- <UButton @click="checkNewNotes" color="gray">Check New Notes</UButton> -->
     </nav>
-    <div class="py-8 max-w-3xl mx-auto">
+    <CommonContainer class="py-8">
       <!-- Floating Check New Notes button that appears when scrolling down -->
       <div
         v-if="showScrollButton"
@@ -36,7 +34,7 @@
       <UButton
         color="gray"
         icon="i-heroicons-arrow-up"
-        class="shadow-md fixed right-4 h-10 w-10 bottom-24 flex items-center justify-center rounded-full z-50"
+        class="shadow-md fixed right-4 h-10 w-10 bottom-28 flex items-center justify-center rounded-full z-50"
         size="xl"
         @click="scrollToTop"
       >
@@ -95,7 +93,7 @@
           </article>
         </div>
       </div>
-    </div>
+    </CommonContainer>
 
     <!-- Import Key Modal -->
     <UModal v-model:open="importKeyModal">

@@ -1,6 +1,8 @@
 <template>
   <div class="flex gap-4">
-    <USkeleton class="h-12 w-12 rounded-full" />
+    <div>
+      <USkeleton class="h-12 w-12 rounded-full" />
+    </div>
     <article class="grid gap-2">
       <USkeleton
         class="h-4"

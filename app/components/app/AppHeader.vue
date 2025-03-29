@@ -1,6 +1,6 @@
 <template>
   <div>
-    <section class="max-w-3xl mx-auto">
+    <CommonContainer class="">
       <nav class="space-y-1 flex">
         <div
           v-for="(item, index) in items"
@@ -18,7 +18,7 @@
           </div>
         </div>
       </nav>
-    </section>
+    </CommonContainer>
   </div>
 </template>
 

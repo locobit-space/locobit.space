@@ -19,7 +19,7 @@ const { user } = useNostr();
         to="/create-note"
         square
         size="xl"
-        class="fixed w-10 h-10 shadow-lg flex items-center rounded-full justify-center bottom-10 right-4 md:hidden"
+        class="fixed w-10 h-10 shadow-lg flex items-center rounded-full justify-center bottom-14 right-4 md:hidden"
       >
       </UButton>
 

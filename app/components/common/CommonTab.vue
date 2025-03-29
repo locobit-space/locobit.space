@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { defineProps, defineEmits } from 'vue';
+import { defineProps, defineEmits } from "vue";
 
 interface Props {
   value: string;
@@ -14,21 +14,21 @@ const props = defineProps<{
   paddingClass?: string;
 }>();
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(["update:modelValue"]);
 
 const selectTab = (tab: string) => {
-  emit('update:modelValue', tab);
+  emit("update:modelValue", tab);
 };
 </script>
 
 <template>
   <div class="flex h-full flex-col">
     <!-- Mobile Dropdown -->
-    <div class="px-4 sm:hidden" :class="paddingClass">
+    <div class="sm:hidden" :class="paddingClass">
       <label for="Tab" class="sr-only">Tab</label>
       <select
         :value="modelValue"
-        class="w-full rounded-md border border-gray-200 p-2 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+        class="w-full rounded-md border p-2 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
         @change="selectTab($event?.target?.value || '')"
       >
         <option v-for="tab in tabs" :key="tab.value" :value="tab.value">

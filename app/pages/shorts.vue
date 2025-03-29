@@ -1,6 +1,8 @@
 <template>
   <div class="h-screen flex flex-col">
-    <section>xx</section>
+    <section>
+      <!-- <nav class="p-2">Shorts</nav> -->
+    </section>
     <section
       class="w-full flex-1 overflow-y-scroll snap-y snap-mandatory scroll-smooth touch-none max-w-lg mx-auto"
       @scroll="handleScroll"
@@ -43,7 +45,7 @@
           <!-- Play Button Overlay -->
           <div
             v-if="isVideoUrl(video.url) && !isPlaying(index)"
-            class="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm z-10"
+            class="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm z-0"
             @click="togglePlay(index)"
           >
             <Icon
@@ -102,7 +104,9 @@
 
           <!-- Video Info -->
           <div class="absolute bottom-10 left-4 text-white z-20">
-            <h3 class="text-lg font-bold">{{ video.title }}</h3>
+            <h3 class="text-lg font-bold break-words break-all">
+              {{ video.title }}
+            </h3>
             <p class="text-sm">{{ video.creator }}</p>
           </div>
         </div>
@@ -113,32 +117,18 @@
 
 <script setup lang="ts">
 import { ref, onMounted, nextTick, watch } from "vue";
-import type { Event } from "nostr-tools";
-interface VideoData {
-  id: string;
-  url: string;
-  title: string;
-  creator: string;
-  likes: number;
-  comments: number;
-  created_at: number;
-}
+import { videoExtensions } from "~/lib";
 
 const { toggleBookmark, bookmarks, mapNotesToMediaList, filterMediaNotes } =
   useNotes();
-const {
-  loadNotesOnce,
-  notes,
-  loadOlderNotes,
-  latestTimestamp,
-  isLoading,
-  getNotes,
-  checkNewNotes,
-} = useNostr();
 
-const offset = ref(0);
-const limit = 10;
-const videos = ref<VideoData[]>([]);
+const {
+  shorts: videos,
+  loadFirstShort,
+  loadOldShort,
+  checkNewShort,
+  isLoading,
+} = useNoteShort();
 
 const mediaRefs = ref<(HTMLVideoElement | HTMLImageElement)[]>([]);
 const currentVideoIndex = ref(0);
@@ -150,9 +140,7 @@ const minSwipeDistance = 50;
 const scrollContainer = ref<HTMLElement | null>(null);
 
 const isVideoUrl = (url: string) => {
-  return [".mp4", ".avi", ".mov", ".webm"].some((ext) =>
-    url.toLowerCase().endsWith(ext)
-  );
+  return videoExtensions.some((ext) => url.toLowerCase().endsWith(ext));
 };
 
 const isPlaying = (index: number) => playingVideos.value[index];
@@ -274,30 +262,11 @@ watch(currentVideoIndex, async (newIndex) => {
 });
 
 async function loadMedia() {
-  const oldestTimestamp = Math.min(
-    ...videos.value.map((v) => v.created_at || Date.now())
-  );
-
-  let events: Event[] = [];
-
-  if (!videos.value.length) {
-    await loadNotesOnce();
-  } else {
-    events = await getNotes({
-      until: oldestTimestamp - 1,
-    });
-  }
-
-  const newMediaItems = mapNotesToMediaList(
-    !videos.value.length ? notes.value : events
-  );
-
-  videos.value.push(...newMediaItems);
-  console.log(videos.value);
+  loadOldShort();
 }
 
 onMounted(() => {
-  loadMedia();
+  loadFirstShort();
   nextTick(() => {
     const firstMedia = mediaRefs.value[0];
     if (firstMedia instanceof HTMLVideoElement) {

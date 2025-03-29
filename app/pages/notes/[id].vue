@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-3xl w-full mx-auto p-4">
+  <div class="max-w-3xl w-full mx-auto md:px-0 p-4">
     <article v-if="!loading">
       <NoteCard v-if="noteDetail.id" :note="noteDetail" />
     </article>

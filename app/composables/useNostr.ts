@@ -14,8 +14,6 @@ const RELAYS = [
   // "wss://nostr-pub.wellorder.net",
 ];
 
-// const pool = new SimplePool();
-
 export const useNostr = () => {
   const user = ref<NostrUser | null>(null);
   const notes = useState<Event[]>("notes", () => []);
