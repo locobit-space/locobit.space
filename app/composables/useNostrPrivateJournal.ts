@@ -10,7 +10,9 @@ export const useNostrPrivateJournal = () => {
   const { $nostr } = useNuxtApp();
   const { pool } = $nostr;
 
-  const { user, error, isLoading, RELAYS } = useNostr();
+  const { user } = useNostrUser();
+  const { error, isLoading } = useNostrFeed();
+  const { DEFAULT_RELAYS: RELAYS } = useNostrRelay();
   const journalNotes = ref<any[]>([]);
 
   // Kind 30001 is a standard for private notes/bookmarks

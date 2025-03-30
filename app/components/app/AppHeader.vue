@@ -29,7 +29,7 @@ const items = useState("itemsHeader", () => [
   { label: "#laostr", key: "hashtag" },
 ]);
 
-const { loadNotesOnce, isLoading } = useNostr();
+const { loadNotesOnce } = useNostrFeed();
 const isActive = ref("for-you");
 
 const handleFilter = (key: string) => {

@@ -15,7 +15,7 @@ interface VideoShort {
 export const useNoteShort = () => {
   const { $nostr } = useNuxtApp();
   const { pool } = $nostr;
-  const { RELAYS } = useNostr();
+  const { DEFAULT_RELAYS: RELAYS } = useNostrRelay();
 
   const shorts = ref<VideoShort[]>([]);
   const isLoading = ref(false);
@@ -81,46 +81,6 @@ export const useNoteShort = () => {
       }));
     });
   };
-
-  // const loadFirstShort = async () => {
-  //   isLoading.value = true;
-  //   let newShortsAdded = false;
-  //   try {
-  //     const sub = pool.subscribeMany(
-  //       RELAYS,
-  //       [
-  //         {
-  //           kinds: [1],
-  //           limit: 10,
-  //         },
-  //       ],
-  //       {
-  //         onevent(event: Event) {
-  //           if (!shorts.value.some((v) => v.id === event.id)) {
-  //             const result = [event];
-  //             const newShorts = mapNotesToMediaList(result);
-  //             shorts.value.push(...newShorts);
-  //           }
-  //         },
-  //         oneose() {
-  //           if (shorts.value.length > 0) {
-  //             latestTimestamp.value = Math.max(
-  //               ...shorts.value.map((v) => v.created_at)
-  //             );
-  //             oldestTimestamp.value = Math.min(
-  //               ...shorts.value.map((v) => v.created_at)
-  //             );
-  //           }
-  //           isLoading.value = false;
-  //           sub.close();
-  //         },
-  //       }
-  //     );
-  //   } catch (err) {
-  //     error.value = err as Error;
-  //     isLoading.value = false;
-  //   }
-  // };
 
   const loadFirstShort = async () => {
     isLoading.value = true;
@@ -252,13 +212,13 @@ export const useNoteShort = () => {
     shorts,
     isLoading,
     error,
+    latestTimestamp,
+    oldestTimestamp,
     loadFirstShort,
     loadOldShort,
     checkNewShort,
     isMediaUrl,
     mapNotesToMediaList,
     filterMediaNotes,
-    latestTimestamp,
-    oldestTimestamp,
   };
 };

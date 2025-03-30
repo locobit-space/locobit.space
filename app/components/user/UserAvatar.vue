@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang="ts">
-const { getUserInfo } = useNostr();
+const { getUserInfo } = useNostrUser();
 
 const userInfo = ref(null);
 

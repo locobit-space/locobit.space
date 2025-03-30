@@ -63,7 +63,7 @@
 
 <script setup lang="ts">
 // Sidebar Navigation Items
-const { user, currentUserInfo } = useNostr();
+const { user, currentUserInfo } = useNostrUser();
 
 const sidebarNavItems = computed(() => [
   {
@@ -112,7 +112,7 @@ const sidebarNavItems = computed(() => [
   {
     label: "Profile",
     icon: "i-heroicons-user-circle",
-    to: `/profile/${user.value?.npub}`,
+    to: `/profile/${user.value?.publicKey}`,
     class: "hidden md:block",
     isMobile: true,
   },

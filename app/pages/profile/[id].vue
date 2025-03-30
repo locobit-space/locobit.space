@@ -163,9 +163,9 @@
           >
             <!-- Image preview -->
             <img
-              v-if="media.imageUrl"
-              :src="media.imageUrl"
-              :alt="media.alt || 'Media'"
+              v-if="media?.imageUrl"
+              :src="media?.imageUrl"
+              :alt="media?.alt || 'Media'"
               class="w-full h-full object-cover"
               @click="openMediaModal(media)"
             />
@@ -299,13 +299,35 @@
 </template>
 
 <script setup lang="ts">
+import type { Event } from "nostr-tools";
 import { ref, onMounted, watch } from "vue";
 import type { UserInfo } from "~~/types";
+
+// Extend Event to include extra fields
+type ExtendedEvent = Event & {
+  parentEvent?: Event;
+  parentAuthor?: UserInfo;
+};
+
 const route = useRoute();
 
 const { $nostr } = useNuxtApp();
 const { pool } = $nostr;
-const { getUserInfo, normalizeKey, RELAYS } = useNostr();
+const { normalizeKey } = useNostrKeys();
+const { DEFAULT_RELAYS: RELAYS } = useNostrRelay();
+const { getUserInfo } = useNostrUser();
+
+interface MediaItem {
+  id: string;
+  imageUrl?: string;
+  videoUrl?: string;
+  audioUrl?: string;
+  alt?: string;
+  created_at: number;
+  caption?: string;
+  type: "image" | "video" | "audio";
+  event: Event;
+}
 
 const tab = ref("notes");
 const tabs = ref([
@@ -324,20 +346,20 @@ const profile = ref<UserInfo>({
   name: "",
 });
 const loading = ref(true);
-const profileNotes = ref([]);
+const profileNotes = ref<Event[]>([]);
 
 // For replies tab
-const profileReplies = ref([]);
+const profileReplies = ref<ExtendedEvent[]>([]);
 const loadingReplies = ref(false);
 
 // For media tab
-const mediaItems = ref([]);
+const mediaItems = ref<MediaItem[]>([]);
 const loadingMedia = ref(false);
-const selectedMedia = ref(null);
+const selectedMedia = ref<MediaItem | null>(null);
 
 // For followers and following
-const followers = ref([]);
-const following = ref([]);
+const followers = ref<UserInfo[]>([]);
+const following = ref<UserInfo[]>([]);
 const loadingFollowers = ref(false);
 const loadingFollowing = ref(false);
 
@@ -361,7 +383,10 @@ onMounted(async () => {
   pubkey.value = route.params.id as string;
 
   try {
-    profile.value = await getUserInfo(pubkey.value);
+    const req = await getUserInfo(pubkey.value);
+    if (req) {
+      profile.value = req;
+    }
 
     // Convert npub to hex
     const hexPubkey = normalizeKey(pubkey.value);
@@ -407,38 +432,41 @@ const fetchReplies = async () => {
   try {
     const hexPubkey = normalizeKey(pubkey.value);
 
-    // Query for replies - kind 1 events with e tags (references to other notes)
+    // Query for replies - kind 1 events with e tags
     const replyEvents = await pool.querySync(RELAYS, {
       kinds: [1],
       authors: [hexPubkey],
       limit: 50,
     });
 
-    // Filter to only include notes that have e tags (replies to other notes)
+    // Filter replies that have at least one 'e' tag
     const replies = replyEvents.filter((event) =>
       event.tags.some((tag) => tag[0] === "e")
     );
 
-    // Load the referenced notes to show what the user is replying to
-    for (const reply of replies) {
-      const referencedEventIds = reply.tags
-        .filter((tag) => tag[0] === "e")
-        .map((tag) => tag[1]);
+    // Load referenced parent notes
+    const extendedReplies: ExtendedEvent[] = replies.map((e) => ({ ...e }));
+
+    for (const reply of extendedReplies) {
+      const referencedEventIds: string[] = reply.tags
+        .filter((tag) => tag[0] === "e" && typeof tag[1] === "string")
+        .map((tag) => tag[1] as string);
 
       if (referencedEventIds.length > 0) {
         try {
-          // Fetch the parent note
           const parentEvents = await pool.querySync(RELAYS, {
-            ids: [referencedEventIds[0]], // Just get the first referenced event
+            ids: [referencedEventIds[0] as string],
             limit: 1,
           });
 
-          if (parentEvents.length > 0) {
-            reply.parentEvent = parentEvents[0];
+          const parentEvent = parentEvents?.[0];
+          if (parentEvent && parentEvent.pubkey) {
+            reply.parentEvent = parentEvent;
 
-            // Get author info for parent event
-            const parentAuthorInfo = await getUserInfo(parentEvents[0].pubkey);
-            reply.parentAuthor = parentAuthorInfo;
+            const parentAuthorInfo = await getUserInfo(parentEvent.pubkey);
+            if (parentAuthorInfo) {
+              reply.parentAuthor = parentAuthorInfo;
+            }
           }
         } catch (error) {
           console.error("Error fetching parent event:", error);
@@ -446,7 +474,9 @@ const fetchReplies = async () => {
       }
     }
 
-    profileReplies.value = replies.sort((a, b) => b.created_at - a.created_at);
+    profileReplies.value = extendedReplies.sort(
+      (a, b) => b.created_at - a.created_at
+    ) as ExtendedEvent[];
   } catch (error) {
     console.error("Error fetching replies:", error);
   } finally {
@@ -470,7 +500,7 @@ const fetchMedia = async () => {
     });
 
     // Process events to extract media
-    const media = [];
+    const media: MediaItem[] = [];
 
     for (const event of events) {
       // Check for image URLs in content
@@ -521,7 +551,10 @@ const fetchMedia = async () => {
 };
 
 // Helper function to extract media URLs from content
-const extractMediaUrls = (content, type) => {
+const extractMediaUrls = (
+  content: string,
+  type: "image" | "video" | "audio"
+) => {
   const urls = [];
 
   // Image URL patterns
@@ -558,7 +591,7 @@ const extractMediaUrls = (content, type) => {
 };
 
 // Function to open media in modal
-const openMediaModal = (media) => {
+const openMediaModal = (media: MediaItem) => {
   selectedMedia.value = media;
 };
 
@@ -602,7 +635,7 @@ const fetchFollowers = async () => {
       })
     );
 
-    followers.value = followerProfiles;
+    followers.value = followerProfiles as UserInfo[];
   } catch (error) {
     console.error("Error fetching followers:", error);
   } finally {
@@ -633,15 +666,19 @@ const fetchFollowing = async () => {
 
     // Extract the pubkeys from the tags
     const contactList = contactListEvents[0];
-    const followingPubkeys = contactList.tags
+    const followingPubkeys = contactList?.tags
       .filter((tag) => tag[0] === "p")
       .map((tag) => tag[1]);
 
-    // Fetch user info for each followed user
+    if (!Array.isArray(followingPubkeys) || followingPubkeys.length === 0) {
+      following.value = [];
+      return;
+    }
+
     const followingProfiles = await Promise.all(
       followingPubkeys.map(async (pk) => {
         try {
-          const userInfo = await getUserInfo(pk);
+          const userInfo = await getUserInfo(pk as string);
           return {
             ...userInfo,
             pubkey: pk,
@@ -656,7 +693,7 @@ const fetchFollowing = async () => {
       })
     );
 
-    following.value = followingProfiles;
+    following.value = followingProfiles as UserInfo[];
   } catch (error) {
     console.error("Error fetching following:", error);
   } finally {

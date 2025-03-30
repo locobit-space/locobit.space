@@ -28,7 +28,7 @@ const selectTab = (tab: string) => {
       <label for="Tab" class="sr-only">Tab</label>
       <select
         :value="modelValue"
-        class="w-full rounded-md border p-2 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+        class="w-full rounded-md border p-2 border-slate-100 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
         @change="selectTab($event?.target?.value || '')"
       >
         <option v-for="tab in tabs" :key="tab.value" :value="tab.value">

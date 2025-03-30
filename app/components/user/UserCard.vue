@@ -6,7 +6,7 @@
       <div class="flex-shrink-0">
         <NuxtLink :to="`/profile/${user.pubkey}`">
           <UAvatar
-            :src="user.picture || '/default-avatar.png'"
+            :src="user.picture"
             alt="Profile Picture"
             icon="i-heroicons-user-circle"
           />
@@ -60,7 +60,9 @@ const props = defineProps({
 const toast = useToast();
 const { $nostr } = useNuxtApp();
 const { finalizeEvent, pool } = $nostr;
-const { normalizeKey, RELAYS, user: currentUser } = useNostr();
+const { normalizeKey } = useNostrKeys();
+const { DEFAULT_RELAYS: RELAYS } = useNostrRelay();
+const { user: currentUser } = useNostrUser();
 const isFollowing = ref(false);
 
 onMounted(async () => {

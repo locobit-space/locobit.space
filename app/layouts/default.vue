@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { user } = useNostr();
+const { user } = useNostrUser();
 </script>
 
 <template>

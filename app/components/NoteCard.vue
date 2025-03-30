@@ -1,5 +1,5 @@
 <template>
-  <div class="mb-4">
+  <div class="mb-4 z-0">
     <div class="flex items-start gap-4">
       <NuxtLink :to="`/profile/${note.pubkey}`">
         <UAvatar :src="userInfo?.picture" />
@@ -9,20 +9,20 @@
           class="flex justify-between md:items-center flex-col md:flex-row mb-2"
         >
           <NuxtLink :to="`/profile/${note.pubkey}`" class="flex flex-col">
-            <span class="font-bold">
+            <span class="font-bold z-0">
               {{ userInfo?.display_name || "N/A" }}
-              <Icon v-if="userInfo?.verified" name="ic:round-verified" class="text-primary-500 w-4 h-4" />
+              <Icon
+                v-if="userInfo?.verified"
+                name="ic:round-verified"
+                class="text-primary-500 w-4 h-4"
+              />
             </span>
             <small class="text-xs text-gray-500">
               @{{ userInfo?.name || "N/A" }}
-              </small
-            >
+            </small>
           </NuxtLink>
           <span class="text-sm text-gray-500">{{ formattedDate }}</span>
         </div>
-        <!-- <div class="text-wrap break-all">
-          {{ note.content }}
-        </div> -->
 
         <!-- Media Display -->
         <section class="mb-3 grid grid-cols-2 gap-2">
@@ -39,7 +39,7 @@
             <video
               v-else-if="media.type === 'video'"
               controls
-              class="w-full rounded-lg max-h-64"
+              class="w-full rounded-lg max-h-64 z-0"
             >
               <source :src="media.url" :type="media.videoType" />
               Your browser does not support the video tag.
@@ -163,11 +163,17 @@ import type { Event } from "nostr-tools";
 import { hexToBytes } from "@noble/hashes/utils";
 import { computed } from "vue";
 import type { UserInfo } from "~~/types";
-const { shortenKey, formatDateTime } = useHelpers();
-const { getUserInfo } = useNostr();
+
 const props = defineProps({
   note: { type: Object, required: true },
 });
+
+const toast = useToast();
+const { $nostr } = useNuxtApp();
+
+const { formatDateTime } = useHelpers();
+const { getUserInfo, user } = useNostrUser();
+const { DEFAULT_RELAYS: RELAYS } = useNostrRelay();
 
 const userInfo = ref<UserInfo>({
   pubkey: "",
@@ -175,7 +181,7 @@ const userInfo = ref<UserInfo>({
   picture: "",
   name: "",
 });
-const shortKey = computed(() => shortenKey(props.note.pubkey));
+
 const formattedDate = computed(() => formatDateTime(props.note.created_at));
 
 function loadUserInfo() {
@@ -189,16 +195,11 @@ function loadUserInfo() {
 
 loadUserInfo();
 
-const toast = useToast();
-
 const shareNote = async () => {
   const url = `https://nostr.guru/e/${props.note.id}`;
   await navigator.clipboard.writeText(url);
   toast.add({ title: "Note URL copied!" });
 };
-
-const { $nostr } = useNuxtApp();
-const { user, postNote, RELAYS } = useNostr();
 
 const likeNote = async () => {
   if (!user.value) return;
@@ -215,7 +216,7 @@ const likeNote = async () => {
   );
 
   // Determine new reaction based on current one
-  const newContent = existing?.content === "+" ? "-" : "+";
+  const newContent = existing?.content === "+" ? "" : "+";
 
   // Optional: toggle off if clicked twice on the same reaction
   const isUnliking = existing && existing.content === newContent;

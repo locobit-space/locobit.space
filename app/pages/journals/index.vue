@@ -27,5 +27,5 @@
 </template>
 
 <script setup>
-const { user } = useNostr();
+const { user } = useNostrUser();
 </script>

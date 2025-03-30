@@ -4,7 +4,7 @@ import { mediaExtensions } from "~/lib";
 export const useNotes = () => {
   const { $nostr } = useNuxtApp();
   const { pool } = $nostr;
-  const { RELAYS } = useNostr();
+  const { DEFAULT_RELAYS: RELAYS } = useNostrRelay();
 
   const bookmarks = useState<string[]>("bookmarkedVideos", () => []);
 
@@ -44,7 +44,7 @@ export const useNotes = () => {
             ids: [noteId],
             kinds: [1],
           });
-          console.log(event)
+          console.log(event);
           return event || null;
         } catch (error) {
           if (debug) console.warn(`⚠️ Relay failed (${relay}):`, error);

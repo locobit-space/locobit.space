@@ -126,7 +126,6 @@ const {
   shorts: videos,
   loadFirstShort,
   loadOldShort,
-  checkNewShort,
   isLoading,
 } = useNoteShort();
 

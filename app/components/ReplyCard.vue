@@ -142,7 +142,7 @@ const props = defineProps({
   },
 });
 
-const { getUserInfo } = useNostr();
+const { getUserInfo } = useNostrUser();
 const profile = ref(null);
 
 // Mock counts for demo - would be replaced with actual data

@@ -162,13 +162,14 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch } from "vue";
-import { useNostr } from "~/composables/useNostr";
 
 const route = useRoute();
 
 const { $nostr } = useNuxtApp();
 const { pool } = $nostr;
-const { getUserInfo, normalizeKey, RELAYS } = useNostr();
+const { normalizeKey } = useNostrKeys();
+const { DEFAULT_RELAYS: RELAYS } = useNostrRelay();
+const { getUserInfo } = useNostrUser();
 
 const tab = ref("notes");
 const tabs = ref([

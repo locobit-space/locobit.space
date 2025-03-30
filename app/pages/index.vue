@@ -40,37 +40,6 @@
       >
       </UButton>
 
-      <!-- User Authentication Section -->
-      <section class="hidden">
-        <div v-if="!user" class="mb-6">
-          <UAlert title="Not Connected" color="yellow" class="mb-4">
-            You need to create or login with your Nostr keys to interact
-          </UAlert>
-          <UButton @click="createNewUser" color="blue" class="mr-2"
-            >Create New User</UButton
-          >
-          <UButton @click="importKeyModal = true" color="gray">
-            Import Private Key
-          </UButton>
-        </div>
-
-        <div v-else class="mb-6">
-          <UAlert
-            :title="`Connected as ${displayUser}`"
-            color="green"
-            class="mb-4"
-          >
-            Your public key: {{ user.publicKey }}
-          </UAlert>
-
-          <UButton @click="logout" color="red">Logout</UButton>
-        </div>
-
-        <UButton @click="refreshNotes" color="gray" class="mb-4">
-          Refresh Notes
-        </UButton>
-      </section>
-
       <!-- Feed -->
       <div>
         <div v-if="isLoading" class="px-4">
@@ -94,53 +63,16 @@
         </div>
       </div>
     </CommonContainer>
-
-   
   </main>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from "vue";
-import { useToast } from "#imports";
+import { ref, onMounted } from "vue";
 
-const importKeyModal = ref(false);
-const { shortenKey } = useHelpers();
+const { checkNewNotes, loadNotesOnce, loadOlderNotes, isLoading, notes } =
+  useNostrFeed();
 
-const {
-  notes,
-  createUser,
-  loadNotes,
-  user,
-  setupUser,
-  postNote,
-  isLoading,
-  checkNewNotes,
-  loadNotesOnce,
-  loadOlderNotes,
-} = useNostr();
-const toast = useToast();
-
-
-const keyInput = ref(null);
 const showScrollButton = ref(false); // New ref to control button visibility
-
-const displayUser = computed(() =>
-  user.value ? shortenKey(user.value.publicKey) : ""
-);
-
-const createNewUser = () => {
-  createUser();
-  toast.add({ title: "New Nostr user created!", color: "green" });
-  refreshNotes();
-};
-
-
-
-const logout = () => {
-  localStorage.removeItem("nostrUser");
-  user.value = null;
-  toast.add({ title: "Logged out", color: "red" });
-};
 
 const refreshNotes = () => {
   loadNotesOnce();
@@ -177,12 +109,6 @@ const handleScroll = async () => {
     await loadOlderNotes();
   }
 };
-
-watch(importKeyModal, (open) => {
-  if (open) {
-    nextTick(() => keyInput.value?.focus());
-  }
-});
 
 onMounted(() => {
   refreshNotes();

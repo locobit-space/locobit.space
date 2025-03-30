@@ -30,7 +30,8 @@
 
 <script setup lang="ts">
 const toast = useToast();
-const { currentUserInfo, loadNotesOnce, postNote, user } = useNostr();
+const { currentUserInfo, user } = useNostrUser();
+const { postNote } = useNostrFeed();
 
 const newPost = ref("");
 const isPosting = ref(false);
@@ -43,7 +44,7 @@ const submitPost = async () => {
   if (success) {
     newPost.value = "";
     toast.add({ title: "Note posted!" });
-    loadNotesOnce();
+    useRouter().back();
   }
 };
 </script>

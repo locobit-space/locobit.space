@@ -19,7 +19,7 @@
 <script setup lang="ts">
 const { id } = useRoute().params;
 
-const { loadOlderNotes, isLoading, notes, loadNotesOnce } = useNostr();
+const { isLoading, notes, loadNotesOnce } = useNostrFeed();
 onMounted(() => {
   if (id) {
     loadNotesOnce({ hashtag: id as string, filter: "hashtag" });

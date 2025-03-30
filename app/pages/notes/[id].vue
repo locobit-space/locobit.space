@@ -15,7 +15,7 @@ import type { Event } from "nostr-tools";
 
 const toast = useToast();
 const { id } = useRoute().params;
-const { getNoteDetail } = useNotes();
+const { getNoteById } = useNostrFeed();
 
 const loading = ref(false);
 
@@ -32,7 +32,7 @@ const noteDetail = ref<Event>({
 async function loaDetail(id: string) {
   try {
     loading.value = true;
-    const data = await getNoteDetail(id);
+    const data = await getNoteById(id);
     if (data) noteDetail.value = data;
   } catch (error) {
     toast.add({ title: "Error loading note", color: "error" });

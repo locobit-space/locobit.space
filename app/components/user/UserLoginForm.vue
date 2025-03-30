@@ -29,6 +29,7 @@
               placeholder="Enter your hex private key"
               type="password"
               class="w-full"
+              @keyup.enter="importUserKey"
             />
           </div>
 
@@ -58,10 +59,12 @@ defineProps<{
 }>();
 
 const toast = useToast();
-const { setupUser, loadNotesOnce } = useNostr();
+const { setupUser } = useNostrUser();
+const { loadNotesOnce } = useNostrFeed();
 
 const importKeyModal = ref(false);
 const importKey = ref("");
+const keyInput = ref<null | HTMLInputElement>(null);
 
 const importUserKey = () => {
   if (importKey.value) {
@@ -70,6 +73,8 @@ const importUserKey = () => {
     importKeyModal.value = false;
     importKey.value = "";
     loadNotesOnce();
+  } else {
+    toast.add({ title: "Please enter a private key", color: "error" });
   }
 };
 </script>

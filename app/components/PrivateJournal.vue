@@ -266,8 +266,9 @@
 </template>
 
 <script setup lang="ts">
-const { user, isLoading } = useNostr();
-const { formatDate } = useHelpers();
+const { user } = useNostrUser();
+const { isLoading } = useNostrFeed();
+
 const {
   journalNotes,
   createJournalEntry,
