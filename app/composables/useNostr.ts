@@ -15,7 +15,7 @@ const RELAYS = [
 ];
 
 export const useNostr = () => {
-  const user = ref<NostrUser | null>(null);
+  const user = useState<NostrUser | null>("nostrUser", () => null);
   const notes = useState<Event[]>("notes", () => []);
   const isLoading = useState<boolean>("isLoading", () => false);
   const error = ref<any>(null);
@@ -25,6 +25,7 @@ export const useNostr = () => {
 
   const latestTimestamp = useState<number>("latestTimestamp", () => 0);
   const currentUserInfo = useState<UserInfo>("currentUserInfo");
+  const accounts = useState<UserInfo[]>("accounts", () => []);
 
   // --- Session Restore on Load ---
   onMounted(() => {
@@ -52,53 +53,112 @@ export const useNostr = () => {
       npub,
     };
 
-    if (import.meta.client) {
-      // user user list
-      const items = JSON.parse(localStorage.getItem("userList") || "[]");
-      items.push(user.value);
-      localStorage.setItem("userList", JSON.stringify(items));
-      localStorage.setItem("nostrUser", JSON.stringify(user.value));
-    }
+    setupUser(privateKeyHex);
 
     return user.value;
   };
 
   // --- Setup user from private key (hex) ---
-  const setupUser = (inputKey: string) => {
-    inputKey = inputKey.trim();
+  const decodePrivateKey = (inputKey: string): string => {
+    const trimmedKey = inputKey.trim();
 
-    let privateKeyHex = "";
-
-    if (inputKey.startsWith("nsec")) {
+    if (trimmedKey.startsWith("nsec")) {
       try {
-        const decoded = nip19.decode(inputKey);
+        const decoded = nip19.decode(trimmedKey);
         if (decoded.type !== "nsec") throw new Error("Invalid nsec key");
-
-        // Convert Uint8Array to hex string
-        privateKeyHex = bytesToHex(decoded.data as Uint8Array);
-      } catch (e) {
+        return bytesToHex(decoded.data as Uint8Array);
+      } catch {
         throw new Error("Failed to decode nsec key");
       }
-    } else {
-      // Validate raw hex key
-      inputKey = inputKey.toLowerCase();
-      if (!/^[0-9a-f]{64}$/.test(inputKey)) {
-        throw new Error(
-          "Invalid private key format. Must be 64-character hex or valid nsec."
-        );
-      }
-      privateKeyHex = inputKey;
     }
 
+    const hexKey = trimmedKey.toLowerCase();
+    if (!/^[0-9a-f]{64}$/.test(hexKey)) {
+      throw new Error(
+        "Invalid private key format. Must be 64-character hex or valid nsec."
+      );
+    }
+
+    return hexKey;
+  };
+
+  const loadUserFromLocalStorage = (pubkey: string): UserInfo | null => {
+    const storedList = JSON.parse(localStorage.getItem("userList") || "[]");
+    return (
+      storedList.find((item: UserInfo) => item.publicKey === pubkey) || null
+    );
+  };
+
+  const saveUserToLocalStorage = (userInfo: UserInfo) => {
+    const storedList: UserInfo[] = JSON.parse(
+      localStorage.getItem("userList") || "[]"
+    );
+    const exists = storedList.find(
+      (item) => item.pubkey === userInfo.pubkey
+    );
+
+    if (!exists) {
+      storedList.push({
+        pubkey: userInfo.pubkey,
+        display_name: `Account ${storedList.length + 1}`,
+        userKeys: userInfo.userKeys,
+        name: "",
+      });
+    }
+
+    localStorage.setItem("userList", JSON.stringify(storedList));
+    localStorage.setItem("nostrUser", JSON.stringify(userInfo.userKeys));
+    localStorage.setItem("currentUserInfo", JSON.stringify(userInfo));
+  };
+
+  const setupUser = async (inputKey: string) => {
+    const privateKeyHex = decodePrivateKey(inputKey);
     const pubkey = getPublicKey(hexToBytes(privateKeyHex));
 
-    user.value = {
+    const userKey = {
       privateKey: privateKeyHex,
       publicKey: pubkey,
+      nsec: inputKey.startsWith("nsec") ? inputKey.trim() : null,
+      npub: null,
+    };
+
+    let newUser: UserInfo = {
+      pubkey,
+      display_name: "",
+      userKeys: userKey,
+    };
+
+    user.value = {
+      ...userKey,
     };
 
     if (import.meta.client) {
-      localStorage.setItem("nostrUser", JSON.stringify(user.value));
+      const existingUser = loadUserFromLocalStorage(pubkey);
+      if (existingUser) {
+        currentUserInfo.value = existingUser;
+        if (existingUser.userKeys)
+          user.value = {
+            ...userKey,
+            ...existingUser.userKeys,
+          };
+      } else {
+        currentUserInfo.value = newUser;
+
+        const data = await getUserInfo(pubkey);
+        if (data) {
+          currentUserInfo.value = data;
+          currentUserInfo.value = {
+            ...data,
+            userKeys: userKey,
+          };
+        }
+        saveUserToLocalStorage(currentUserInfo.value);
+      }
+      // refresh
+      const _items = JSON.parse(localStorage.getItem("userList") || "[]");
+      accounts.value = _items; 
+    } else {
+      currentUserInfo.value = newUser;
     }
   };
 
@@ -545,10 +605,16 @@ export const useNostr = () => {
   };
 
   onMounted(async () => {
-    if (user.value) {
-      const data = await getUserInfo(user.value.publicKey);
-      if (data) {
-        currentUserInfo.value = data;
+    const _currentUserInfo = localStorage.getItem("currentUserInfo");
+    if (_currentUserInfo) {
+      currentUserInfo.value = JSON.parse(_currentUserInfo);
+    }
+
+    if (accounts.value.length === 0) {
+      const _items = localStorage.getItem("userList");
+      if (_items) {
+        const items = JSON.parse(_items);
+        accounts.value = items;
       }
     }
   });
@@ -560,6 +626,7 @@ export const useNostr = () => {
     error,
     latestTimestamp,
     currentUserInfo,
+    accounts,
     RELAYS,
     getUserInfo,
     checkNewNotes,

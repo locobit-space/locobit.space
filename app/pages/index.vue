@@ -95,40 +95,7 @@
       </div>
     </CommonContainer>
 
-    <!-- Import Key Modal -->
-    <UModal v-model:open="importKeyModal">
-      <template #content>
-        <UCard>
-          <template #header>
-            <h3 class="text-lg font-bold">Import Private Key</h3>
-          </template>
-
-          <div class="mb-4">
-            <UInput
-              ref="keyInput"
-              v-model="importKey"
-              placeholder="Enter your hex private key"
-              type="password"
-            />
-          </div>
-
-          <template #footer>
-            <div class="flex justify-end gap-2">
-              <UButton color="gray" @click="importKeyModal = false">
-                Cancel
-              </UButton>
-              <UButton
-                color="primary"
-                :disabled="!importKey"
-                @click="importUserKey"
-              >
-                Import
-              </UButton>
-            </div>
-          </template>
-        </UCard>
-      </template>
-    </UModal>
+   
   </main>
 </template>
 
@@ -136,6 +103,7 @@
 import { ref, computed, onMounted, watch, nextTick } from "vue";
 import { useToast } from "#imports";
 
+const importKeyModal = ref(false);
 const { shortenKey } = useHelpers();
 
 const {
@@ -152,8 +120,7 @@ const {
 } = useNostr();
 const toast = useToast();
 
-const importKeyModal = ref(false);
-const importKey = ref("");
+
 const keyInput = ref(null);
 const showScrollButton = ref(false); // New ref to control button visibility
 
@@ -167,16 +134,7 @@ const createNewUser = () => {
   refreshNotes();
 };
 
-const importUserKey = () => {
-  if (importKey.value) {
-    setupUser(importKey.value);
-    localStorage.setItem("nostrUser", importKey.value);
-    toast.add({ title: "Private key imported!", color: "green" });
-    importKeyModal.value = false;
-    importKey.value = "";
-    refreshNotes();
-  }
-};
+
 
 const logout = () => {
   localStorage.removeItem("nostrUser");
