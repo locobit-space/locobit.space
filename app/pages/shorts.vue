@@ -1,7 +1,7 @@
 <template>
   <div class="h-screen flex flex-col">
     <section>
-      <!-- <nav class="p-2">Shorts</nav> -->
+      <!-- <nav class="p-2">Nostr Shorts</nav> -->
     </section>
     <section
       class="w-full flex-1 overflow-y-scroll snap-y snap-mandatory scroll-smooth touch-none max-w-lg mx-auto"
@@ -103,13 +103,29 @@
           </div>
 
           <!-- Video Info -->
-          <div class="absolute bottom-10 left-4 text-white z-20">
-            <h3 class="text-lg font-bold break-words break-all">
+          <div class="absolute bottom-10 left-4 text-white z-20 max-w-[70%]">
+            <h3 class="text-lg font-bold break-words">
               {{ video.title }}
             </h3>
             <p class="text-sm">{{ video.creator }}</p>
+            <div class="flex flex-wrap gap-1 mt-1">
+              <span
+                v-for="tag in (video.hashtags || []).slice(0, 3)"
+                :key="tag"
+                class="bg-white/20 px-2 py-0.5 rounded-full text-xs"
+              >
+                #{{ tag }}
+              </span>
+            </div>
           </div>
         </div>
+      </div>
+
+      <!-- Loading Indicator -->
+      <div v-if="isLoading" class="flex justify-center items-center h-32">
+        <div
+          class="animate-spin rounded-full h-8 w-8 border-b-2 border-white"
+        ></div>
       </div>
     </section>
   </div>
@@ -119,8 +135,7 @@
 import { ref, onMounted, nextTick, watch } from "vue";
 import { videoExtensions } from "~/lib";
 
-const { toggleBookmark, bookmarks, mapNotesToMediaList, filterMediaNotes } =
-  useNotes();
+const { toggleBookmark, bookmarks } = useNotes();
 
 const {
   shorts: videos,
@@ -217,10 +232,12 @@ const toggleLike = (videoId: string) => {
 };
 
 const openComments = (videoId: string) => {
+  // This would need to integrate with Nostr replies/thread view
   console.log(`Opening comments for video ${videoId}`);
 };
 
 const shareVideo = (videoId: string) => {
+  // This could create a shareable Nostr link
   console.log(`Sharing video ${videoId}`);
 };
 
@@ -259,6 +276,14 @@ watch(currentVideoIndex, async (newIndex) => {
       });
   }
 });
+
+// Update playingVideos array when videos change
+watch(
+  () => videos.value.length,
+  () => {
+    playingVideos.value = Array(videos.value.length).fill(false);
+  }
+);
 
 async function loadMedia() {
   loadOldShort();

@@ -1,224 +1,129 @@
-import { ref } from "vue";
-import type { Event } from "nostr-tools";
-import { mediaExtensions } from "~/lib";
+// composables/useNoteShort.ts
 
-interface VideoShort {
-  id: string;
-  url: string;
-  title: string;
-  creator: string;
-  likes: number;
-  comments: number;
-  created_at: number;
-}
+import { computed } from "vue";
 
 export const useNoteShort = () => {
-  const { $nostr } = useNuxtApp();
-  const { pool } = $nostr;
-  const { DEFAULT_RELAYS: RELAYS } = useNostrRelay();
+  const { notes, isLoading, loadNotesOnce, loadOlderNotes, getNoteById } =
+    useNostrFeed();
 
-  const shorts = ref<VideoShort[]>([]);
-  const isLoading = ref(false);
-  const error = ref<Error | null>(null);
-  const latestTimestamp = ref<number | null>(null);
-  const oldestTimestamp = ref<number | null>(null);
-
-  const isMediaUrl = (url: string): boolean => {
-    return mediaExtensions.some((ext) => url.toLowerCase().endsWith(ext));
-  };
-
-  const extractMediaUrlsFromContent = (content: string): string[] => {
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    return (content.match(urlRegex) || []).filter(isMediaUrl);
-  };
-
-  const extractMediaUrlsFromTags = (tags: string[][]): string[] => {
-    return tags
-      .filter((tag) => tag[0] === "imeta" && tag[1]?.includes("url"))
-      .map((tag) => {
-        const match = tag[1].match(/https?:\/\/[^ ]+/);
-        return match?.[0] ?? "";
+  // Transform Nostr notes into shorts format
+  const shorts = computed(() => {
+    return notes.value
+      .filter((note) => {
+        // Filter notes that have media URLs in their content
+        const urlRegex =
+          /(https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|mp4|webm|ogg|mov))/gi;
+        return urlRegex.test(note.content);
       })
-      .filter(Boolean)
-      .filter(isMediaUrl);
-  };
+      .map((note) => {
+        // Extract the first media URL from the content
+        const urlRegex =
+          /(https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|mp4|webm|ogg|mov))/i;
+        const match = note.content.match(urlRegex);
+        const url = match ? match[0] : "";
 
-  const filterMediaNotes = (events: Event[]): Event[] => {
-    return events.filter((event) => {
-      const contentHasMedia =
-        extractMediaUrlsFromContent(event.content).length > 0;
-      const tagsHaveMedia = extractMediaUrlsFromTags(event.tags).length > 0;
-      return contentHasMedia || tagsHaveMedia;
-    });
-  };
+        // Extract hashtags for potential use
+        const hashtagRegex = /#(\w+)/g;
+        const hashtags = Array.from(
+          note.content.matchAll(hashtagRegex),
+          (m) => m[1]
+        );
 
-  const mapNotesToMediaList = (events: Event[]): VideoShort[] => {
-    const mediaNotes = filterMediaNotes(events);
+        // Clean content by removing the URL
+        let title = note.content.replace(urlRegex, "").trim();
 
-    return mediaNotes.flatMap((event) => {
-      const mediaUrls = [
-        ...extractMediaUrlsFromContent(event.content),
-        ...extractMediaUrlsFromTags(event.tags),
-      ];
+        // If content is too long, truncate it
+        if (title.length > 100) {
+          title = title.substring(0, 97) + "...";
+        }
 
-      const creator = `@${event.pubkey.slice(0, 8)}`;
-      const title = event.content?.split("\n")[0].slice(0, 100);
+        // Find author info from event tags if available
+        let creator = "";
+        const authorTag = note.tags.find((tag) => tag[0] === "p");
+        if (authorTag && authorTag[1]) {
+          creator = authorTag[3] || `nostr:${authorTag[1].substring(0, 8)}...`;
+        } else {
+          creator = `nostr:${note.pubkey.substring(0, 8)}...`;
+        }
 
-      const uniqueMediaUrls = [...new Set(mediaUrls)];
+        return {
+          id: note.id,
+          url: url,
+          title: title,
+          creator: creator,
+          createdAt: note.created_at,
+          pubkey: note.pubkey,
+          hashtags: hashtags,
+          // Placeholder values for UI elements
+          likes: Math.floor(Math.random() * 100),
+          comments: Math.floor(Math.random() * 20),
+          originalEvent: note,
+        };
+      });
+  });
 
-      if (uniqueMediaUrls.length === 0) {
-        return [];
-      }
-
-      return uniqueMediaUrls.map((url) => ({
-        id: event.id,
-        url,
-        title,
-        creator,
-        likes: Math.floor(Math.random() * 500),
-        comments: Math.floor(Math.random() * 100),
-        created_at: event.created_at,
-      }));
-    });
-  };
-
+  // Load initial shorts
   const loadFirstShort = async () => {
-    isLoading.value = true;
-    let newShortsAdded = false;
-
-    try {
-      const sub = pool.subscribeMany(
-        RELAYS,
-        [
-          {
-            kinds: [1],
-            limit: 10,
-          },
-        ],
-        {
-          onevent(event: Event) {
-            if (!shorts.value.some((v) => v.id === event.id)) {
-              const result = [event];
-              const newShorts = mapNotesToMediaList(result);
-              if (newShorts.length > 0) {
-                shorts.value.push(...newShorts);
-                newShortsAdded = true;
-              }
-            }
-          },
-          oneose() {
-            if (shorts.value.length > 0) {
-              latestTimestamp.value = Math.max(
-                ...shorts.value.map((v) => v.created_at)
-              );
-              oldestTimestamp.value = Math.min(
-                ...shorts.value.map((v) => v.created_at)
-              );
-            }
-            isLoading.value = false;
-            sub.close();
-
-            // If no new shorts were added, attempt to load older shorts
-            if (!newShortsAdded) {
-              loadOldShort();
-            }
-          },
-        }
-      );
-    } catch (err) {
-      error.value = err as Error;
-      isLoading.value = false;
-    }
+    await loadNotesOnce({ limit: 10 });
   };
 
+  // Load older shorts when scrolling
   const loadOldShort = async () => {
-    if (isLoading.value || !oldestTimestamp.value) return;
-    isLoading.value = true;
-
-    try {
-      let oldestSeen = oldestTimestamp.value;
-
-      const sub = pool.subscribeMany(
-        RELAYS,
-        [
-          {
-            kinds: [1],
-            limit: 10,
-            until: oldestTimestamp.value - 1,
-          },
-        ],
-        {
-          onevent(event: Event) {
-            if (event.created_at < oldestSeen) {
-              oldestSeen = event.created_at;
-            }
-
-            if (!shorts.value.some((v) => v.id === event.id)) {
-              const result = [event];
-              const newShorts = mapNotesToMediaList(result);
-              shorts.value.push(...newShorts);
-
-              if (newShorts.length > 0) {
-                const newMin = Math.min(...newShorts.map((v) => v.created_at));
-                oldestSeen = Math.min(oldestSeen, newMin);
-              }
-            }
-          },
-          oneose() {
-            oldestTimestamp.value = oldestSeen;
-            isLoading.value = false;
-            sub.close();
-          },
-        }
-      );
-    } catch (err) {
-      error.value = err as Error;
-      isLoading.value = false;
-    }
+    await loadOlderNotes({ limit: 5 });
   };
 
-  const checkNewShort = async () => {
-    if (!latestTimestamp.value) return;
+  // Get a specific short by ID
+  const getShortById = async (id: string) => {
+    const note = await getNoteById(id);
+    if (!note) return null;
 
-    const sub = pool.subscribeMany(
-      RELAYS,
-      [
-        {
-          kinds: [1],
-          since: latestTimestamp.value + 1,
-        },
-      ],
-      {
-        onevent(event: Event) {
-          if (!shorts.value.some((v) => v.id === event.id)) {
-            const result = [event];
-            const newShorts = mapNotesToMediaList(result);
-            shorts.value.unshift(...newShorts);
+    // Convert the note to short format
+    const urlRegex =
+      /(https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|mp4|webm|ogg|mov))/i;
+    const match = note.content.match(urlRegex);
+    if (!match) return null;
 
-            if (newShorts.length > 0) {
-              const newMax = Math.max(...newShorts.map((v) => v.created_at));
-              latestTimestamp.value = Math.max(latestTimestamp.value!, newMax);
-            }
-          }
-        },
-        oneose() {
-          sub.close();
-        },
-      }
-    );
+    const url = match[0];
+    let title = note.content.replace(urlRegex, "").trim();
+
+    if (title.length > 100) {
+      title = title.substring(0, 97) + "...";
+    }
+
+    let creator = "";
+    const authorTag = note.tags.find((tag) => tag[0] === "p");
+    if (authorTag && authorTag[1]) {
+      creator = authorTag[3] || `nostr:${authorTag[1].substring(0, 8)}...`;
+    } else {
+      creator = `nostr:${note.pubkey.substring(0, 8)}...`;
+    }
+
+    return {
+      id: note.id,
+      url: url,
+      title: title,
+      creator: creator,
+      createdAt: note.created_at,
+      pubkey: note.pubkey,
+      hashtags: [],
+      likes: Math.floor(Math.random() * 100),
+      comments: Math.floor(Math.random() * 20),
+      originalEvent: note,
+    };
+  };
+
+  // Post a new short with media URL
+  const postShort = async (content: string, mediaUrl: string) => {
+    // This would need to be implemented using the postNote function
+    // from useNostrFeed, combining the content and mediaUrl
   };
 
   return {
     shorts,
     isLoading,
-    error,
-    latestTimestamp,
-    oldestTimestamp,
     loadFirstShort,
     loadOldShort,
-    checkNewShort,
-    isMediaUrl,
-    mapNotesToMediaList,
-    filterMediaNotes,
+    getShortById,
+    postShort,
   };
 };

@@ -264,7 +264,7 @@ const replyToNote = () => {
 const nostrBookmarks = ref<string[]>([]);
 
 const loadBookmarks = () => {
-  const stored = localStorage.getItem("nostrBookmarks");
+  const stored = localStorage.getItem("nostr-bookmarks");
   nostrBookmarks.value = stored ? JSON.parse(stored) : [];
 };
 

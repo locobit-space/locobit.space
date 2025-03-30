@@ -7,7 +7,7 @@ import type { Event } from "nostr-tools";
 const DEFAULT_RELAYS = [
   "wss://relay.damus.io",
   // Uncomment these as needed
-  // "wss://yabu.me",
+  "wss://yabu.me",
   // "wss://nos.lol",
   // "wss://nostr-pub.wellorder.net",
 ];

@@ -6,6 +6,7 @@ export const useNotes = () => {
   const { pool } = $nostr;
   const { DEFAULT_RELAYS: RELAYS } = useNostrRelay();
 
+  const storedBookmarks = localStorage.getItem("nostr-bookmarks");
   const bookmarks = useState<string[]>("bookmarkedVideos", () => []);
 
   const toggleBookmark = (videoId: string) => {
@@ -113,14 +114,17 @@ export const useNotes = () => {
   const mapNotesToMediaList = (events: Event[]) => {
     const mediaNotes = filterMediaNotes(events);
 
+    console.log(mediaNotes)
+
     return mediaNotes.flatMap((event) => {
       const mediaUrls = [
         ...extractMediaUrlsFromContent(event.content),
         ...extractMediaUrlsFromTags(event.tags),
       ];
 
-      const creator = `@${event.pubkey.slice(0, 8)}`;
-      const title = event.content?.split("\n")[0].slice(0, 100); // first line as title
+      const creator = `@${event?.pubkey?.slice(0, 8) || "unknown"}`;
+      // first line as title
+      const title = event?.content?.split("\n")[0]?.slice(0, 100) ?? "Untitled";
 
       return mediaUrls.map((url) => ({
         id: event.id,
