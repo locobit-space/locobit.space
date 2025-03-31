@@ -124,14 +124,6 @@
         <!-- action buttons repost like etc -->
         <div class="flex gap-4 mt-4 border-y border-slate-100 py-1">
           <UButton
-            color="neutral"
-            icon="system-uicons:retweet"
-            class="mr-2"
-            variant="ghost"
-            :label="rePostCount > 0 ? `${rePostCount}` : ''"
-            @click="repost"
-          />
-          <UButton
             :color="isLiked ? 'primary' : 'neutral'"
             :icon="isLiked ? 'heroicons:heart-20-solid' : 'heroicons:heart'"
             class="mr-2"
@@ -142,8 +134,24 @@
           <UButton
             color="neutral"
             variant="ghost"
-            icon="i-heroicons-chat-bubble-left-right"
+            icon="proicons:comment"
             :label="commentCount > 0 ? `${commentCount}` : ''"
+          />
+          <UButton
+            color="neutral"
+            icon="system-uicons:retweet"
+            class="mr-2"
+            variant="ghost"
+            :label="rePostCount > 0 ? `${rePostCount}` : ''"
+            @click="repost"
+          />
+          <UButton
+            color="neutral"
+            icon="lets-icons:lightning-light"
+            class="mr-2"
+            variant="ghost"
+            :label="zap.zapCount > 0 ? `${zap.totalZapSats}` : ''"
+            @click="repost"
           />
           <UButton
             color="neutral"
@@ -176,14 +184,20 @@ const { $nostr } = useNuxtApp();
 
 const { formatDateTime, timeAgo } = useHelpers();
 const { getUserInfo, user } = useNostrUser();
-const { DEFAULT_RELAYS: RELAYS } = useNostrRelay();
+const { DEFAULT_RELAYS: RELAYS, queryEvents } = useNostrRelay();
 const { trackInteraction } = useNostrFeedAlgorithm();
+const { getZapStats } = useZapSats();
 
 const userInfo = ref<UserInfo>({
   pubkey: "",
   display_name: "",
   picture: "",
   name: "",
+});
+
+const zap = ref({
+  zapCount: 0,
+  totalZapSats: 0,
 });
 
 const formattedDate = computed(() => formatDateTime(props.note.created_at));
@@ -350,11 +364,17 @@ const isLiked = computed(() => {
 
 const getNoteLikes = async (noteId: string): Promise<number> => {
   try {
-    const events = await $nostr.pool.querySync(RELAYS, {
+    const events = await queryEvents({
       kinds: [7, 1, 6],
       "#e": [noteId], // reactions linked to this note
       limit: 100, // adjust based on how many likes you expect
     });
+
+
+
+    // Zaps
+    const zaps = await getZapStats(noteId);
+    zap.value = zaps;
 
     noteItems.value = events;
 

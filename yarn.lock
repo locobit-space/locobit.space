@@ -4724,6 +4724,13 @@ levn@^0.4.1:
     prelude-ls "^1.2.1"
     type-check "~0.4.0"
 
+light-bolt11-decoder@^3.2.0:
+  version "3.2.0"
+  resolved "https://registry.yarnpkg.com/light-bolt11-decoder/-/light-bolt11-decoder-3.2.0.tgz#2d48f78386cde526c4131db8f9dfd3250a2d5d4d"
+  integrity sha512-3QEofgiBOP4Ehs9BI+RkZdXZNtSys0nsJ6fyGeSiAGCBsMwHGUDS/JQlY/sTnWs91A2Nh0S9XXfA8Sy9g6QpuQ==
+  dependencies:
+    "@scure/base" "1.1.1"
+
 lightningcss-darwin-arm64@1.29.2:
   version "1.29.2"
   resolved "https://registry.yarnpkg.com/lightningcss-darwin-arm64/-/lightningcss-darwin-arm64-1.29.2.tgz#6ceff38b01134af48e859394e1ca21e5d49faae6"
