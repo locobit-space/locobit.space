@@ -11,7 +11,7 @@
           <span class="text-center">
             {{ item.label }}
           </span>
-          <div v-if="isActive == item.key" class="absolute bottom-0 w-full">
+          <div v-if="filterTab == item.key" class="absolute bottom-0 w-full">
             <div class="flex w-full justify-center items-center">
               <div class="h-1 w-10 rounded-full bg-black" />
             </div>
@@ -29,12 +29,14 @@ const items = useState("itemsHeader", () => [
   { label: "#laostr", key: "hashtag" },
 ]);
 
-const { loadNotesOnce } = useNostrFeed();
-const isActive = ref("for-you");
+const { loadNotesOnce, filterTab } = useNostrFeed();
+
+const emit = defineEmits(["filter"]);
 
 const handleFilter = (key: string) => {
-  isActive.value = key;
+  filterTab.value = key;
   loadNotesOnce({ hashtag: key === "hashtag" ? "laostr" : "", filter: key });
+  emit("filter", key);
 };
 </script>
 

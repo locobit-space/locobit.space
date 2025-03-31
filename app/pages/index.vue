@@ -3,7 +3,7 @@
     <nav
       class="sticky top-0 backdrop-blur bg-white/30 border-b border-white/20 z-50"
     >
-      <AppHeader class="" />
+      <AppHeader class="" @filter="scrollToTop()" />
     </nav>
     <CommonContainer class="py-8">
       <!-- Floating Check New Notes button that appears when scrolling down -->
