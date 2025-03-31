@@ -29,19 +29,17 @@
 const items = useState("itemsHeader", () => [
   { label: "For You", key: "for-you", value: "for-you" },
   { label: "Following", key: "following", value: "following" },
+  { label: "Trending", key: "trending", value: "trending" },
   { label: "#laostr", key: "hashtag", value: "laostr" },
 ]);
 
-const { loadNotesOnce, filterTab, notes } = useNostrFeed();
+const { filterTab } = useNostrFeed();
 
 const emit = defineEmits(["filter"]);
 
 const handleFilter = (item: any) => {
-  const { key, value } = item;
   filterTab.value = item;
-  notes.value = [];
-  loadNotesOnce({ hashtag: key === "hashtag" ? value : null, filter: key });
-  emit("filter", key);
+  emit("filter", item);
 };
 </script>
 

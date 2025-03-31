@@ -21,7 +21,9 @@
               @{{ userInfo?.name || "N/A" }}
             </small>
           </NuxtLink>
-          <span class="text-sm text-gray-500">{{ formattedDate }}</span>
+          <span class="text-sm text-gray-500" :title="formattedDate">
+            {{ timeAgo(note.created_at) }}
+          </span>
         </div>
 
         <!-- Media Display -->
@@ -62,13 +64,12 @@
                 media.embedType.charAt(0).toUpperCase() +
                 media.embedType.slice(1)
               }}
-              video
             </div>
           </div>
         </section>
 
         <!-- Note Content with Hashtag Parsing -->
-        <div class="text-wrap break-all">
+        <div class="text-wrap break-all" @click="emit('contentClicked', note)">
           <template v-for="(part, index) in parsedContent" :key="index">
             <NuxtLink
               :to="`/notes/${note.id}`"
@@ -120,7 +121,7 @@
           </div>
         </div>
 
-        <!-- action buttons share like etc -->
+        <!-- action buttons repost like etc -->
         <div class="flex gap-4 mt-4 border-y border-slate-100 py-1">
           <UButton
             color="neutral"
@@ -128,11 +129,11 @@
             class="mr-2"
             variant="ghost"
             :label="rePostCount > 0 ? `${rePostCount}` : ''"
-            @click="shareNote"
+            @click="repost"
           />
           <UButton
-            color="neutral"
-            icon="i-heroicons-heart"
+            :color="isLiked ? 'primary' : 'neutral'"
+            :icon="isLiked ? 'heroicons:heart-20-solid' : 'heroicons:heart'"
             class="mr-2"
             variant="ghost"
             :label="likeCount > 0 ? `${likeCount}` : ''"
@@ -164,16 +165,19 @@ import { hexToBytes } from "@noble/hashes/utils";
 import { computed } from "vue";
 import type { UserInfo } from "~~/types";
 
-const props = defineProps({
-  note: { type: Object, required: true },
-});
+const props = defineProps<{
+  note: Event;
+}>();
+
+const emit = defineEmits(["contentClicked"]);
 
 const toast = useToast();
 const { $nostr } = useNuxtApp();
 
-const { formatDateTime } = useHelpers();
+const { formatDateTime, timeAgo } = useHelpers();
 const { getUserInfo, user } = useNostrUser();
 const { DEFAULT_RELAYS: RELAYS } = useNostrRelay();
+const { trackInteraction } = useNostrFeedAlgorithm();
 
 const userInfo = ref<UserInfo>({
   pubkey: "",
@@ -207,6 +211,8 @@ const likeNote = async () => {
   const pubkey = user.value.publicKey;
   const noteId = props.note.id;
 
+  trackInteraction(props.note, "like");
+
   // Find user's latest reaction for this note
   const existing = noteItems.value.find(
     (item) =>
@@ -216,7 +222,7 @@ const likeNote = async () => {
   );
 
   // Determine new reaction based on current one
-  const newContent = existing?.content === "+" ? "" : "+";
+  const newContent = existing?.content === "👍" ? "" : "👍";
 
   // Optional: toggle off if clicked twice on the same reaction
   const isUnliking = existing && existing.content === newContent;
@@ -255,7 +261,15 @@ const likeNote = async () => {
   }
 };
 
+const repost = () => {
+  trackInteraction(props.note, "repost");
+  toast.add({
+    title: "Repost feature not implemented yet.",
+  });
+};
+
 const replyToNote = () => {
+  trackInteraction(props.note, "reply");
   toast.add({
     title: "Reply feature not implemented yet.",
   });
@@ -325,6 +339,15 @@ const syncBookmarksToNostr = async () => {
 
 const noteItems = ref<Event[]>([]);
 
+const isLiked = computed(() => {
+  if (noteItems.value.length) {
+    return ["+", "❤️", "👍", "🙏🏿", "💜"].includes(
+      noteItems.value[0]?.content || ""
+    );
+  }
+  return false;
+});
+
 const getNoteLikes = async (noteId: string): Promise<number> => {
   try {
     const events = await $nostr.pool.querySync(RELAYS, {
@@ -335,12 +358,12 @@ const getNoteLikes = async (noteId: string): Promise<number> => {
 
     noteItems.value = events;
 
-    // Count "+" reactions (likes)
-    const likes = events.filter((event) =>
-      ["+", "❤️", "👍"].includes(event.content)
+    // Filter only like-type reactions
+    const likeReactions = events.filter((event) =>
+      ["+", "❤️", "👍", "🙏🏿", "💜", "like"].includes(event.content)
     );
 
-    return likes.length;
+    return likeReactions.length;
   } catch (error) {
     console.error("Error fetching likes:", error);
     return 0;
@@ -365,8 +388,8 @@ const likeCount = computed(() => {
   }
 
   // Only count those where the latest reaction is "+"
-  const count = Array.from(latestByUser.values()).filter(
-    (item) => item.content === "+"
+  const count = Array.from(latestByUser.values()).filter((item) =>
+    ["+", "❤️", "👍", "🙏🏿", "💜"].includes(item.content)
   ).length;
 
   return count;

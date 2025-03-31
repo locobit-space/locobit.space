@@ -117,6 +117,16 @@ export const useNostrFeed = () => {
     ];
   };
 
+  // remove duplicate events
+  const getUniqueEvents = (newEvents: Event[], existingEvents: Event[]) => {
+    return newEvents.filter(
+      (newEvent) =>
+        !existingEvents.some(
+          (existingEvent) => existingEvent.id === newEvent.id
+        )
+    );
+  };
+
   function getEngagementScore(event: Event): number {
     const tags = event.tags || [];
 
@@ -150,8 +160,6 @@ export const useNostrFeed = () => {
     } = options;
 
     try {
-      console.log(filter);
-
       const filterQuery: any = { kinds: [1], limit };
       if (since) filterQuery.since = since;
       if (until) filterQuery.until = until;
@@ -300,6 +308,7 @@ export const useNostrFeed = () => {
     error,
     latestTimestamp,
     filterTab,
+    DEFAULT_OPTIONS,
     postNote,
     subscribeToNotes,
     loadNotesOnce,
@@ -308,5 +317,7 @@ export const useNostrFeed = () => {
     searchNotes,
     getNoteById,
     extractHashtags,
+    mergeUniqueEvents,
+    getUniqueEvents,
   };
 };
