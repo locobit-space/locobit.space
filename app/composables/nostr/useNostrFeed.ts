@@ -16,7 +16,13 @@ export const useNostrFeed = () => {
   const isLoading = useState<boolean>("isLoading", () => false);
   const error = ref<any>(null);
   const latestTimestamp = useState<number>("latestTimestamp", () => 0);
-  const filterTab = useState<string>("filterTab", () => "for-you");
+  const filterTab = useState<any>("filterTab", () => {
+    return {
+      label: "For You",
+      key: "for-you",
+      value: "for-you",
+    };
+  });
 
   const { user, fetchFollowList } = useNostrUser();
   const { publishEvent, queryEvents, subscribeToEvents } = useNostrRelay();
@@ -160,45 +166,24 @@ export const useNostrFeed = () => {
         filterQuery["#t"] = [hashtag];
       }
 
-      // const events = await queryEvents(filterQuery);
-      // const uniqueEvents = mergeUniqueEvents(events, notes.value);
-      // const sortedEvents = uniqueEvents.sort(
-      //   (a, b) => b.created_at - a.created_at
-      // );
-      // notes.value = sortedEvents;
-
-      // if (
-      //   sortedEvents.length > 0 &&
-      //   sortedEvents[0]?.created_at !== undefined
-      // ) {
-      //   latestTimestamp.value = Math.max(
-      //     latestTimestamp.value,
-      //     sortedEvents[0].created_at
-      //   );
-      // }
-
-      // return sortedEvents;
-
       const events = await queryEvents(filterQuery);
-
-      // Filter out duplicates (assuming `id` is unique identifier)
-      const existingIds = new Set(notes.value.map((e) => e.id));
-      let newEvents = events.filter((e) => !existingIds.has(e.id));
-
-      const sortedNewEvents = newEvents.sort(
+      const uniqueEvents = mergeUniqueEvents(events, notes.value);
+      const sortedEvents = uniqueEvents.sort(
         (a, b) => b.created_at - a.created_at
       );
+      notes.value = sortedEvents;
 
-      if (sortedNewEvents.length > 0) {
+      if (
+        sortedEvents.length > 0 &&
+        sortedEvents[0]?.created_at !== undefined
+      ) {
         latestTimestamp.value = Math.max(
           latestTimestamp.value,
-          sortedNewEvents[0]?.created_at ?? 0
+          sortedEvents[0].created_at
         );
       }
 
-      notes.value = [...sortedNewEvents, ...notes.value];
-
-      return sortedNewEvents;
+      return sortedEvents;
     } catch (e) {
       error.value = e;
       return [];

@@ -28,7 +28,7 @@
         <section class="mb-3 grid grid-cols-2 gap-2">
           <div v-for="(media, index) in mediaUrls" :key="index">
             <!-- Image Display -->
-            <img
+            <NuxtImg
               v-if="media.type === 'image'"
               :src="media.url"
               :alt="`Note image ${index + 1}`"

@@ -69,8 +69,14 @@
 <script setup>
 import { ref, onMounted } from "vue";
 
-const { checkNewNotes, loadNotesOnce, loadOlderNotes, isLoading, notes } =
-  useNostrFeed();
+const {
+  checkNewNotes,
+  loadNotesOnce,
+  loadOlderNotes,
+  isLoading,
+  notes,
+  filterTab,
+} = useNostrFeed();
 
 const showScrollButton = ref(false); // New ref to control button visibility
 
@@ -106,7 +112,11 @@ const handleScroll = async () => {
   const bottomOfWindow =
     window.innerHeight + window.scrollY >= document.body.offsetHeight - 300; // 300px before bottom
   if (bottomOfWindow && !isLoading.value) {
-    await loadOlderNotes();
+    const { key, value } = filterTab.value;
+    await loadOlderNotes({
+      filter: key,
+      hashtag: key === "hashtag" ? value : null,
+    });
   }
 };
 

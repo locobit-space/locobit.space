@@ -25,18 +25,41 @@
       </div>
 
       <div class="px-4 pt-16 pb-4">
-        <div class="flex items-center space-x-2">
-          <h2 class="text-xl font-bold">
-            {{ profile?.display_name || profile?.name || "N/A" }}
-          </h2>
-          <span
-            v-if="profile?.verified"
-            class="text-primary-500"
-            title="Verified"
-          >
-            <Icon name="bitcoin-icons:verify-outline" size="20" />
-          </span>
-        </div>
+        <nav class="flex justify-between">
+          <div class="flex flex-col">
+            <h2 class="text-xl font-bold">
+              {{ profile?.display_name || profile?.name || "N/A" }}
+              <span
+                v-if="profile?.verified"
+                class="text-primary-500"
+                title="Verified"
+              >
+                <Icon name="bitcoin-icons:verify-outline" size="20" />
+              </span>
+            </h2>
+            <div>
+              <span class="text-sm text-gray-500">
+                @{{ profile?.name || "N/A" }}
+              </span>
+            </div>
+          </div>
+          <div class="">
+            <UButton
+              variant="ghost"
+              :label="isFollowing ? 'Unfollow' : 'Follow'"
+              :color="isFollowing ? 'primary' : 'neutral'"
+              :icon="
+                isFollowing ? 'i-heroicons-check' : 'i-heroicons-plus-circle'
+              "
+              @click="toggleFollow"
+            />
+            <!-- <UButton variant="ghost" label="Message" @click="message" /> -->
+            <!-- <UButton color="neutral" label="Share" @click="share" />
+            <UButton color="neutral" label="Report" @click="report" />
+            <UButton color="neutral" label="Block" @click="block" />
+            <UButton color="neutral" label="Mute" @click="mute" /> -->
+          </div>
+        </nav>
 
         <p class="text-gray-600 mt-1">
           {{ profile?.about }}
@@ -316,6 +339,7 @@ const { pool } = $nostr;
 const { normalizeKey } = useNostrKeys();
 const { DEFAULT_RELAYS: RELAYS } = useNostrRelay();
 const { getUserInfo } = useNostrUser();
+const { isFollowing, toggleFollow } = useFollowUser(route.params.id as string);
 
 interface MediaItem {
   id: string;
