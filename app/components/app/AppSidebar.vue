@@ -30,12 +30,7 @@
 
       <!-- switch account -->
       <section class="md:block hidden">
-        <div v-if="user" class="flex items-center gap-2 cursor-pointer">
-          <UserAccountSwitchModal />
-        </div>
-        <div v-else>
-          <UserLoginForm />
-        </div>
+        <UserAccountSwitchModal />
       </section>
     </nav>
 

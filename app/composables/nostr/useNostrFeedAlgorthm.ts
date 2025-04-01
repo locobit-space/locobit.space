@@ -129,8 +129,6 @@ export const useNostrFeedAlgorithm = () => {
     // Calculate the final interaction weight
     const interactionWeight = baseWeight * contentMultiplier;
 
-    console.log("Interaction Weight:", interactionWeight);
-
     // Update the user's interaction score
     // userInteractions.value[event.pubkey] += interactionWeight;
     userInteractions.value[event.pubkey] =
@@ -183,10 +181,13 @@ export const useNostrFeedAlgorithm = () => {
         (tag) => (userInterests.value[tag] || 0) > 0
       );
 
+      const uniqueTags = [...new Set(tags)];
+
       const filterQuery = {
         kinds: [1],
         limit: 10,
-        "#t": [...new Set(tags)],
+        // add tags
+        ...(tags.length && { "#t": uniqueTags }),
         ...(oldTimestamp.value && { until: oldTimestamp.value - 1 }),
       };
 

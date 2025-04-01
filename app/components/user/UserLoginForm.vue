@@ -2,13 +2,13 @@
   <div>
     <slot>
       <UButton
-        icon="i-heroicons-user"
+        icon="material-symbols-light:key-outline"
         variant="ghost"
         :block="block"
         color="primary"
         @click="importKeyModal = true"
       >
-        Login
+        Login / Import Key
       </UButton>
     </slot>
     <!-- Import Key Modal -->
@@ -18,11 +18,9 @@
     >
       <template #content>
         <UCard>
-          <template #header>
-            <h3 class="text-lg font-bold">Import Private Key</h3>
-          </template>
+          <h3 class="text-lg font-bold">Import Private Key</h3>
 
-          <div class="mb-4">
+          <div class="my-4">
             <UInput
               ref="keyInput"
               v-model="importKey"
@@ -33,20 +31,18 @@
             />
           </div>
 
-          <template #footer>
-            <div class="flex justify-end gap-2">
-              <UButton color="neutral" @click="importKeyModal = false">
-                Cancel
-              </UButton>
-              <UButton
-                color="primary"
-                :disabled="!importKey"
-                @click="importUserKey"
-              >
-                Import
-              </UButton>
-            </div>
-          </template>
+          <div class="flex justify-end gap-2">
+            <UButton color="neutral" @click="importKeyModal = false">
+              Cancel
+            </UButton>
+            <UButton
+              color="primary"
+              :disabled="!importKey"
+              @click="importUserKey"
+            >
+              Import
+            </UButton>
+          </div>
         </UCard>
       </template>
     </UModal>

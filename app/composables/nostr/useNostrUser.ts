@@ -26,7 +26,7 @@ export const useNostrUser = () => {
     getPublicKeyFromPrivate,
     createKeyPair,
   } = useNostrKeys();
-  const { saveUser, loadUser, loadCurrentUser, loadAllAccounts } =
+  const { saveUser, loadUser, accounts, loadCurrentUser, loadAllAccounts } =
     useNostrStorage();
   const { queryEvents } = useNostrRelay();
 
@@ -60,7 +60,7 @@ export const useNostrUser = () => {
 
       let newUser: UserInfo = {
         pubkey,
-        display_name: "",
+        display_name: `Account ${accounts.value.length + 1}`,
         userKeys: userKey,
       };
 
@@ -72,17 +72,6 @@ export const useNostrUser = () => {
 
         if (existingUser) {
           currentUserInfo.value = existingUser;
-          saveUser(currentUserInfo.value);
-          if (existingUser.userKeys) {
-            user.value = {
-              ...userKey,
-              ...existingUser.userKeys,
-            };
-          }
-        } else {
-          // Fetch user info from relays
-          currentUserInfo.value = newUser;
-         
           const data = await getUserInfo(pubkey);
 
           if (data) {
@@ -92,10 +81,21 @@ export const useNostrUser = () => {
             };
           }
           saveUser(currentUserInfo.value);
-        }
+        } else {
+          // Fetch user info from relays
+          currentUserInfo.value = newUser;
 
-        // Update accounts list
-        loadAllAccounts();
+          const data = await getUserInfo(pubkey);
+
+          if (data) {
+            currentUserInfo.value = {
+              ...data,
+              userKeys: userKey,
+            };
+          }
+          console.log(data);
+          saveUser(currentUserInfo.value);
+        }
       } else {
         currentUserInfo.value = newUser;
       }
