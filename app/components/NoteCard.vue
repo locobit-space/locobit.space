@@ -415,7 +415,6 @@ const getNoteLikes = async (noteId: string): Promise<number> => {
     zap.value = zaps;
 
     noteItems.value = events;
-    console.log(noteItems.value);
 
     // Filter only like-type reactions
     const likeReactions = events.filter((event) =>
