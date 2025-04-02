@@ -143,7 +143,7 @@
             class="mr-2"
             variant="ghost"
             :label="rePostCount > 0 ? `${rePostCount}` : ''"
-            @click="repost"
+            @click="repostNote"
           />
           <UButton
             color="neutral"
@@ -151,7 +151,6 @@
             class="mr-2"
             variant="ghost"
             :label="zap.zapCount > 0 ? `${zap.totalZapSats}` : ''"
-            @click="repost"
           />
           <UButton
             color="neutral"
@@ -187,6 +186,8 @@ const { getUserInfo, user } = useNostrUser();
 const { DEFAULT_RELAYS: RELAYS, queryEvents } = useNostrRelay();
 const { trackInteraction } = useNostrFeedAlgorithm();
 const { getZapStats } = useZapSats();
+
+const LIKE_REACTIONS = ["+", "❤️", "👍", "🙏🏿", "💜", "like"];
 
 const userInfo = ref<UserInfo>({
   pubkey: "",
@@ -275,15 +276,56 @@ const likeNote = async () => {
   }
 };
 
-const repost = () => {
+const repostNote = async () => {
+  if (!user.value) return;
+
+  const pubkey = user.value.publicKey;
+  const noteId = props.note.id;
+  const authorPubkey = props.note.pubkey;
+
   trackInteraction(props.note, "repost");
-  toast.add({
-    title: "Repost feature not implemented yet.",
-  });
+
+  // Optional: Check if already reposted
+  const existing = noteItems.value.find(
+    (item) =>
+      item.kind === 6 &&
+      item.pubkey === pubkey &&
+      item.tags.some((tag) => tag[0] === "e" && tag[1] === noteId)
+  );
+
+  if (existing) {
+    // Toggle repost off (optional)
+    noteItems.value = noteItems.value.filter((item) => item.id !== existing.id);
+    return;
+  }
+
+  const event = {
+    kind: 6,
+    content: "", // You could allow comments if you want
+    tags: [
+      ["e", noteId],
+      ["p", authorPubkey],
+    ],
+    created_at: Math.floor(Date.now() / 1000),
+  };
+
+  const { $nostr } = useNuxtApp();
+  const signed = $nostr.finalizeEvent(event, hexToBytes(user.value.privateKey));
+
+  toast.add({ title: "Note reposted!" });
+  noteItems.value.push(signed);
+
+  try {
+    await Promise.any($nostr.pool.publish(RELAYS, signed));
+  } catch (err) {
+    toast.add({ title: "Repost failed", color: "error" });
+    console.error("Repost failed", err);
+  }
 };
 
 const replyToNote = () => {
   trackInteraction(props.note, "reply");
+  // comment 
   toast.add({
     title: "Reply feature not implemented yet.",
   });
@@ -355,9 +397,7 @@ const noteItems = ref<Event[]>([]);
 
 const isLiked = computed(() => {
   if (noteItems.value.length) {
-    return ["+", "❤️", "👍", "🙏🏿", "💜"].includes(
-      noteItems.value[0]?.content || ""
-    );
+    return LIKE_REACTIONS.includes(noteItems.value[0]?.content || "");
   }
   return false;
 });
@@ -370,17 +410,16 @@ const getNoteLikes = async (noteId: string): Promise<number> => {
       limit: 100, // adjust based on how many likes you expect
     });
 
-
-
     // Zaps
     const zaps = await getZapStats(noteId);
     zap.value = zaps;
 
     noteItems.value = events;
+    console.log(noteItems.value);
 
     // Filter only like-type reactions
     const likeReactions = events.filter((event) =>
-      ["+", "❤️", "👍", "🙏🏿", "💜", "like"].includes(event.content)
+      LIKE_REACTIONS.includes(event.content)
     );
 
     return likeReactions.length;
@@ -407,12 +446,7 @@ const likeCount = computed(() => {
     }
   }
 
-  // Only count those where the latest reaction is "+"
-  const count = Array.from(latestByUser.values()).filter((item) =>
-    ["+", "❤️", "👍", "🙏🏿", "💜"].includes(item.content)
-  ).length;
-
-  return count;
+  return latestByUser.size;
 });
 
 const commentCount = computed(() => {

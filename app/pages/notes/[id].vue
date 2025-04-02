@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-3xl w-full mx-auto md:px-0 p-4">
+  <CommonContainer class="py-4">
     <article v-if="!loading">
       <NoteCard v-if="noteDetail.id" :note="noteDetail" />
     </article>
@@ -7,7 +7,7 @@
     <div v-else class="py-4">
       <NoteSkeleton />
     </div>
-  </div>
+  </CommonContainer>
 </template>
 
 <script setup lang="ts">

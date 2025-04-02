@@ -196,6 +196,11 @@ const isCreateAccount = ref(false);
 const loading = ref(false);
 
 function switchAccount(account: UserInfo) {
+  if (account.pubkey === user?.value?.publicKey) {
+    switchAccountModal.value = false;
+    return;
+  }
+
   setupUser(account.userKeys?.privateKey || "");
   updateAccountsList(account);
   switchAccountEffect.value = true;
