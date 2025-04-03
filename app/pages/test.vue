@@ -1,6 +1,6 @@
 <template>
     <div>
-        <JournalList  />
+
     </div>
 </template>
 

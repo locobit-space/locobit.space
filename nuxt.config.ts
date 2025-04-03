@@ -23,7 +23,9 @@ export default defineNuxtConfig({
     "@nuxt/ui",
   ],
   runtimeConfig: {
+    supabaseServiceKey: process.env.SUPABASE_SERVICE_KEY, // Server-only
     public: {
+      supabaseUrl: process.env.SUPABASE_URL,
       relayUrls: [
         "wss://relay.damus.io",
         "wss://nos.lol",

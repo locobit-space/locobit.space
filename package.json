@@ -16,6 +16,7 @@
     "@nuxt/image": "1.10.0",
     "@nuxt/test-utils": "3.17.2",
     "@nuxt/ui": "3.0.1",
+    "@supabase/supabase-js": "^2.49.4",
     "crypto-browserify": "^3.12.1",
     "eslint": "^9.0.0",
     "light-bolt11-decoder": "^3.2.0",
@@ -23,6 +24,7 @@
     "nostr-tools": "^2.11.0",
     "nuxt": "^3.16.1",
     "typescript": "^5.6.3",
+    "video.js": "^8.22.0",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0"
   },

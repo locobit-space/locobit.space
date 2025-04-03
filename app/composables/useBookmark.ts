@@ -12,6 +12,7 @@ export const useBookmark = () => {
   // fetch bookmarks
   async function fetchBookmarks() {
     try {
+      if (!user.value) return;
       const events = await queryEvents({
         kinds: [30001],
         limit: 1,
@@ -30,6 +31,8 @@ export const useBookmark = () => {
       throw new Error(`[useBookmark] Error fetching bookmarks: ${error}`);
     }
   }
+
+  
 
   return {
     items,
