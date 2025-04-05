@@ -1,22 +1,13 @@
+import { hexToBytes } from "@noble/ciphers/utils";
 import type { Event } from "nostr-tools";
 import { mediaExtensions } from "~/lib";
 
 export const useNotes = () => {
   const { $nostr } = useNuxtApp();
-  const { pool } = $nostr;
-  const { DEFAULT_RELAYS: RELAYS } = useNostrRelay();
-
-  const storedBookmarks = localStorage.getItem("nostr-bookmarks");
-  const bookmarks = useState<string[]>("bookmarkedVideos", () => []);
-
-  const toggleBookmark = (videoId: string) => {
-    const index = bookmarks.value.indexOf(videoId);
-    if (index > -1) {
-      bookmarks.value.splice(index, 1);
-    } else {
-      bookmarks.value.push(videoId);
-    }
-  };
+  const { finalizeEvent } = $nostr;
+  const { DEFAULT_RELAYS: RELAYS, queryEvents, publishEvent } = useNostrRelay();
+  const { trackInteraction } = useNostrFeedAlgorithm();
+  const { user } = useNostrUser();
 
   const getNoteDetail = async (
     noteId: string,
@@ -41,10 +32,13 @@ export const useNotes = () => {
     const fetchFromRelays = async (): Promise<Event | null> => {
       const fetchPromises = shuffledRelays.map(async (relay) => {
         try {
-          const event = await pool.get([relay], {
-            ids: [noteId],
-            kinds: [1],
-          });
+          const event = await queryEvents(
+            {
+              ids: [noteId],
+              kinds: [1],
+            },
+            [relay]
+          );
           console.log(event);
           return event || null;
         } catch (error) {
@@ -56,8 +50,7 @@ export const useNotes = () => {
       const results = await Promise.allSettled(fetchPromises);
       const successful = results
         .filter((r) => r.status === "fulfilled" && r.value)
-        .map((r) => (r as PromiseFulfilledResult<Event>).value);
-
+        .map((r) => (r as unknown as PromiseFulfilledResult<Event>).value);
       return successful[0] || null;
     };
 
@@ -95,6 +88,7 @@ export const useNotes = () => {
     return tags
       .filter((tag) => tag[0] === "imeta" && tag[1]?.includes("url"))
       .map((tag) => {
+        if (!tag[1]) return "";
         const match = tag[1].match(/https?:\/\/[^ ]+/);
         return match?.[0] ?? "";
       })
@@ -114,7 +108,7 @@ export const useNotes = () => {
   const mapNotesToMediaList = (events: Event[]) => {
     const mediaNotes = filterMediaNotes(events);
 
-    console.log(mediaNotes)
+    console.log(mediaNotes);
 
     return mediaNotes.flatMap((event) => {
       const mediaUrls = [
@@ -138,11 +132,39 @@ export const useNotes = () => {
     });
   };
 
+  const repostNote = async (note: Event) => {
+    if (!user.value) return;
+
+    const pubkey = user.value.publicKey;
+    const noteId = note.id;
+    const authorPubkey = note.pubkey;
+
+    trackInteraction(note, "repost");
+
+    const event = {
+      kind: 6,
+      content: "", // You could allow comments if you want
+      tags: [
+        ["e", noteId],
+        ["p", authorPubkey],
+      ],
+      created_at: Math.floor(Date.now() / 1000),
+    };
+
+    const signed = finalizeEvent(event, hexToBytes(user.value.privateKey));
+
+    try {
+      await publishEvent(signed);
+      return true;
+    } catch (err) {
+      console.error("Repost failed", err);
+    }
+  };
+
   return {
-    bookmarks,
     getNoteDetail,
-    toggleBookmark,
     filterMediaNotes,
     mapNotesToMediaList,
+    repostNote,
   };
 };

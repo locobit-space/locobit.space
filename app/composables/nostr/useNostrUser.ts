@@ -93,7 +93,6 @@ export const useNostrUser = () => {
               userKeys: userKey,
             };
           }
-          console.log(data);
           saveUser(currentUserInfo.value);
         }
       } else {

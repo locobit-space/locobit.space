@@ -143,7 +143,7 @@
             class="mr-2"
             variant="ghost"
             :label="rePostCount > 0 ? `${rePostCount}` : ''"
-            @click="repostNote"
+            @click="repostNote(note)"
           />
           <UButton
             color="neutral"
@@ -158,7 +158,7 @@
             :icon="
               isBookmarked ? 'heroicons:bookmark-solid' : 'heroicons:bookmark'
             "
-            @click="bookmarkNote"
+            @click="bookmarkNote(note.id)"
           />
         </div>
       </div>
@@ -171,6 +171,7 @@ import type { Event } from "nostr-tools";
 import { hexToBytes } from "@noble/hashes/utils";
 import { computed } from "vue";
 import type { UserInfo } from "~~/types";
+import { platformMedias } from "~/lib";
 
 const props = defineProps<{
   note: Event;
@@ -179,13 +180,14 @@ const props = defineProps<{
 const emit = defineEmits(["contentClicked"]);
 
 const toast = useToast();
-const { $nostr } = useNuxtApp();
 
 const { formatDateTime, timeAgo } = useHelpers();
 const { getUserInfo, user } = useNostrUser();
 const { DEFAULT_RELAYS: RELAYS, queryEvents } = useNostrRelay();
 const { trackInteraction } = useNostrFeedAlgorithm();
 const { getZapStats } = useZapSats();
+const { bookmarkNote, items: bookmarks } = useBookmark();
+const { repostNote } = useNotes();
 
 const LIKE_REACTIONS = ["+", "❤️", "👍", "🙏🏿", "💜", "like"];
 
@@ -276,122 +278,17 @@ const likeNote = async () => {
   }
 };
 
-const repostNote = async () => {
-  if (!user.value) return;
-
-  const pubkey = user.value.publicKey;
-  const noteId = props.note.id;
-  const authorPubkey = props.note.pubkey;
-
-  trackInteraction(props.note, "repost");
-
-  // Optional: Check if already reposted
-  const existing = noteItems.value.find(
-    (item) =>
-      item.kind === 6 &&
-      item.pubkey === pubkey &&
-      item.tags.some((tag) => tag[0] === "e" && tag[1] === noteId)
-  );
-
-  if (existing) {
-    // Toggle repost off (optional)
-    noteItems.value = noteItems.value.filter((item) => item.id !== existing.id);
-    return;
-  }
-
-  const event = {
-    kind: 6,
-    content: "", // You could allow comments if you want
-    tags: [
-      ["e", noteId],
-      ["p", authorPubkey],
-    ],
-    created_at: Math.floor(Date.now() / 1000),
-  };
-
-  const { $nostr } = useNuxtApp();
-  const signed = $nostr.finalizeEvent(event, hexToBytes(user.value.privateKey));
-
-  toast.add({ title: "Note reposted!" });
-  noteItems.value.push(signed);
-
-  try {
-    await Promise.any($nostr.pool.publish(RELAYS, signed));
-  } catch (err) {
-    toast.add({ title: "Repost failed", color: "error" });
-    console.error("Repost failed", err);
-  }
-};
-
 const replyToNote = () => {
   trackInteraction(props.note, "reply");
-  // comment 
+  // comment
   toast.add({
     title: "Reply feature not implemented yet.",
   });
 };
 
-const nostrBookmarks = ref<string[]>([]);
-
-const loadBookmarks = () => {
-  const stored = localStorage.getItem("nostr-bookmarks");
-  nostrBookmarks.value = stored ? JSON.parse(stored) : [];
-};
-
-// Load on init
-loadBookmarks();
-
-const bookmarkNote = () => {
-  const id = props.note.id;
-  const index = nostrBookmarks.value.indexOf(id);
-
-  if (index === -1) {
-    nostrBookmarks.value.push(id);
-    toast.add({ title: "Note bookmarked" });
-  } else {
-    nostrBookmarks.value.splice(index, 1);
-    toast.add({ title: "Note unbookmarked", color: "neutral" });
-  }
-
-  // Save back to localStorage
-  localStorage.setItem("nostrBookmarks", JSON.stringify(nostrBookmarks.value));
-
-  syncBookmarksToNostr();
-};
-
 const isBookmarked = computed(() => {
-  return nostrBookmarks.value.includes(props.note.id);
+  return bookmarks.value.includes(props.note.id);
 });
-
-const syncBookmarksToNostr = async () => {
-  if (!user.value) return;
-
-  const { $nostr } = useNuxtApp();
-  const pubkey = user.value?.publicKey;
-  if (!pubkey) return;
-
-  const event = {
-    kind: 30001,
-    created_at: Math.floor(Date.now() / 1000),
-    content: "",
-    tags: [
-      ["d", "bookmarks"],
-      ["title", "Bookmarks"],
-      ["t", "bookmark"],
-      ...nostrBookmarks.value.map((id) => ["e", id]),
-    ],
-    pubkey,
-  };
-
-  const signed = $nostr.finalizeEvent(event, hexToBytes(user.value.privateKey));
-
-  try {
-    await Promise.any($nostr.pool.publish(RELAYS, signed));
-    // Optional success toast here if you want
-  } catch (err) {
-    console.error("Failed to sync bookmarks to Nostr", err);
-  }
-};
 
 const noteItems = ref<Event[]>([]);
 
@@ -459,95 +356,6 @@ const rePostCount = computed(() => {
 // Media URL extraction with support for multiple platforms
 const mediaUrls = computed(() => {
   // Collection of platform patterns
-  const platforms = [
-    {
-      name: "youtube",
-      regex:
-        /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]+)(?:\S*)/gi,
-      embedUrl: (id: string) => `https://www.youtube.com/embed/${id}`,
-      thumbnailUrl: (id: string) =>
-        `https://img.youtube.com/vi/${id}/hqdefault.jpg`,
-    },
-    {
-      name: "vimeo",
-      regex:
-        /(?:https?:\/\/)?(?:www\.)?vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/(?:[^\/]*)\/videos\/|album\/(?:\d+)\/video\/|)(\d+)(?:$|\/|\?)/gi,
-      embedUrl: (id: string) => `https://player.vimeo.com/video/${id}`,
-    },
-    {
-      name: "rumble",
-      regex:
-        /(?:https?:\/\/)?(?:www\.)?rumble\.com\/([a-zA-Z0-9_-]+)(?:\.html)?(?:\S*)/gi,
-      embedUrl: (id: string) => `https://rumble.com/embed/${id}/`,
-    },
-    {
-      name: "dailymotion",
-      regex:
-        /(?:https?:\/\/)?(?:www\.)?dailymotion\.com\/video\/([a-zA-Z0-9_-]+)(?:\S*)/gi,
-      embedUrl: (id: string) => `https://www.dailymotion.com/embed/video/${id}`,
-    },
-    {
-      name: "twitch",
-      regex:
-        /(?:https?:\/\/)?(?:www\.)?twitch\.tv\/(?:videos\/)?([a-zA-Z0-9_-]+)(?:\S*)/gi,
-      embedUrl: (id: string) => {
-        // Check if it's a video or channel
-        if (/^\d+$/.test(id)) {
-          return `https://player.twitch.tv/?video=${id}&parent=${window.location.hostname}`;
-        } else {
-          return `https://player.twitch.tv/?channel=${id}&parent=${window.location.hostname}`;
-        }
-      },
-    },
-    {
-      name: "tiktok",
-      regex:
-        /(?:https?:\/\/)?(?:www\.)?tiktok\.com\/@[^\/]+\/video\/(\d+)(?:\S*)/gi,
-      embedUrl: (id: string) => `https://www.tiktok.com/embed/v2/${id}`,
-    },
-    {
-      name: "facebook",
-      regex:
-        /(?:https?:\/\/)?(?:www\.|web\.|m\.)?facebook\.com\/(?:watch\/?\?v=|video\.php\?v=|video\.php\?id=|.*?\/videos\/(?:[^\/]+\/)?)(\d+)(?:\S*)/gi,
-      embedUrl: (id: string) =>
-        `https://www.facebook.com/plugins/video.php?href=https://www.facebook.com/watch/?v=${id}&show_text=0`,
-    },
-    {
-      name: "instagram",
-      regex:
-        /(?:https?:\/\/)?(?:www\.)?instagram\.com\/(?:p|reel)\/([a-zA-Z0-9_-]+)(?:\S*)/gi,
-      embedUrl: (id: string) => `https://www.instagram.com/p/${id}/embed/`,
-    },
-    {
-      name: "bitchute",
-      regex:
-        /(?:https?:\/\/)?(?:www\.)?bitchute\.com\/video\/([a-zA-Z0-9_-]+)(?:\S*)/gi,
-      embedUrl: (id: string) => `https://www.bitchute.com/embed/${id}/`,
-    },
-    {
-      name: "odysee",
-      regex:
-        /(?:https?:\/\/)?(?:www\.)?odysee\.com\/(?:\$\/)?([a-zA-Z0-9_-]+:[a-zA-Z0-9_-]+)(?:\S*)/gi,
-      embedUrl: (id: string) => `https://odysee.com/$/embed/${id}`,
-    },
-    {
-      name: "peertube",
-      regex:
-        /(?:https?:\/\/)?([a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+)\/(?:videos\/)?watch\/([a-zA-Z0-9_-]+)(?:\S*)/gi,
-      // Special handler for PeerTube as it needs both domain and ID
-      customHandler: (match: any) => {
-        const domain = match[1];
-        const videoId = match[2];
-        return {
-          type: "embed",
-          embedType: "peertube",
-          videoId: videoId,
-          domain: domain,
-          embedUrl: `https://${domain}/videos/embed/${videoId}`,
-        };
-      },
-    },
-  ];
 
   // Direct media file URLs
   const imageUrlRegex = /(https?:\/\/\S+\.(?:jpg|jpeg|png|gif|webp))/gi;
@@ -576,7 +384,7 @@ const mediaUrls = computed(() => {
   });
 
   // Process each platform
-  platforms.forEach((platform) => {
+  platformMedias.forEach((platform) => {
     if (platform.customHandler) {
       // For platforms that need special handling (like PeerTube)
       let match;
@@ -596,6 +404,7 @@ const mediaUrls = computed(() => {
           embedType: platform.name,
           videoId: videoId,
           embedUrl: platform.embedUrl(videoId || ""),
+          thumbnailUrl: "",
         };
 
         // Add thumbnail URL if available
