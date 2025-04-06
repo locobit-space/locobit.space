@@ -1,3 +1,4 @@
+import type { Event } from "nostr-tools";
 import { hexToBytes } from "@noble/ciphers/utils";
 
 export const useBookmark = () => {
@@ -11,12 +12,16 @@ export const useBookmark = () => {
     return [];
   });
 
+  const bookmarks = useState<Event[]>("bookmarks", () => []);
+
   const bookmarkNote = (noteId: string) => {
     const index = items.value.indexOf(noteId);
 
     if (index === -1) {
       items.value.push(noteId);
     } else {
+      // Remove bookmark
+      bookmarks.value = bookmarks.value.filter((note) => note.id !== noteId);
       items.value.splice(index, 1);
     }
 
@@ -26,7 +31,7 @@ export const useBookmark = () => {
   };
 
   // fetch bookmarks
-  async function fetchBookmarks() {
+  async function fetchBookmarks(isAll: boolean = false) {
     try {
       if (!user.value) return;
       const events = await queryEvents({
@@ -49,8 +54,22 @@ export const useBookmark = () => {
             tag[0] === "e" && typeof tag[1] === "string"
         )
         .map((tag) => tag[1]);
-
+      if (isAll) {
+        fetchAllBookmarks(_items);
+      }
       items.value = _items;
+    } catch (error) {
+      throw new Error(`[useBookmark] Error fetching bookmarks: ${error}`);
+    }
+  }
+
+  async function fetchAllBookmarks(ids: string[]) {
+    try {
+      const reqNote = await queryEvents({
+        ids,
+        kinds: [1],
+      });
+      bookmarks.value = reqNote;
     } catch (error) {
       throw new Error(`[useBookmark] Error fetching bookmarks: ${error}`);
     }
@@ -89,14 +108,12 @@ export const useBookmark = () => {
     }
   };
 
-  onMounted(() => {
-    fetchBookmarks();
-  });
-
   return {
     items,
+    bookmarks,
     bookmarkNote,
     syncBookmarks,
     fetchBookmarks,
+    fetchAllBookmarks,
   };
 };

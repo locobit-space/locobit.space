@@ -108,8 +108,6 @@ export const useNotes = () => {
   const mapNotesToMediaList = (events: Event[]) => {
     const mediaNotes = filterMediaNotes(events);
 
-    console.log(mediaNotes);
-
     return mediaNotes.flatMap((event) => {
       const mediaUrls = [
         ...extractMediaUrlsFromContent(event.content),
@@ -161,10 +159,21 @@ export const useNotes = () => {
     }
   };
 
+  async function fetchNotes(filter = {}) {
+    try {
+      const req = await queryEvents(filter)
+    } catch (error) {
+      throw new Error(`[useNotes]: error fetch notes: ${error}`);
+    }
+  }
+
+  
+
   return {
     getNoteDetail,
     filterMediaNotes,
     mapNotesToMediaList,
     repostNote,
+    fetchNotes
   };
 };

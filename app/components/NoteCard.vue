@@ -263,13 +263,11 @@ const likeNote = async () => {
 
   const { $nostr } = useNuxtApp();
   const signed = $nostr.finalizeEvent(event, hexToBytes(user.value.privateKey));
-
+  noteItems.value.push(signed); // Add the new one
   // Remove old one if exists (e.g. switching from + to -)
   if (existing) {
     noteItems.value = noteItems.value.filter((item) => item.id !== existing.id);
   }
-
-  noteItems.value.push(signed); // Add the new one
 
   try {
     await Promise.any($nostr.pool.publish(RELAYS, signed));
