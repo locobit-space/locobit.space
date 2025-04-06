@@ -136,6 +136,7 @@
             variant="ghost"
             icon="proicons:comment"
             :label="commentCount > 0 ? `${commentCount}` : ''"
+            @click="isComment = !isComment"
           />
           <UButton
             color="neutral"
@@ -160,6 +161,13 @@
             "
             @click="bookmarkNote(note.id)"
           />
+        </div>
+
+        <div v-if="isComment">
+          <!-- comment list -->
+          <CommentList :note-id="note.id" :pubkey="note?.pubkey" />
+          <!-- comments input -->
+          <CommentInput :note-id="note.id" :pubkey="note?.pubkey" />
         </div>
       </div>
     </div>
@@ -189,6 +197,7 @@ const { getZapStats } = useZapSats();
 const { bookmarkNote, items: bookmarks } = useBookmark();
 const { repostNote } = useNotes();
 
+const isComment = ref(false);
 const LIKE_REACTIONS = ["+", "❤️", "👍", "🙏🏿", "💜", "like"];
 
 const userInfo = ref<UserInfo>({
@@ -263,7 +272,7 @@ const likeNote = async () => {
 
   const { $nostr } = useNuxtApp();
   const signed = $nostr.finalizeEvent(event, hexToBytes(user.value.privateKey));
-  noteItems.value.push(signed); // Add the new one
+  noteItems.value = [signed, ...noteItems.value]; // Add the new one
   // Remove old one if exists (e.g. switching from + to -)
   if (existing) {
     noteItems.value = noteItems.value.filter((item) => item.id !== existing.id);
@@ -330,7 +339,6 @@ const likeCount = computed(() => {
       item.tags.some((tag) => tag[0] === "e" && tag[1] === props.note.id)
   );
 
-  // Map to store the latest reaction per pubkey
   const latestByUser = new Map();
 
   for (const item of reactions) {

@@ -2,12 +2,17 @@
   <div>
     <div
       v-if="user"
-      class="cursor-pointer flex mt-4 items-center gap-2"
+      class="cursor-pointer flex mt-4 items-center relative gap-2"
       @click="switchAccountModal = true"
     >
-      <UAvatar :src="currentUserInfo?.picture" />
+      <span>
+        <UAvatar :src="currentUserInfo?.picture" size="xl" />
+      </span>
       <span>
         {{ currentUserInfo?.display_name || "Nostr User" }}
+      </span>
+      <span v-if="currentUserInfo?.nip05">
+        <Icon name="ic:round-verified" class="text-primary-500 w-4 h-4" />
       </span>
     </div>
     <div v-else>
@@ -53,9 +58,18 @@
               <UAvatar
                 :src="currentUserInfo?.picture"
                 icon="i-heroicons-user"
+                size="2xl"
               />
-              <div class="text-center">
-                <h3>{{ currentUserInfo?.display_name || "Nostr User" }}</h3>
+              <div class="">
+                <h3>
+                  {{ currentUserInfo?.display_name || "Nostr User" }}
+                  <span v-if="currentUserInfo?.nip05">
+                    <Icon
+                      name="ic:round-verified"
+                      class="text-primary-500 w-4 h-4"
+                    />
+                  </span>
+                </h3>
                 <small class="text-gray-500" v-if="currentUserInfo?.nip05">
                   @{{ currentUserInfo?.nip05 }}
                 </small>
@@ -90,6 +104,12 @@
               </span>
               <span class="flex-grow">
                 {{ account.display_name || "Nostr User" }}
+                <span v-if="account?.nip05">
+                  <Icon
+                    name="ic:round-verified"
+                    class="text-primary-500 w-4 h-4"
+                  />
+                </span>
               </span>
               <span v-if="account.pubkey === user?.publicKey">
                 <Icon
