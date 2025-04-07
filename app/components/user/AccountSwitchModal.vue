@@ -52,7 +52,7 @@
 
           <figure
             v-if="currentUserInfo?.pubkey"
-            class="p-4 flex gap-4 border border-slate-100 rounded-xl mb-2"
+            class="p-4 flex gap-4 border border-slate-100 dark:border-slate-800 rounded-xl mb-2"
           >
             <div class="flex gap-2 items-center flex-grow">
               <UAvatar

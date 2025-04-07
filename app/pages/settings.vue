@@ -1,6 +1,8 @@
 <template>
-  <div class="flex w-full divide-x divide-slate-100">
-    <aside>
+  <div
+    class="flex w-full h-full divide-x divide-slate-100 dark:divide-slate-800"
+  >
+    <aside class="">
       <nav class="space-y-1 w-64 p-4 px-2 sticky top-0">
         <UButton
           v-for="item in items"
@@ -16,7 +18,7 @@
         </UButton>
       </nav>
     </aside>
-    <main class="flex-1 flex flex-col">
+    <main class="flex-1 flex flex-col h-full overflow-y-auto">
       <NuxtPage />
     </main>
   </div>
@@ -27,17 +29,32 @@ const items = [
   {
     label: "Profile",
     icon: "i-heroicons-user-circle",
-    to: "/profile",
+    to: "/settings/profile",
   },
   {
     label: "Nostr Key Management",
     icon: "i-heroicons-key",
-    to: "/nostr",
+    to: "/settings/nostr",
   },
   {
     label: "Privacy Settings",
     icon: "i-heroicons-lock-closed",
-    to: "/privacy",
+    to: "/settings/privacy",
+  },
+  {
+    label: "Interface",
+    icon: "ri:compasses-2-line",
+    to: "/settings/interface",
+  },
+  {
+    label: "Preferences",
+    icon: "ri:equalizer-line",
+    to: "/settings/preferences",
+  },
+  {
+    label: "About",
+    icon: "ri:information-line",
+    to: "/settings/about",
   },
 ];
 </script>

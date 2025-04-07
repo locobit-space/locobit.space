@@ -15,6 +15,36 @@ export default defineNuxtConfig({
     preference: "light",
   },
 
+  ui: {
+    theme: {
+      colors: [
+        "red",
+        "orange",
+        "amber",
+        "yellow",
+        "lime",
+        "green",
+        "emerald",
+        "teal",
+        "cyan",
+        "sky",
+        "blue",
+        "indigo",
+        "violet",
+        "purple",
+        "fuchsia",
+        "pink",
+        "rose",
+        "amethyst",
+        "slate",
+        "gray",
+        "zinc",
+        "neutral",
+        "stone",
+      ],
+    },
+  },
+
   modules: [
     "@nuxt/eslint",
     "@nuxt/icon",

@@ -1,9 +1,30 @@
 export default defineAppConfig({
-    ui: {
-      colors: {
-        primary: 'amethyst',
-        neutral: 'zinc'
-      }
-    }
-  })
-  
+  ui: {
+    colors: {
+      primary: "amethyst",
+      neutral: "neutral",
+      amber: "amber",
+      red: "red",
+      green: "green",
+      blue: "blue",
+      yellow: "yellow",
+      orange: "orange",
+      sky: "sky",
+      teal: "teal",
+      indigo: "indigo",
+      emerald: "emerald",
+      cyan: "cyan",
+      lime: "lime",
+      violet: "violet",
+      purple: "purple",
+      fuchsia: "fuchsia",
+      pink: "pink",
+      rose: "rose",
+      amethyst: "amethyst",
+      slate: "slate",
+      zinc: "zinc",
+      gray: "gray",
+      stone: "stone",
+    },
+  },
+});
