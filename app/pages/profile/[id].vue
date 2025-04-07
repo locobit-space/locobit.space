@@ -43,16 +43,21 @@
               </span>
             </div>
           </div>
-          <div class="">
-            <UButton
-              variant="ghost"
-              :label="isFollowing ? 'Unfollow' : 'Follow'"
-              :color="isFollowing ? 'primary' : 'neutral'"
-              :icon="
-                isFollowing ? 'i-heroicons-check' : 'i-heroicons-plus-circle'
-              "
-              @click="toggleFollow"
-            />
+          <div v-if="user" class="">
+            <nav v-if="user?.publicKey !== profile?.pubkey">
+              <UButton
+                variant="ghost"
+                :label="isFollowing ? 'Unfollow' : 'Follow'"
+                :color="isFollowing ? 'primary' : 'neutral'"
+                :icon="
+                  isFollowing ? 'i-heroicons-check' : 'i-heroicons-plus-circle'
+                "
+                @click="toggleFollow"
+              />
+            </nav>
+            <nav v-else>
+              <UButton variant="ghost" label="Edit" :to="`/profile/${id}`" />
+            </nav>
             <!-- <UButton variant="ghost" label="Message" @click="message" /> -->
             <!-- <UButton color="neutral" label="Share" @click="share" />
             <UButton color="neutral" label="Report" @click="report" />
@@ -369,6 +374,8 @@ const profile = ref<UserInfo>({
   picture: "",
   name: "",
 });
+
+const { user } = useNostrUser();
 const loading = ref(true);
 const profileNotes = ref<Event[]>([]);
 
@@ -403,8 +410,10 @@ watch(tab, (newTab) => {
   }
 });
 
+const { id } = route.params;
+
 onMounted(async () => {
-  pubkey.value = route.params.id as string;
+  pubkey.value = id as string;
 
   try {
     const req = await getUserInfo(pubkey.value);

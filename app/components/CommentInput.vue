@@ -1,7 +1,7 @@
 <!-- CommentInput.vue -->
 <template>
   <div class="mt-4">
-    <div class="flex items-start gap-3">
+    <div class="flex items-start gap-3 relative">
       <UAvatar
         v-if="profile"
         :src="profile.picture"
@@ -50,6 +50,10 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  isReplyComment: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(["comment-added"]);
@@ -65,6 +69,16 @@ const { user, currentUserInfo: profile } = useNostrUser();
 const submitComment = async () => {
   if (!user.value) return;
   if (!commentText.value.trim() || isSubmitting.value) return;
+
+  // is a reply comment
+  if (props.isReplyComment) {
+    commentText.value = `${commentText.value}`;
+    emit("comment-added", {
+      comment: commentText.value,
+      noteId: props.noteId,
+    });
+    return;
+  }
 
   isSubmitting.value = true;
 

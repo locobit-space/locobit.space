@@ -15,7 +15,7 @@
           <div class="font-medium">
             <NuxtLink :to="`/profile/${comment.pubkey}`">
               {{
-                authorProfile?.displayName ||
+                authorProfile?.display_name ||
                 authorProfile?.name ||
                 shortenPubkey(comment.pubkey)
               }}
@@ -57,6 +57,7 @@
           :noteId="comment.id"
           :pubkey="`${currentUserPubkey}`"
           :profile="currentUserProfile"
+          :isReplyComment="true"
           @comment-added="handleReplyAdded"
         />
       </div>
@@ -66,6 +67,8 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
+import type { Event } from "nostr-tools";
+import { hexToBytes } from "@noble/ciphers/utils";
 
 const props = defineProps({
   comment: {
@@ -76,9 +79,17 @@ const props = defineProps({
     type: Object,
     default: () => ({}),
   },
+  rootId: {
+    type: String,
+    required: true,
+  }
 });
 
+const { $nostr } = useNuxtApp();
+const { finalizeEvent } = $nostr;
+
 const { timeAgo } = useHelpers();
+const { publishEvent } = useNostrRelay();
 const { user, currentUserInfo } = useNostrUser();
 const showReplyInput = ref(false);
 const isLiked = ref(false);
@@ -102,8 +113,36 @@ const toggleLike = async () => {
   // This will be added in a future iteration
 };
 
-const handleReplyAdded = (replyEvent: Event) => {
+const handleReplyAdded = async (data: any) => {
+  if (!user.value) return;
+
   showReplyInput.value = false;
-  // Emit event to parent to refresh comments if needed
+
+  const pubkey = user.value?.publicKey;
+  const created_at = Math.floor(Date.now() / 1000);
+
+  const { comment, noteId } = data;
+
+  const event: Event = {
+    kind: 1,
+    pubkey: `${pubkey}`,
+    created_at,
+    content: comment,
+    tags: [
+      ["e", props.rootId, "", "root"], // root post
+      ["e", noteId, "", "reply"], // the comment being replied to
+      ["p", props.comment.pubkey], // the commenter you're replying to
+    ],
+  };
+
+  console.log(event);
+
+  const signed = finalizeEvent(event, hexToBytes(`${user.value?.privateKey}`));
+  console.log(signed);
+  const ok = await publishEvent(signed);
+  if (ok) {
+    console.log("Reply posted.");
+  }
+
 };
 </script>

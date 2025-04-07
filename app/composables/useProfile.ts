@@ -10,6 +10,8 @@ export const useProfile = () => {
       ...profiles.value,
       ..._profiles,
     };
+
+    console.log("Fetched user profiles:", _profiles);
   }
 
   return {

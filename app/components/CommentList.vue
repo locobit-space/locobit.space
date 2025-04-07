@@ -18,13 +18,67 @@
       No comments yet. Be the first to comment!
     </div>
 
-    <div v-else class="space-y-4">
-      <CommentItem
-        v-for="comment in comments"
-        :key="comment.id"
-        :comment="comment"
-        :profiles="profiles"
-      />
+    <div v-else>
+      <!-- <ul class="space-y-4">
+        <li v-for="(comment, index) in rootComments" :key="index">
+          <CommentItem
+            :comment="comment.event"
+            :profiles="profiles"
+            :rootId="noteId"
+          />
+          <ol v-if="comment.replies.length" class="pl-8 space-y-2 my-2">
+            <li
+              v-for="(reply, replyIndex) in comment.replies"
+              :key="replyIndex"
+            >
+              <CommentItem
+                :comment="reply.event"
+                :profiles="profiles"
+                :rootId="noteId"
+                :isReplyComment="true"
+              />
+            </li>
+          </ol>
+        </li>
+      </ul> -->
+      <ul class="space-y-4">
+        <li
+          v-for="(comment, index) in rootComments"
+          :key="index"
+          class="relative"
+        >
+          <CommentItem
+            :comment="comment.event"
+            :profiles="profiles"
+            :rootId="noteId"
+          />
+          <ol v-if="comment.replies.length" class="pl-8 space-y-2 my-2">
+            <!-- Vertical line with rounded edges -->
+            <div
+              class="absolute left-3 top-7 w-0.5 h-[65%]  bg-gray-200 rounded-full"
+            ></div>
+
+            <li
+              v-for="(reply, replyIndex) in comment.replies"
+              :key="replyIndex"
+              class="relative"
+            >
+              <!-- Curved connector using border-radius -->
+              <div
+                class="absolute left-[-20px] -top-6 w-5 h-10 border-l-2 border-b-2 border-gray-200 rounded-bl-lg"
+                style="border-right: none; border-top: none"
+              ></div>
+
+              <CommentItem
+                :comment="reply.event"
+                :profiles="profiles"
+                :rootId="noteId"
+                :isReplyComment="true"
+              />
+            </li>
+          </ol>
+        </li>
+      </ul>
     </div>
 
     <div v-if="hasMoreComments" class="flex justify-center pt-2">
@@ -55,6 +109,13 @@ const props = defineProps({
   },
 });
 
+interface CommentNode {
+  event: Event;
+  replies: CommentNode[];
+}
+const commentMap = new Map<string, CommentNode>();
+const rootComments = ref<CommentNode[]>([]);
+
 const comments = ref<Event[]>([]);
 const loading = ref(true);
 const loadingMore = ref(false);
@@ -82,6 +143,33 @@ const loadComments = async (page = 1) => {
 
     const fetchedComments = await queryEvents(filter);
 
+    for (const event of fetchedComments) {
+      if (event.kind !== 1) continue;
+      commentMap.set(event.id, { event, replies: [] });
+    }
+
+    for (const { event } of commentMap.values()) {
+      const replyTag = event.tags.find((t) => t[0] === "e" && t[3] === "reply");
+
+      if (replyTag) {
+        const parentId = replyTag[1];
+        const parentNode = commentMap.get(`${parentId}`);
+
+        if (parentNode) {
+          parentNode.replies.push(commentMap.get(event.id)!);
+        } else {
+          // fallback: treat as root if parent not found
+          rootComments.value.push(commentMap.get(event.id)!);
+        }
+      } else {
+        // top-level comment
+        rootComments.value.push(commentMap.get(event.id)!);
+      }
+    }
+
+    console.log(rootComments.value);
+    // console.log(commentMap);
+
     // Sort comments by timestamp
     const sortedComments = fetchedComments.sort(
       (a, b) => b.created_at - a.created_at
@@ -101,6 +189,7 @@ const loadComments = async (page = 1) => {
     const pubkeys = [
       ...new Set(fetchedComments.map((comment) => comment.pubkey)),
     ];
+    console.log(pubkeys);
     if (pubkeys.length > 0) {
       await fetchUserProfiles(pubkeys);
     }
