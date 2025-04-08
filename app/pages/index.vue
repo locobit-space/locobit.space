@@ -1,7 +1,7 @@
 <template>
   <main class="">
     <nav
-      class="sticky top-0 backdrop-blur bg-white/30 border-b border-white/20 z-50"
+      class="sticky top-0 dark:border-gray-800 dark:bg-transparent dark:backdrop-blur bg-white/30 border-b border-white/20 z-50"
     >
       <AppHeader class="" @filter="handleFilter" />
     </nav>
@@ -55,7 +55,7 @@
           <p class="text-gray-500">No notes found. Be the first to post!</p>
         </div>
         <!-- {{ notes }} -->
-        <div class="space-y-4 divide-y divide-slate-100">
+        <div class="space-y-4 divide-y divide-slate-100 dark:divide-slate-800">
           <NoteCard
             v-for="note in notes"
             :key="note.id"

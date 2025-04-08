@@ -93,7 +93,7 @@
           <div
             v-for="(preview, index) in linkPreviews"
             :key="index"
-            class="border rounded-lg border-slate-100 overflow-hidden flex"
+            class="border rounded-lg border-slate-100 overflow-hidden flex dark:border-slate-800"
           >
             <div v-if="preview.image" class="w-1/3">
               <img
@@ -122,7 +122,7 @@
         </div>
 
         <!-- action buttons repost like etc -->
-        <div class="flex gap-4 mt-4 border-y border-slate-100 py-1">
+        <div class="flex gap-4 mt-4 border-t border-slate-100 dark:border-slate-800 py-1">
           <UButton
             :color="isLiked ? 'primary' : 'neutral'"
             :icon="isLiked ? 'heroicons:heart-20-solid' : 'heroicons:heart'"

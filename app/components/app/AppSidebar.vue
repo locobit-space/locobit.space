@@ -68,6 +68,12 @@ const sidebarNavItems = computed(() => [
     isMobile: true,
   },
   {
+    label: "Notifications",
+    icon: "i-heroicons-bell",
+    to: "/notifications",
+    isMobile: true,
+  },
+  {
     label: "Shorts",
     icon: "simple-icons:youtubeshorts",
     to: "/shorts",
@@ -97,12 +103,6 @@ const sidebarNavItems = computed(() => [
     to: "/bookmarks",
     class: "hidden md:block",
     isMobile: false,
-  },
-  {
-    label: "Notifications",
-    icon: "i-heroicons-bell",
-    to: "/notifications",
-    isMobile: true,
   },
   {
     label: "Profile",

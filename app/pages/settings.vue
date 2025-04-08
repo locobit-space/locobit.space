@@ -3,18 +3,19 @@
     class="flex w-full h-full divide-x divide-slate-100 dark:divide-slate-800"
   >
     <aside class="">
-      <nav class="space-y-1 w-64 p-4 px-2 sticky top-0">
+      <nav class="space-y-1 md:w-64 w-auto p-4 px-2 sticky flex flex-col top-0">
         <UButton
           v-for="item in items"
           :key="item.label"
           :icon="item.icon"
-          color="neutral"
           variant="ghost"
-          block
-          class="justify-start"
+          class="justify-start md:w-full text-gray-700 dark:text-gray-200"
           :to="item.to"
+          active-class="bg-primary-100 dark:text-white dark:bg-primary-400 text-primary-500"
         >
-          {{ item.label }}
+          <span class="hidden md:block">
+            {{ item.label }}
+          </span>
         </UButton>
       </nav>
     </aside>
@@ -32,14 +33,14 @@ const items = [
     to: "/settings/profile",
   },
   {
-    label: "Nostr Key Management",
+    label: "Nostr Keys",
     icon: "i-heroicons-key",
-    to: "/settings/nostr",
+    to: "/settings/keys",
   },
   {
-    label: "Privacy Settings",
-    icon: "i-heroicons-lock-closed",
-    to: "/settings/privacy",
+    label: "Relay Settings",
+    icon: "system-uicons:server",
+    to: "/settings/relays",
   },
   {
     label: "Interface",

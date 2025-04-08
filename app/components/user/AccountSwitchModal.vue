@@ -215,7 +215,7 @@ const switchAccountEffect = ref(false);
 const isCreateAccount = ref(false);
 const loading = ref(false);
 
-function switchAccount(account: UserInfo) {
+async function switchAccount(account: UserInfo) {
   if (account.pubkey === user?.value?.publicKey) {
     switchAccountModal.value = false;
     return;
