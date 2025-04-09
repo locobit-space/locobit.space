@@ -1,7 +1,7 @@
 <template>
   <main class="">
     <nav
-      class="sticky top-0 dark:border-gray-800 dark:bg-transparent dark:backdrop-blur bg-white/30 border-b border-white/20 z-50"
+      class="sticky top-0 dark:border-gray-800 dark:bg-transparent backdrop-blur bg-white/30 border-b border-white/20 z-50"
     >
       <AppHeader class="" @filter="handleFilter" />
     </nav>

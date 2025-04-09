@@ -1,7 +1,12 @@
 <template>
-  <div class="bg-white shadow-sm rounded-lg p-4 hover:bg-gray-50 transition">
+  <div
+    class="bg-white shadow-sm dark:bg-slate-800 rounded-lg p-4 hover:bg-gray-50 transition hover:dark:bg-slate-900"
+  >
     <!-- Parent post reference section -->
-    <div v-if="reply.parentEvent" class="mb-3 pb-3 border-b border-gray-200">
+    <div
+      v-if="reply.parentEvent"
+      class="mb-3 pb-3 border-b dark:border-slate-700 border-gray-200"
+    >
       <div class="flex items-start space-x-3">
         <!-- Parent author avatar -->
         <div>
@@ -34,7 +39,9 @@
             </span>
           </div>
 
-          <p class="text-gray-700 text-sm line-clamp-2 mt-1">
+          <p
+            class="text-gray-700 dark:text-slate-300 text-sm line-clamp-2 mt-1"
+          >
             {{ reply.parentEvent.content }}
           </p>
         </div>
@@ -72,7 +79,7 @@
           </span>
         </div>
 
-        <p class="text-gray-800 mt-1 whitespace-pre-line">
+        <p class="text-gray-800 mt-1 dark:text-slate-300 whitespace-pre-line">
           {{ reply.content }}
         </p>
 

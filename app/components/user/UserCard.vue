@@ -1,6 +1,6 @@
 <template>
   <div
-    class="p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
+    class="p-4 bg-white dark:bg-slate-800 rounded-lg shadow-sm hover:shadow-md transition-shadow"
   >
     <div class="flex items-start space-x-3">
       <div class="flex-shrink-0">

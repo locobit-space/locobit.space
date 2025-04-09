@@ -45,7 +45,6 @@ export default defineNuxtConfig({
         "warning",
         "info",
         "success",
-        "primary",
       ],
     },
   },

@@ -314,8 +314,6 @@ const getNoteLikes = async (noteId: string): Promise<number> => {
       limit: 100, // adjust based on how many likes you expect
     });
 
-    console.log(events);
-
     // Zaps
     const zaps = await getZapStats(noteId);
     zap.value = zaps;

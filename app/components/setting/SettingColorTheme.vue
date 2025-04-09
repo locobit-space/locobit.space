@@ -27,18 +27,12 @@ const primaryColors = Object.keys(colors)
   .filter((color) => !colorsToOmit.includes(color))
   .concat("amethyst");
 
-// bg color class from primary color
-const bgColorClass = new Map(
-  primaryColors.map((color) => [color, `bg-${color}-500`])
-);
-console.log(bgColorClass);
-
 const primary = computed({
   get() {
     return appConfig.ui.colors.primary;
   },
   set(option) {
-    appConfig.ui.colors.primary = option;
+    appConfig.ui.colors.primary = option || "amethyst";
     window.localStorage.setItem("nuxt-ui-primary", appConfig.ui.colors.primary);
     setBlackAsPrimary(false);
   },
@@ -67,7 +61,10 @@ onMounted(() => {
   <div>
     <div class="space-y-4">
       <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Primary</label>
+        <label
+          class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >Primary</label
+        >
         <ul class="flex gap-3 flex-wrap mt-2">
           <li v-for="color in primaryColors" :key="color">
             <UButton
@@ -83,7 +80,10 @@ onMounted(() => {
         </ul>
       </div>
       <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Neutral</label>
+        <label
+          class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >Neutral</label
+        >
         <ul class="flex gap-3 flex-wrap mt-2">
           <li v-for="color in neutralColors" :key="color">
             <UButton
