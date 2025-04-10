@@ -34,7 +34,9 @@ async function loaDetail(id: string) {
     loading.value = true;
     const data = await getNoteById(id);
     if (data) noteDetail.value = data;
+
   } catch (error) {
+    console.error(error);
     toast.add({ title: "Error loading note", color: "error" });
   } finally {
     loading.value = false;

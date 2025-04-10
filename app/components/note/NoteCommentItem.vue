@@ -53,7 +53,7 @@
       </div>
 
       <div v-if="showReplyInput" class="mt-2">
-        <CommentInput
+        <NoteCommentInput
           :noteId="comment.id"
           :pubkey="`${currentUserPubkey}`"
           :profile="currentUserProfile"
@@ -82,7 +82,7 @@ const props = defineProps({
   rootId: {
     type: String,
     required: true,
-  }
+  },
 });
 
 const { $nostr } = useNuxtApp();
@@ -108,7 +108,6 @@ const shortenPubkey = (pubkey: string) => {
 const toggleLike = async () => {
   isLiked.value = !isLiked.value;
   likeCount.value += isLiked.value ? 1 : -1;
-
   // TODO: Implement reaction event (kind 7)
   // This will be added in a future iteration
 };
@@ -133,16 +132,11 @@ const handleReplyAdded = async (data: any) => {
       ["e", noteId, "", "reply"], // the comment being replied to
       ["p", props.comment.pubkey], // the commenter you're replying to
     ],
+    id: "",
+    sig: "",
   };
 
-  console.log(event);
-
   const signed = finalizeEvent(event, hexToBytes(`${user.value?.privateKey}`));
-  console.log(signed);
-  const ok = await publishEvent(signed);
-  if (ok) {
-    console.log("Reply posted.");
-  }
-
+  await publishEvent(signed);
 };
 </script>

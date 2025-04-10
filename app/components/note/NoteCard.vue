@@ -165,9 +165,9 @@
 
         <div v-if="isComment">
           <!-- comment list -->
-          <CommentList :note-id="note.id" :pubkey="note?.pubkey" />
+          <NoteCommentList :note-id="note.id" :pubkey="note?.pubkey" />
           <!-- comments input -->
-          <CommentInput :note-id="note.id" :pubkey="note?.pubkey" />
+          <NoteCommentInput :note-id="note.id" :pubkey="note?.pubkey" />
         </div>
       </div>
     </div>

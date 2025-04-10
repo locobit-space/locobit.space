@@ -19,35 +19,13 @@
     </div>
 
     <div v-else>
-      <!-- <ul class="space-y-4">
-        <li v-for="(comment, index) in rootComments" :key="index">
-          <CommentItem
-            :comment="comment.event"
-            :profiles="profiles"
-            :rootId="noteId"
-          />
-          <ol v-if="comment.replies.length" class="pl-8 space-y-2 my-2">
-            <li
-              v-for="(reply, replyIndex) in comment.replies"
-              :key="replyIndex"
-            >
-              <CommentItem
-                :comment="reply.event"
-                :profiles="profiles"
-                :rootId="noteId"
-                :isReplyComment="true"
-              />
-            </li>
-          </ol>
-        </li>
-      </ul> -->
       <ul class="space-y-4">
         <li
           v-for="(comment, index) in rootComments"
           :key="index"
           class="relative"
         >
-          <CommentItem
+          <NoteCommentItem
             :comment="comment.event"
             :profiles="profiles"
             :rootId="noteId"
@@ -55,7 +33,7 @@
           <ol v-if="comment.replies.length" class="pl-8 space-y-2 my-2">
             <!-- Vertical line with rounded edges -->
             <div
-              class="absolute left-3 top-7 w-0.5 h-[65%]  bg-gray-200 rounded-full"
+              class="absolute left-3 top-7 w-0.5 h-[65%] bg-gray-200 rounded-full"
             ></div>
 
             <li
@@ -69,7 +47,7 @@
                 style="border-right: none; border-top: none"
               ></div>
 
-              <CommentItem
+              <NoteCommentItem
                 :comment="reply.event"
                 :profiles="profiles"
                 :rootId="noteId"
@@ -233,7 +211,10 @@ onMounted(() => {
   const subscription = subscribe(
     { kinds: [1], "#e": [props.noteId] },
     {
-      onevent: handleNewComment,
+      onevent: (event) =>  {
+        handleNewComment(event)
+        console.log(event);
+      },
     }
   );
 });
