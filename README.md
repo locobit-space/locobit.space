@@ -1,3 +1,5 @@
+# locobit.space
+
 # Enterprise Social Network (Decentralized on Nostr)
 
 ## 🌐 Overview

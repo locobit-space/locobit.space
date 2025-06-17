@@ -1,7 +1,7 @@
 <template>
   <div>
     <nav class="space-y-1 flex-col md:flex hidden">
-      <h1 class="text-3xl font-bold hidden md:block py-2 mb-2">Nostr Social</h1>
+      <h1 class="text-3xl font-bold hidden md:block py-2 mb-2" title="locobit.space">Locobit</h1>
 
       <UButton
         v-for="item in sidebarNavItems"
