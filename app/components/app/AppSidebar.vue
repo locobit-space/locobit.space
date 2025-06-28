@@ -74,9 +74,9 @@ const sidebarNavItems = computed(() => [
     isMobile: true,
   },
   {
-    label: "Shorts",
-    icon: "simple-icons:youtubeshorts",
-    to: "/shorts",
+    label: "Bit Zap",
+    icon: "bitcoin-icons:lightning-outline",
+    to: "/zaps",
     isMobile: true,
   },
   {
