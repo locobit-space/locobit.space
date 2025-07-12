@@ -1,5 +1,5 @@
 // composables/useUploadToPhp.ts
-export const useUploadToPhp = () => {
+export const useUpload = () => {
   const uploadEncryptedFile = async (
     file: Blob,
     filename: string
@@ -7,14 +7,12 @@ export const useUploadToPhp = () => {
     const formData = new FormData();
     formData.append("file", file, filename);
 
-    const res = await fetch("http://localhost/customer/upload.php", {
+    const res = await fetch("api/upload", {
       method: "POST",
       body: formData,
     });
 
     const result = await res.json();
-
-    console.log(result)
     if (result.success) {
       return result.url; // Publicly accessible encrypted file URL
     } else {

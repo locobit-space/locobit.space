@@ -15,6 +15,40 @@ export default defineNuxtConfig({
     preference: "light",
   },
 
+  ui: {
+    theme: {
+      colors: [
+        "red",
+        "orange",
+        "amber",
+        "yellow",
+        "lime",
+        "green",
+        "emerald",
+        "teal",
+        "cyan",
+        "sky",
+        "blue",
+        "indigo",
+        "violet",
+        "purple",
+        "fuchsia",
+        "pink",
+        "rose",
+        "amethyst",
+        "slate",
+        "gray",
+        "zinc",
+        "neutral",
+        "stone",
+        "error",
+        "warning",
+        "info",
+        "success",
+      ],
+    },
+  },
+
   modules: [
     "@nuxt/eslint",
     "@nuxt/icon",
@@ -23,7 +57,9 @@ export default defineNuxtConfig({
     "@nuxt/ui",
   ],
   runtimeConfig: {
+    supabaseServiceKey: process.env.SUPABASE_SERVICE_KEY, // Server-only
     public: {
+      supabaseUrl: process.env.SUPABASE_URL,
       relayUrls: [
         "wss://relay.damus.io",
         "wss://nos.lol",

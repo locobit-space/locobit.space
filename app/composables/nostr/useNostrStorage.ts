@@ -19,7 +19,6 @@ export const useNostrStorage = () => {
 
     // Save current user info
     localStorage.setItem("currentUserInfo", JSON.stringify(userInfo));
-
     // Update accounts list
     updateAccountsList(userInfo);
   };
@@ -30,9 +29,7 @@ export const useNostrStorage = () => {
   const updateAccountsList = (userInfo: UserInfo) => {
     if (!import.meta.client) return;
 
-    const storedList: UserInfo[] = JSON.parse(
-      localStorage.getItem("userList") || "[]"
-    );
+    const storedList: UserInfo[] = accounts.value;
 
     const exists = storedList.find((item) => item.pubkey === userInfo.pubkey);
 
@@ -44,10 +41,24 @@ export const useNostrStorage = () => {
         userKeys: userInfo.userKeys,
         name: userInfo.name || "",
       });
-
-      localStorage.setItem("userList", JSON.stringify(storedList));
-      accounts.value = storedList;
     }
+    // Update accounts list
+    const _items = storedList.map((item) => {
+      return item.pubkey === userInfo.pubkey
+        ? {
+            ...item,
+            ...userInfo,
+            userKeys: item.userKeys,
+          }
+        : {
+            ...item,
+            display_name:
+              item.display_name || `Account ${storedList.length + 1}`,
+          };
+    });
+
+    localStorage.setItem("userList", JSON.stringify(_items));
+    accounts.value = storedList;
   };
 
   /**
@@ -106,6 +117,14 @@ export const useNostrStorage = () => {
     localStorage.removeItem("currentUserInfo");
   };
 
+  // remove account
+  const removeAccount = (pubkey: string) => {
+    const storedList = JSON.parse(localStorage.getItem("userList") || "[]");
+    const _items = storedList.filter((item: UserInfo) => item.pubkey !== pubkey);
+    localStorage.setItem("userList", JSON.stringify(_items));
+    accounts.value = _items;
+  };
+
   return {
     accounts,
     saveUser,
@@ -113,5 +132,7 @@ export const useNostrStorage = () => {
     loadCurrentUser,
     loadAllAccounts,
     clearUserData,
+    updateAccountsList,
+    removeAccount,
   };
 };

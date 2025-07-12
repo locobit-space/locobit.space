@@ -6,6 +6,8 @@ import type { NostrUser, UserInfo } from "~~/types";
 import { useNostrRelay } from "./useNostrRelay";
 import { useNostrStorage } from "./useNostrStorage";
 import { useNostrKeys } from "./useNostrKeys";
+import { nip19 } from "nostr-tools";
+import { hexToBytes } from "@noble/ciphers/utils";
 
 // Default options
 const DEFAULT_OPTIONS = {
@@ -26,7 +28,7 @@ export const useNostrUser = () => {
     getPublicKeyFromPrivate,
     createKeyPair,
   } = useNostrKeys();
-  const { saveUser, loadUser, loadCurrentUser, loadAllAccounts } =
+  const { saveUser, loadUser, accounts, loadCurrentUser, loadAllAccounts } =
     useNostrStorage();
   const { queryEvents } = useNostrRelay();
 
@@ -51,16 +53,18 @@ export const useNostrUser = () => {
       const privateKeyHex = decodePrivateKey(inputKey);
       const pubkey = getPublicKeyFromPrivate(privateKeyHex);
 
+      const nsec = nip19.nsecEncode(hexToBytes(privateKeyHex));
+      const npub = nip19.npubEncode(pubkey);
       const userKey = {
         privateKey: privateKeyHex,
         publicKey: pubkey,
-        nsec: inputKey.startsWith("nsec") ? inputKey.trim() : null,
-        npub: null, // Will be filled in later
+        nsec,
+        npub,
       };
 
       let newUser: UserInfo = {
         pubkey,
-        display_name: "",
+        display_name: `Account ${accounts.value.length + 1}`,
         userKeys: userKey,
       };
 
@@ -72,17 +76,19 @@ export const useNostrUser = () => {
 
         if (existingUser) {
           currentUserInfo.value = existingUser;
-          saveUser(currentUserInfo.value);
-          if (existingUser.userKeys) {
-            user.value = {
-              ...userKey,
-              ...existingUser.userKeys,
+          const data = await getUserInfo(pubkey);
+
+          if (data) {
+            currentUserInfo.value = {
+              ...data,
+              userKeys: userKey,
             };
           }
+          saveUser(currentUserInfo.value);
         } else {
           // Fetch user info from relays
           currentUserInfo.value = newUser;
-         
+
           const data = await getUserInfo(pubkey);
 
           if (data) {
@@ -93,9 +99,6 @@ export const useNostrUser = () => {
           }
           saveUser(currentUserInfo.value);
         }
-
-        // Update accounts list
-        loadAllAccounts();
       } else {
         currentUserInfo.value = newUser;
       }

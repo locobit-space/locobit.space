@@ -119,9 +119,15 @@
 
               <!-- Entry Content -->
               <div class="flex-grow">
-                <p class="text-sm text-gray-500 line-clamp-2 mt-1">
-                  {{ getExcerpt(entry.decryptedContent) }}
-                </p>
+                <div class="flex py-2">
+                  <p class="text-sm text-gray-500 line-clamp-2 flex-grow">
+                    {{ getExcerpt(entry.decryptedContent) }}
+                  </p>
+
+                  <small class="text-xs text-gray-500">
+                    {{ formatTime(entry.created_at) }}
+                  </small>
+                </div>
 
                 <!-- {{ entry.tags }} -->
 
@@ -183,6 +189,9 @@
             </div>
           </section>
         </figure>
+        <div class="mt-4">
+          <UButton color="primary" @click="onLoadMore">Load More</UButton>
+        </div>
       </div>
     </section>
 
@@ -268,6 +277,7 @@
 <script setup lang="ts">
 const { user } = useNostrUser();
 const { isLoading } = useNostrFeed();
+const { formatTime } = useHelpers();
 
 const {
   journalNotes,
@@ -275,6 +285,8 @@ const {
   updateJournalEntry,
   loadJournalEntries,
   removeJournalEntry,
+  loadMoreJournalEntries,
+  hasMore,
 } = useNostrPrivateJournal();
 
 // State management
@@ -307,7 +319,6 @@ const toggleNewEntry = () => {
   isEditing.value = !isEditing.value;
 };
 
-const { uploadEncryptedFile } = useUploadToPhp();
 
 const generateSafeFilename = (originalName: string) => {
   const ext = originalName.split(".").pop() || "bin";
@@ -476,10 +487,13 @@ const downloadAttachment = (attachment) => {
   // In a real app, you'd use fetch or axios to download the file
 };
 
+const onLoadMore = () => {
+  hasMore.value = true;
+  loadMoreJournalEntries();
+};
+
 // Load journal entries on mount
-onMounted(async () => {
-  if (user.value) {
-    await loadJournalEntries();
-  }
+onMounted(() => {
+  loadJournalEntries();
 });
 </script>

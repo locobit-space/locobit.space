@@ -16,6 +16,13 @@ export const useNostrFeed = () => {
   const isLoading = useState<boolean>("isLoading", () => false);
   const error = ref<any>(null);
   const latestTimestamp = useState<number>("latestTimestamp", () => 0);
+  const filterTab = useState<any>("filterTab", () => {
+    return {
+      label: "For You",
+      key: "for-you",
+      value: "for-you",
+    };
+  });
 
   const { user, fetchFollowList } = useNostrUser();
   const { publishEvent, queryEvents, subscribeToEvents } = useNostrRelay();
@@ -110,6 +117,26 @@ export const useNostrFeed = () => {
     ];
   };
 
+  // remove duplicate events
+  const getUniqueEvents = (newEvents: Event[], existingEvents: Event[]) => {
+    return newEvents.filter(
+      (newEvent) =>
+        !existingEvents.some(
+          (existingEvent) => existingEvent.id === newEvent.id
+        )
+    );
+  };
+
+  function getEngagementScore(event: Event): number {
+    const tags = event.tags || [];
+
+    const likeCount = tags.filter((t) => t[0] === "like").length;
+    const repostCount = tags.filter((t) => t[0] === "repost").length;
+    const commentCount = tags.filter((t) => t[0] === "reply").length;
+
+    return likeCount + repostCount + commentCount * 2;
+  }
+
   const loadNotesOnce = async (
     options: {
       filter?: "for-you" | "following" | "hashtag";
@@ -152,8 +179,8 @@ export const useNostrFeed = () => {
       const sortedEvents = uniqueEvents.sort(
         (a, b) => b.created_at - a.created_at
       );
-
       notes.value = sortedEvents;
+
       if (
         sortedEvents.length > 0 &&
         sortedEvents[0]?.created_at !== undefined
@@ -280,6 +307,8 @@ export const useNostrFeed = () => {
     isLoading,
     error,
     latestTimestamp,
+    filterTab,
+    DEFAULT_OPTIONS,
     postNote,
     subscribeToNotes,
     loadNotesOnce,
@@ -288,5 +317,7 @@ export const useNostrFeed = () => {
     searchNotes,
     getNoteById,
     extractHashtags,
+    mergeUniqueEvents,
+    getUniqueEvents,
   };
 };

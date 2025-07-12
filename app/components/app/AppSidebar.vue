@@ -1,7 +1,7 @@
 <template>
   <div>
     <nav class="space-y-1 flex-col md:flex hidden">
-      <h1 class="text-3xl font-bold hidden md:block py-2 mb-2">Nostr Social</h1>
+      <h1 class="text-3xl font-bold hidden md:block py-2 mb-2" title="locobit.space">Locobit</h1>
 
       <UButton
         v-for="item in sidebarNavItems"
@@ -30,12 +30,7 @@
 
       <!-- switch account -->
       <section class="md:block hidden">
-        <div v-if="user" class="flex items-center gap-2 cursor-pointer">
-          <UserAccountSwitchModal />
-        </div>
-        <div v-else>
-          <UserLoginForm />
-        </div>
+        <UserAccountSwitchModal />
       </section>
     </nav>
 
@@ -73,9 +68,15 @@ const sidebarNavItems = computed(() => [
     isMobile: true,
   },
   {
-    label: "Shorts",
-    icon: "simple-icons:youtubeshorts",
-    to: "/shorts",
+    label: "Notifications",
+    icon: "i-heroicons-bell",
+    to: "/notifications",
+    isMobile: true,
+  },
+  {
+    label: "Bit Zap",
+    icon: "bitcoin-icons:lightning-outline",
+    to: "/zaps",
     isMobile: true,
   },
   {
@@ -102,12 +103,6 @@ const sidebarNavItems = computed(() => [
     to: "/bookmarks",
     class: "hidden md:block",
     isMobile: false,
-  },
-  {
-    label: "Notifications",
-    icon: "i-heroicons-bell",
-    to: "/notifications",
-    isMobile: true,
   },
   {
     label: "Profile",

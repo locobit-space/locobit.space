@@ -8,8 +8,9 @@ const DEFAULT_RELAYS = [
   "wss://relay.damus.io",
   // Uncomment these as needed
   "wss://yabu.me",
-  // "wss://nos.lol",
+  "wss://nos.lol",
   // "wss://nostr-pub.wellorder.net",
+  "wss://relay.nostr.band",
 ];
 
 export const useNostrRelay = () => {

@@ -1,22 +1,25 @@
 <template>
-  <div class="flex w-full divide-x divide-slate-100">
-    <aside>
-      <nav class="space-y-1 w-64 p-4 px-2 sticky top-0">
+  <div
+    class="flex w-full h-full divide-x divide-slate-100 dark:divide-slate-800"
+  >
+    <aside class="">
+      <nav class="space-y-1 md:w-64 w-auto p-4 px-2 sticky flex flex-col top-0">
         <UButton
           v-for="item in items"
           :key="item.label"
           :icon="item.icon"
-          color="neutral"
           variant="ghost"
-          block
-          class="justify-start"
+          class="justify-start md:w-full text-gray-700 dark:text-gray-200"
           :to="item.to"
+          active-class="bg-primary-100 dark:text-white dark:bg-primary-400 text-primary-500"
         >
-          {{ item.label }}
+          <span class="hidden md:block">
+            {{ item.label }}
+          </span>
         </UButton>
       </nav>
     </aside>
-    <main class="flex-1 flex flex-col">
+    <main class="flex-1 flex flex-col h-full overflow-y-auto">
       <NuxtPage />
     </main>
   </div>
@@ -27,17 +30,32 @@ const items = [
   {
     label: "Profile",
     icon: "i-heroicons-user-circle",
-    to: "/profile",
+    to: "/settings/profile",
   },
   {
-    label: "Nostr Key Management",
+    label: "Nostr Keys",
     icon: "i-heroicons-key",
-    to: "/nostr",
+    to: "/settings/keys",
   },
   {
-    label: "Privacy Settings",
-    icon: "i-heroicons-lock-closed",
-    to: "/privacy",
+    label: "Relay Settings",
+    icon: "system-uicons:server",
+    to: "/settings/relays",
+  },
+  {
+    label: "Interface",
+    icon: "ri:compasses-2-line",
+    to: "/settings/interface",
+  },
+  {
+    label: "Preferences",
+    icon: "ri:equalizer-line",
+    to: "/settings/preferences",
+  },
+  {
+    label: "About",
+    icon: "ri:information-line",
+    to: "/settings/about",
   },
 ];
 </script>

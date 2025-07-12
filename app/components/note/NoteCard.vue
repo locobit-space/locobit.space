@@ -21,14 +21,16 @@
               @{{ userInfo?.name || "N/A" }}
             </small>
           </NuxtLink>
-          <span class="text-sm text-gray-500">{{ formattedDate }}</span>
+          <span class="text-sm text-gray-500" :title="formattedDate">
+            {{ timeAgo(note.created_at) }}
+          </span>
         </div>
 
         <!-- Media Display -->
         <section class="mb-3 grid grid-cols-2 gap-2">
           <div v-for="(media, index) in mediaUrls" :key="index">
             <!-- Image Display -->
-            <img
+            <NuxtImg
               v-if="media.type === 'image'"
               :src="media.url"
               :alt="`Note image ${index + 1}`"
@@ -62,13 +64,12 @@
                 media.embedType.charAt(0).toUpperCase() +
                 media.embedType.slice(1)
               }}
-              video
             </div>
           </div>
         </section>
 
         <!-- Note Content with Hashtag Parsing -->
-        <div class="text-wrap break-all">
+        <div class="text-wrap break-all" @click="emit('contentClicked', note)">
           <template v-for="(part, index) in parsedContent" :key="index">
             <NuxtLink
               :to="`/notes/${note.id}`"
@@ -92,7 +93,7 @@
           <div
             v-for="(preview, index) in linkPreviews"
             :key="index"
-            class="border rounded-lg border-slate-100 overflow-hidden flex"
+            class="border rounded-lg border-slate-100 overflow-hidden flex dark:border-slate-800"
           >
             <div v-if="preview.image" class="w-1/3">
               <img
@@ -120,19 +121,11 @@
           </div>
         </div>
 
-        <!-- action buttons share like etc -->
-        <div class="flex gap-4 mt-4 border-y border-slate-100 py-1">
+        <!-- action buttons repost like etc -->
+        <div class="flex gap-4 mt-4 border-t border-slate-100 dark:border-slate-800 py-1">
           <UButton
-            color="neutral"
-            icon="system-uicons:retweet"
-            class="mr-2"
-            variant="ghost"
-            :label="rePostCount > 0 ? `${rePostCount}` : ''"
-            @click="shareNote"
-          />
-          <UButton
-            color="neutral"
-            icon="i-heroicons-heart"
+            :color="isLiked ? 'primary' : 'neutral'"
+            :icon="isLiked ? 'heroicons:heart-20-solid' : 'heroicons:heart'"
             class="mr-2"
             variant="ghost"
             :label="likeCount > 0 ? `${likeCount}` : ''"
@@ -141,8 +134,24 @@
           <UButton
             color="neutral"
             variant="ghost"
-            icon="i-heroicons-chat-bubble-left-right"
+            icon="proicons:comment"
             :label="commentCount > 0 ? `${commentCount}` : ''"
+            @click="isComment = !isComment"
+          />
+          <UButton
+            color="neutral"
+            icon="system-uicons:retweet"
+            class="mr-2"
+            variant="ghost"
+            :label="rePostCount > 0 ? `${rePostCount}` : ''"
+            @click="repostNote(note)"
+          />
+          <UButton
+            color="neutral"
+            icon="lets-icons:lightning-light"
+            class="mr-2"
+            variant="ghost"
+            :label="zap.zapCount > 0 ? `${zap.totalZapSats}` : ''"
           />
           <UButton
             color="neutral"
@@ -150,8 +159,15 @@
             :icon="
               isBookmarked ? 'heroicons:bookmark-solid' : 'heroicons:bookmark'
             "
-            @click="bookmarkNote"
+            @click="bookmarkNote(note.id)"
           />
+        </div>
+
+        <div v-if="isComment">
+          <!-- comment list -->
+          <NoteCommentList :note-id="note.id" :pubkey="note?.pubkey" />
+          <!-- comments input -->
+          <NoteCommentInput :note-id="note.id" :pubkey="note?.pubkey" />
         </div>
       </div>
     </div>
@@ -163,23 +179,37 @@ import type { Event } from "nostr-tools";
 import { hexToBytes } from "@noble/hashes/utils";
 import { computed } from "vue";
 import type { UserInfo } from "~~/types";
+import { platformMedias } from "~/lib";
 
-const props = defineProps({
-  note: { type: Object, required: true },
-});
+const props = defineProps<{
+  note: Event;
+}>();
+
+const emit = defineEmits(["contentClicked"]);
 
 const toast = useToast();
-const { $nostr } = useNuxtApp();
 
-const { formatDateTime } = useHelpers();
+const { formatDateTime, timeAgo } = useHelpers();
 const { getUserInfo, user } = useNostrUser();
-const { DEFAULT_RELAYS: RELAYS } = useNostrRelay();
+const { DEFAULT_RELAYS: RELAYS, queryEvents } = useNostrRelay();
+const { trackInteraction } = useNostrFeedAlgorithm();
+const { getZapStats } = useZapSats();
+const { bookmarkNote, items: bookmarks } = useBookmark();
+const { repostNote } = useNotes();
+
+const isComment = ref(false);
+const LIKE_REACTIONS = ["+", "❤️", "👍", "🙏🏿", "💜", "like"];
 
 const userInfo = ref<UserInfo>({
   pubkey: "",
   display_name: "",
   picture: "",
   name: "",
+});
+
+const zap = ref({
+  zapCount: 0,
+  totalZapSats: 0,
 });
 
 const formattedDate = computed(() => formatDateTime(props.note.created_at));
@@ -207,6 +237,8 @@ const likeNote = async () => {
   const pubkey = user.value.publicKey;
   const noteId = props.note.id;
 
+  trackInteraction(props.note, "like");
+
   // Find user's latest reaction for this note
   const existing = noteItems.value.find(
     (item) =>
@@ -216,7 +248,7 @@ const likeNote = async () => {
   );
 
   // Determine new reaction based on current one
-  const newContent = existing?.content === "+" ? "" : "+";
+  const newContent = existing?.content === "👍" ? "" : "👍";
 
   // Optional: toggle off if clicked twice on the same reaction
   const isUnliking = existing && existing.content === newContent;
@@ -240,13 +272,11 @@ const likeNote = async () => {
 
   const { $nostr } = useNuxtApp();
   const signed = $nostr.finalizeEvent(event, hexToBytes(user.value.privateKey));
-
+  noteItems.value = [signed, ...noteItems.value]; // Add the new one
   // Remove old one if exists (e.g. switching from + to -)
   if (existing) {
     noteItems.value = noteItems.value.filter((item) => item.id !== existing.id);
   }
-
-  noteItems.value.push(signed); // Add the new one
 
   try {
     await Promise.any($nostr.pool.publish(RELAYS, signed));
@@ -256,91 +286,46 @@ const likeNote = async () => {
 };
 
 const replyToNote = () => {
+  trackInteraction(props.note, "reply");
+  // comment
   toast.add({
     title: "Reply feature not implemented yet.",
   });
 };
 
-const nostrBookmarks = ref<string[]>([]);
-
-const loadBookmarks = () => {
-  const stored = localStorage.getItem("nostr-bookmarks");
-  nostrBookmarks.value = stored ? JSON.parse(stored) : [];
-};
-
-// Load on init
-loadBookmarks();
-
-const bookmarkNote = () => {
-  const id = props.note.id;
-  const index = nostrBookmarks.value.indexOf(id);
-
-  if (index === -1) {
-    nostrBookmarks.value.push(id);
-    toast.add({ title: "Note bookmarked" });
-  } else {
-    nostrBookmarks.value.splice(index, 1);
-    toast.add({ title: "Note unbookmarked", color: "neutral" });
-  }
-
-  // Save back to localStorage
-  localStorage.setItem("nostrBookmarks", JSON.stringify(nostrBookmarks.value));
-
-  syncBookmarksToNostr();
-};
-
 const isBookmarked = computed(() => {
-  return nostrBookmarks.value.includes(props.note.id);
+  return bookmarks.value.includes(props.note.id);
 });
-
-const syncBookmarksToNostr = async () => {
-  if (!user.value) return;
-
-  const { $nostr } = useNuxtApp();
-  const pubkey = user.value?.publicKey;
-  if (!pubkey) return;
-
-  const event = {
-    kind: 30001,
-    created_at: Math.floor(Date.now() / 1000),
-    content: "",
-    tags: [
-      ["d", "bookmarks"],
-      ["title", "Bookmarks"],
-      ["t", "bookmark"],
-      ...nostrBookmarks.value.map((id) => ["e", id]),
-    ],
-    pubkey,
-  };
-
-  const signed = $nostr.finalizeEvent(event, hexToBytes(user.value.privateKey));
-
-  try {
-    await Promise.any($nostr.pool.publish(RELAYS, signed));
-    // Optional success toast here if you want
-  } catch (err) {
-    console.error("Failed to sync bookmarks to Nostr", err);
-  }
-};
 
 const noteItems = ref<Event[]>([]);
 
+const isLiked = computed(() => {
+  if (noteItems.value.length) {
+    return LIKE_REACTIONS.includes(noteItems.value[0]?.content || "");
+  }
+  return false;
+});
+
 const getNoteLikes = async (noteId: string): Promise<number> => {
   try {
-    const events = await $nostr.pool.querySync(RELAYS, {
+    const events = await queryEvents({
       kinds: [7, 1, 6],
       "#e": [noteId], // reactions linked to this note
       limit: 100, // adjust based on how many likes you expect
     });
 
+    // Zaps
+    const zaps = await getZapStats(noteId);
+    zap.value = zaps;
+
     noteItems.value = events;
 
-    // Count "+" reactions (likes)
-    const likes = events.filter((event) =>
-      ["+", "❤️", "👍"].includes(event.content)
+    // Filter only like-type reactions
+    const likeReactions = events.filter((event) =>
+      LIKE_REACTIONS.includes(event.content)
     );
 
-    return likes.length;
+    return likeReactions.length;
   } catch (error) {
     console.error("Error fetching likes:", error);
     return 0;
@@ -354,7 +339,6 @@ const likeCount = computed(() => {
       item.tags.some((tag) => tag[0] === "e" && tag[1] === props.note.id)
   );
 
-  // Map to store the latest reaction per pubkey
   const latestByUser = new Map();
 
   for (const item of reactions) {
@@ -364,12 +348,7 @@ const likeCount = computed(() => {
     }
   }
 
-  // Only count those where the latest reaction is "+"
-  const count = Array.from(latestByUser.values()).filter(
-    (item) => item.content === "+"
-  ).length;
-
-  return count;
+  return latestByUser.size;
 });
 
 const commentCount = computed(() => {
@@ -383,95 +362,6 @@ const rePostCount = computed(() => {
 // Media URL extraction with support for multiple platforms
 const mediaUrls = computed(() => {
   // Collection of platform patterns
-  const platforms = [
-    {
-      name: "youtube",
-      regex:
-        /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]+)(?:\S*)/gi,
-      embedUrl: (id: string) => `https://www.youtube.com/embed/${id}`,
-      thumbnailUrl: (id: string) =>
-        `https://img.youtube.com/vi/${id}/hqdefault.jpg`,
-    },
-    {
-      name: "vimeo",
-      regex:
-        /(?:https?:\/\/)?(?:www\.)?vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/(?:[^\/]*)\/videos\/|album\/(?:\d+)\/video\/|)(\d+)(?:$|\/|\?)/gi,
-      embedUrl: (id: string) => `https://player.vimeo.com/video/${id}`,
-    },
-    {
-      name: "rumble",
-      regex:
-        /(?:https?:\/\/)?(?:www\.)?rumble\.com\/([a-zA-Z0-9_-]+)(?:\.html)?(?:\S*)/gi,
-      embedUrl: (id: string) => `https://rumble.com/embed/${id}/`,
-    },
-    {
-      name: "dailymotion",
-      regex:
-        /(?:https?:\/\/)?(?:www\.)?dailymotion\.com\/video\/([a-zA-Z0-9_-]+)(?:\S*)/gi,
-      embedUrl: (id: string) => `https://www.dailymotion.com/embed/video/${id}`,
-    },
-    {
-      name: "twitch",
-      regex:
-        /(?:https?:\/\/)?(?:www\.)?twitch\.tv\/(?:videos\/)?([a-zA-Z0-9_-]+)(?:\S*)/gi,
-      embedUrl: (id: string) => {
-        // Check if it's a video or channel
-        if (/^\d+$/.test(id)) {
-          return `https://player.twitch.tv/?video=${id}&parent=${window.location.hostname}`;
-        } else {
-          return `https://player.twitch.tv/?channel=${id}&parent=${window.location.hostname}`;
-        }
-      },
-    },
-    {
-      name: "tiktok",
-      regex:
-        /(?:https?:\/\/)?(?:www\.)?tiktok\.com\/@[^\/]+\/video\/(\d+)(?:\S*)/gi,
-      embedUrl: (id: string) => `https://www.tiktok.com/embed/v2/${id}`,
-    },
-    {
-      name: "facebook",
-      regex:
-        /(?:https?:\/\/)?(?:www\.|web\.|m\.)?facebook\.com\/(?:watch\/?\?v=|video\.php\?v=|video\.php\?id=|.*?\/videos\/(?:[^\/]+\/)?)(\d+)(?:\S*)/gi,
-      embedUrl: (id: string) =>
-        `https://www.facebook.com/plugins/video.php?href=https://www.facebook.com/watch/?v=${id}&show_text=0`,
-    },
-    {
-      name: "instagram",
-      regex:
-        /(?:https?:\/\/)?(?:www\.)?instagram\.com\/(?:p|reel)\/([a-zA-Z0-9_-]+)(?:\S*)/gi,
-      embedUrl: (id: string) => `https://www.instagram.com/p/${id}/embed/`,
-    },
-    {
-      name: "bitchute",
-      regex:
-        /(?:https?:\/\/)?(?:www\.)?bitchute\.com\/video\/([a-zA-Z0-9_-]+)(?:\S*)/gi,
-      embedUrl: (id: string) => `https://www.bitchute.com/embed/${id}/`,
-    },
-    {
-      name: "odysee",
-      regex:
-        /(?:https?:\/\/)?(?:www\.)?odysee\.com\/(?:\$\/)?([a-zA-Z0-9_-]+:[a-zA-Z0-9_-]+)(?:\S*)/gi,
-      embedUrl: (id: string) => `https://odysee.com/$/embed/${id}`,
-    },
-    {
-      name: "peertube",
-      regex:
-        /(?:https?:\/\/)?([a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+)\/(?:videos\/)?watch\/([a-zA-Z0-9_-]+)(?:\S*)/gi,
-      // Special handler for PeerTube as it needs both domain and ID
-      customHandler: (match: any) => {
-        const domain = match[1];
-        const videoId = match[2];
-        return {
-          type: "embed",
-          embedType: "peertube",
-          videoId: videoId,
-          domain: domain,
-          embedUrl: `https://${domain}/videos/embed/${videoId}`,
-        };
-      },
-    },
-  ];
 
   // Direct media file URLs
   const imageUrlRegex = /(https?:\/\/\S+\.(?:jpg|jpeg|png|gif|webp))/gi;
@@ -500,7 +390,7 @@ const mediaUrls = computed(() => {
   });
 
   // Process each platform
-  platforms.forEach((platform) => {
+  platformMedias.forEach((platform) => {
     if (platform.customHandler) {
       // For platforms that need special handling (like PeerTube)
       let match;
@@ -520,6 +410,7 @@ const mediaUrls = computed(() => {
           embedType: platform.name,
           videoId: videoId,
           embedUrl: platform.embedUrl(videoId || ""),
+          thumbnailUrl: "",
         };
 
         // Add thumbnail URL if available
