@@ -319,7 +319,6 @@ const toggleNewEntry = () => {
   isEditing.value = !isEditing.value;
 };
 
-const { uploadEncryptedFile } = useUploadToPhp();
 
 const generateSafeFilename = (originalName: string) => {
   const ext = originalName.split(".").pop() || "bin";
