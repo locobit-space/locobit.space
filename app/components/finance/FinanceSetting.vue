@@ -4,48 +4,39 @@
 
     <div class="space-y-6">
       <!-- Default Currency -->
-      <UFormGroup label="Default Currency">
+      <UFormField label="Default Currency">
         <USelect
           v-model="settings.default_currency"
-          :options="currencies"
+          :items="currencies"
           @update:model-value="saveSettings"
         />
-      </UFormGroup>
+      </UFormField>
 
       <!-- Default Display Unit -->
-      <UFormGroup label="Default Display Unit">
-        <URadio
+      <UFormField label="Default Display Unit">
+        <URadioGroup
           v-model="settings.display_unit"
-          value="fiat"
-          name="display_unit"
-          :label="`Fiat (${settings.default_currency})`"
+          :items="unitItems"
           @update:model-value="saveSettings"
         />
-        <URadio
-          v-model="settings.display_unit"
-          value="sats"
-          name="display_unit"
-          label="Satoshis"
-          @update:model-value="saveSettings"
-        />
-      </UFormGroup>
+      </UFormField>
 
       <!-- Exchange Rate Provider -->
-      <UFormGroup label="Exchange Rate Provider">
+      <UFormField label="Exchange Rate Provider">
         <USelect
           v-model="selectedRateProvider"
-          :options="rateProviders"
+          :items="rateProviders"
           @update:model-value="saveSettings"
         />
-      </UFormGroup>
+      </UFormField>
 
       <!-- Auto-fetch Exchange Rate -->
-      <UFormGroup label="Exchange Rate Updates">
+      <UFormField label="Exchange Rate Updates">
         <UToggle v-model="autoFetchRates" @update:model-value="saveSettings" />
         <span class="text-sm text-gray-500 dark:text-gray-400 ml-2">
           Automatically fetch exchange rates when adding transactions
         </span>
-      </UFormGroup>
+      </UFormField>
 
       <!-- Import/Export -->
       <div>
@@ -188,6 +179,11 @@ const showDeleteModal = ref(false);
 // Available currencies
 const currencies = ["USD", "EUR", "JPY", "GBP", "THB", "BTC"];
 
+const unitItems = [
+  { label: "Fiat", value: "fiat" },
+  { label: "Sats", value: "sats" },
+];
+
 // Exchange rate providers (for demonstration)
 const rateProviders = ["CoinGecko", "CoinMarketCap", "Binance", "Manual"];
 const selectedRateProvider = ref("CoinGecko");
@@ -208,7 +204,6 @@ const saveSettings = () => {
     title: "Settings Saved",
     description: "Your preferences have been updated.",
     color: "green",
-    timeout: 3000,
   });
 };
 
@@ -237,7 +232,6 @@ const exportData = () => {
     title: "Export Completed",
     description: "Your data has been exported successfully.",
     color: "green",
-    timeout: 3000,
   });
 };
 
@@ -245,7 +239,7 @@ const exportData = () => {
 const handleFileUpload = (event: Event) => {
   const target = event.target as HTMLInputElement;
   if (target.files && target.files.length > 0) {
-    importFile.value = target.files[0];
+    importFile.value = target.files[0] as File;
   }
 };
 
@@ -276,7 +270,6 @@ const importData = () => {
           title: "Import Completed",
           description: "Your data has been imported successfully.",
           color: "green",
-          timeout: 3000,
         });
       } else {
         throw new Error("Invalid data format");
@@ -286,7 +279,6 @@ const importData = () => {
         title: "Import Failed",
         description: "The file format is invalid or corrupted.",
         color: "red",
-        timeout: 5000,
       });
     }
   };
