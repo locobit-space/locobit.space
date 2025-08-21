@@ -1,16 +1,16 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+  <div class="min-h-screen ">
     <!-- Header -->
-    <div class="bg-white dark:bg-gray-800 shadow">
+    <div class="">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center py-6">
           <div class="flex items-center">
-            <NuxtIcon name="lucide:leaf" class="h-8 w-8 text-green-600 dark:text-green-400 mr-3" />
+            <Icon name="lucide:leaf" class="h-8 w-8 text-green-600 dark:text-green-400 mr-3" />
             <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ $t('garden.title') }}</h1>
           </div>
           <div class="flex items-center space-x-4">
             <UButton 
-              :to="'/plants/register'"
+              :to="'/gms/register'"
               icon="i-lucide-plus"
               color="primary"
               variant="solid"
@@ -37,7 +37,7 @@
         <UCard>
           <div class="flex items-center">
             <div class="flex-shrink-0">
-              <NuxtIcon name="lucide:trees" class="h-8 w-8 text-green-600 dark:text-green-400" />
+              <Icon name="lucide:trees" class="h-8 w-8 text-green-600 dark:text-green-400" />
             </div>
             <div class="ml-5 w-0 flex-1">
               <dl>
@@ -51,7 +51,7 @@
         <UCard>
           <div class="flex items-center">
             <div class="flex-shrink-0">
-              <NuxtIcon name="lucide:activity" class="h-8 w-8 text-blue-600 dark:text-blue-400" />
+              <Icon name="lucide:activity" class="h-8 w-8 text-blue-600 dark:text-blue-400" />
             </div>
             <div class="ml-5 w-0 flex-1">
               <dl>
@@ -65,7 +65,7 @@
         <UCard>
           <div class="flex items-center">
             <div class="flex-shrink-0">
-              <NuxtIcon name="lucide:calendar-check" class="h-8 w-8 text-yellow-600 dark:text-yellow-400" />
+              <Icon name="lucide:calendar-check" class="h-8 w-8 text-yellow-600 dark:text-yellow-400" />
             </div>
             <div class="ml-5 w-0 flex-1">
               <dl>
@@ -79,7 +79,7 @@
         <UCard>
           <div class="flex items-center">
             <div class="flex-shrink-0">
-              <NuxtIcon name="lucide:trending-up" class="h-8 w-8 text-purple-600 dark:text-purple-400" />
+              <Icon name="lucide:trending-up" class="h-8 w-8 text-purple-600 dark:text-purple-400" />
             </div>
             <div class="ml-5 w-0 flex-1">
               <dl>
@@ -131,7 +131,7 @@
                   <tr v-for="plant in recentPlants" :key="plant.id">
                     <td class="px-6 py-4 whitespace-nowrap">
                       <div class="flex items-center">
-                        <NuxtIcon :name="getPlantIcon(plant.type)" class="h-5 w-5 text-green-600 dark:text-green-400 mr-2" />
+                        <Icon :name="getPlantIcon(plant.type)" class="h-5 w-5 text-green-600 dark:text-green-400 mr-2" />
                         <span class="text-sm font-medium text-gray-900 dark:text-white">{{ plant.name }}</span>
                       </div>
                     </td>
@@ -216,7 +216,7 @@
             <div class="space-y-3">
               <div v-for="task in pendingTasks" :key="task.id" class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                 <div class="flex items-center">
-                  <NuxtIcon :name="getTaskIcon(task.type)" class="h-4 w-4 text-gray-600 dark:text-gray-400 mr-2" />
+                  <Icon :name="getTaskIcon(task.type)" class="h-4 w-4 text-gray-600 dark:text-gray-400 mr-2" />
                   <div>
                     <p class="text-sm font-medium text-gray-900 dark:text-white">{{ task.title }}</p>
                     <p class="text-xs text-gray-500 dark:text-gray-400">{{ task.plant }}</p>
