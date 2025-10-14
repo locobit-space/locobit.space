@@ -6,7 +6,7 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <!-- Transaction Type -->
         <div>
-          <UFormGroup label="Transaction Type">
+          <UFormField label="Transaction Type">
             <URadio
               v-model="form.type"
               value="income"
@@ -19,12 +19,12 @@
               name="type"
               label="Expense"
             />
-          </UFormGroup>
+          </UFormField>
         </div>
 
         <!-- Currency Unit Selection -->
         <div>
-          <UFormGroup label="Enter amount in">
+          <UFormField label="Enter amount in">
             <URadio
               v-model="form.unit_input"
               value="fiat"
@@ -37,12 +37,12 @@
               name="unit_input"
               label="Satoshis"
             />
-          </UFormGroup>
+          </UFormField>
         </div>
 
         <!-- Amount Input -->
         <div class="col-span-1 md:col-span-2">
-          <UFormGroup label="Amount">
+          <UFormField label="Amount">
             <div class="flex items-center">
               <UInput
                 v-model="amount"
@@ -67,23 +67,23 @@
                 </span>
               </div>
             </div>
-          </UFormGroup>
+          </UFormField>
         </div>
 
         <!-- Fiat Currency Selection -->
         <div>
-          <UFormGroup label="Fiat Currency">
+          <UFormField label="Fiat Currency">
             <USelect
               v-model="form.fiat_currency"
               :options="currencies"
               @update:model-value="updateExchangeRate"
             />
-          </UFormGroup>
+          </UFormField>
         </div>
 
         <!-- Exchange Rate -->
         <div>
-          <UFormGroup label="Exchange Rate (sats per fiat)">
+          <UFormField label="Exchange Rate (sats per fiat)">
             <div class="flex">
               <UInput
                 v-model="form.sats_per_fiat"
@@ -99,23 +99,23 @@
                 @click="updateExchangeRate"
               />
             </div>
-          </UFormGroup>
+          </UFormField>
         </div>
 
         <!-- Note -->
         <div class="col-span-1 md:col-span-2">
-          <UFormGroup label="Note">
+          <UFormField label="Note">
             <UInput
               v-model="form.note"
               placeholder="Description"
               class="w-full"
             />
-          </UFormGroup>
+          </UFormField>
         </div>
 
         <!-- Tags -->
         <div class="col-span-1 md:col-span-2">
-          <UFormGroup label="Tags">
+          <UFormField label="Tags">
             <UInput
               v-model="tagsInput"
               placeholder="Enter tags separated by commas"
@@ -133,12 +133,12 @@
                 <UIcon name="i-heroicons-x-mark" class="ml-1" />
               </UBadge>
             </div>
-          </UFormGroup>
+          </UFormField>
         </div>
 
         <!-- Visibility -->
         <div class="col-span-1 md:col-span-2">
-          <UFormGroup label="Visibility">
+          <UFormField label="Visibility">
             <URadio
               v-model="form.visibility"
               value="private"
@@ -151,7 +151,7 @@
               name="visibility"
               label="Public"
             />
-          </UFormGroup>
+          </UFormField>
         </div>
       </div>
 

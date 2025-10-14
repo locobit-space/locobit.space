@@ -26,9 +26,9 @@
         </UTooltip>
 
         <!-- Filters -->
-        <UDropdown :items="filterDropdownItems">
+        <UDropdownMenu :items="filterDropdownItems">
           <UButton icon="i-heroicons-funnel" color="gray" variant="ghost" />
-        </UDropdown>
+        </UDropdownMenu>
       </div>
     </div>
 

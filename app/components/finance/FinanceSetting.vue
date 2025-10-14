@@ -73,69 +73,34 @@
     </div>
 
     <!-- Import Data Modal -->
-    <UModal v-model="showImportModal">
-      <UCard>
-        <template #header>
-          <div class="flex items-center justify-between">
-            <h3 class="text-lg font-semibold">Import Data</h3>
-            <UButton
-              color="gray"
-              variant="ghost"
-              icon="i-heroicons-x-mark"
-              class="-my-1"
-              @click="showImportModal = false"
-            />
-          </div>
-        </template>
-
+    <UModal v-model:open="showImportModal" title="Import Data">
+      <template #body>
         <div class="space-y-4">
           <p class="text-sm text-gray-500 dark:text-gray-400">
             Upload a JSON file containing your financial data. This will replace
             your current data.
           </p>
 
-          <UFormGroup label="Upload JSON File">
+          <UFormField label="Upload JSON File">
             <UInput type="file" accept=".json" @change="handleFileUpload" />
-          </UFormGroup>
+          </UFormField>
         </div>
-
-        <template #footer>
-          <div class="flex justify-end gap-2">
-            <UButton
-              color="gray"
-              variant="soft"
-              @click="showImportModal = false"
-            >
-              Cancel
-            </UButton>
-            <UButton
-              color="primary"
-              :disabled="!importFile"
-              @click="importData"
-            >
-              Import
-            </UButton>
-          </div>
-        </template>
-      </UCard>
+      </template>
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <UButton color="gray" variant="soft" @click="showImportModal = false">
+            Cancel
+          </UButton>
+          <UButton color="primary" :disabled="!importFile" @click="importData">
+            Import
+          </UButton>
+        </div>
+      </template>
     </UModal>
 
     <!-- Delete Confirmation Modal -->
-    <UModal v-model="showDeleteModal">
-      <UCard>
-        <template #header>
-          <div class="flex items-center justify-between">
-            <h3 class="text-lg font-semibold">Clear All Data</h3>
-            <UButton
-              color="gray"
-              variant="ghost"
-              icon="i-heroicons-x-mark"
-              class="-my-1"
-              @click="showDeleteModal = false"
-            />
-          </div>
-        </template>
-
+    <UModal v-model:open="showDeleteModal" title="Clear All Data">
+      <template #body>
         <div>
           <p class="text-red-500 font-medium">
             Warning: This action cannot be undone!
@@ -145,22 +110,17 @@
             exporting your data before clearing.
           </p>
         </div>
-
-        <template #footer>
-          <div class="flex justify-end gap-2">
-            <UButton
-              color="gray"
-              variant="soft"
-              @click="showDeleteModal = false"
-            >
-              Cancel
-            </UButton>
-            <UButton color="red" @click="clearAllData">
-              Yes, Delete Everything
-            </UButton>
-          </div>
-        </template>
-      </UCard>
+      </template>
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <UButton color="gray" variant="soft" @click="showDeleteModal = false">
+            Cancel
+          </UButton>
+          <UButton color="red" @click="clearAllData">
+            Yes, Delete Everything
+          </UButton>
+        </div>
+      </template>
     </UModal>
   </div>
 </template>
