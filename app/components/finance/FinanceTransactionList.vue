@@ -40,11 +40,11 @@
         <div class="text-sm text-gray-500 dark:text-gray-400">Income</div>
         <div class="text-lg font-semibold text-green-600 dark:text-green-400">
           <span v-if="finance.settings.value.display_unit === 'fiat'">
-            {{ finance.totals.value.income.toFixed(2) }}
+            {{ $n(finance.totals.value.income) }}
             {{ finance.settings.value.default_currency }}
           </span>
           <span v-else>
-            {{ Math.round(finance.totals.value.incomeSats).toLocaleString() }}
+            {{ $n(Math.round(finance.totals.value.incomeSats)) }}
             sats
           </span>
         </div>
@@ -54,11 +54,11 @@
         <div class="text-sm text-gray-500 dark:text-gray-400">Expenses</div>
         <div class="text-lg font-semibold text-red-600 dark:text-red-400">
           <span v-if="finance.settings.value.display_unit === 'fiat'">
-            {{ finance.totals.value.expenses.toFixed(2) }}
+            {{ $n(finance.totals.value.expenses) }}
             {{ finance.settings.value.default_currency }}
           </span>
           <span v-else>
-            {{ Math.round(finance.totals.value.expensesSats).toLocaleString() }}
+            {{ $n(Math.round(finance.totals.value.expensesSats)) }}
             sats
           </span>
         </div>
@@ -75,11 +75,11 @@
           "
         >
           <span v-if="finance.settings.value.display_unit === 'fiat'">
-            {{ finance.totals.value.balance.toFixed(2) }}
+            {{ $n(finance.totals.value.balance) }}
             {{ finance.settings.value.default_currency }}
           </span>
           <span v-else>
-            {{ Math.round(finance.totals.value.balanceSats).toLocaleString() }}
+            {{ $n(Math.round(finance.totals.value.balanceSats)) }}
             sats
           </span>
         </div>
@@ -131,19 +131,19 @@
               >
                 <span v-if="finance.settings.value.display_unit === 'fiat'">
                   {{ entry.type === "income" ? "+" : "-"
-                  }}{{ entry.amount_fiat.toFixed(2) }} {{ entry.fiat_currency }}
+                  }}{{ $n(entry.amount_fiat) }} {{ entry.fiat_currency }}
                 </span>
                 <span v-else>
                   {{ entry.type === "income" ? "+" : "-"
-                  }}{{ Math.round(entry.amount_sats).toLocaleString() }} sats
+                  }}{{ $n(Math.round(entry.amount_sats)) }} sats
                 </span>
               </div>
               <div class="text-xs text-gray-500 dark:text-gray-400">
                 <span v-if="finance.settings.value.display_unit === 'fiat'">
-                  ≈ {{ Math.round(entry.amount_sats).toLocaleString() }} sats
+                  ≈ {{ $n(Math.round(entry.amount_sats)) }} sats
                 </span>
                 <span v-else>
-                  ≈ {{ entry.amount_fiat.toFixed(2) }} {{ entry.fiat_currency }}
+                  ≈ {{ $n(entry.amount_fiat) }} {{ entry.fiat_currency }}
                 </span>
               </div>
             </td>
@@ -284,25 +284,6 @@ const filterDropdownItems = computed(() => [
     },
   ],
 ]);
-
-// Format dates
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(date);
-};
-
-const formatTime = (dateString: string) => {
-  const date = new Date(dateString);
-  return new Intl.DateTimeFormat("en-US", {
-    hour: "numeric",
-    minute: "numeric",
-    hour12: true,
-  }).format(date);
-};
 
 // Filter entries based on search and filters
 const filteredEntries = computed(() => {

@@ -9,11 +9,7 @@ export default defineNuxtConfig({
 
   ssr: false,
 
-  css: ["~/assets/css/main.css"],
-
-  colorMode: {
-    preference: "light",
-  },
+  css: ['~/assets/css/main.css'],
 
   ui: {
     theme: {

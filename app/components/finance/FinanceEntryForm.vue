@@ -7,17 +7,12 @@
         <!-- Transaction Type -->
         <div>
           <UFormField label="Transaction Type">
-            <URadio
+            <URadioGroup
               v-model="form.type"
-              value="income"
-              name="type"
-              label="Income"
-            />
-            <URadio
-              v-model="form.type"
-              value="expense"
-              name="type"
-              label="Expense"
+              :ui="{
+                fieldset: 'flex flex-row',
+              }"
+              :items="['income', 'expense']"
             />
           </UFormField>
         </div>
@@ -25,17 +20,12 @@
         <!-- Currency Unit Selection -->
         <div>
           <UFormField label="Enter amount in">
-            <URadio
+            <URadioGroup
               v-model="form.unit_input"
-              value="fiat"
-              name="unit_input"
-              :label="form.fiat_currency"
-            />
-            <URadio
-              v-model="form.unit_input"
-              value="sats"
-              name="unit_input"
-              label="Satoshis"
+              :ui="{
+                fieldset: 'flex flex-row',
+              }"
+              :items="['fiat', 'sats']"
             />
           </UFormField>
         </div>
@@ -56,7 +46,7 @@
 
               <div
                 v-if="showConversion"
-                class="ml-4 text-sm text-gray-500 dark:text-gray-400"
+                class="ml-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400"
               >
                 <span v-if="form.unit_input === 'fiat'">
                   ≈ {{ Math.round(Number(amount) * form.sats_per_fiat) }} sats
@@ -75,7 +65,7 @@
           <UFormField label="Fiat Currency">
             <USelect
               v-model="form.fiat_currency"
-              :options="currencies"
+              :items="currencies"
               @update:model-value="updateExchangeRate"
             />
           </UFormField>
@@ -116,40 +106,20 @@
         <!-- Tags -->
         <div class="col-span-1 md:col-span-2">
           <UFormField label="Tags">
-            <UInput
-              v-model="tagsInput"
+            <UInputTags
+              v-model="form.tags"
               placeholder="Enter tags separated by commas"
               class="w-full"
             />
-            <div class="mt-2 flex flex-wrap gap-2">
-              <UBadge
-                v-for="tag in form.tags"
-                :key="tag"
-                color="blue"
-                class="cursor-pointer"
-                @click="removeTag(tag)"
-              >
-                {{ tag }}
-                <UIcon name="i-heroicons-x-mark" class="ml-1" />
-              </UBadge>
-            </div>
           </UFormField>
         </div>
 
         <!-- Visibility -->
         <div class="col-span-1 md:col-span-2">
           <UFormField label="Visibility">
-            <URadio
+            <URadioGroup
               v-model="form.visibility"
-              value="private"
-              name="visibility"
-              label="Private"
-            />
-            <URadio
-              v-model="form.visibility"
-              value="public"
-              name="visibility"
-              label="Public"
+              :items="['private', 'public']"
             />
           </UFormField>
         </div>
@@ -163,7 +133,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from "vue";
+import { ref, computed } from "vue";
 
 const finance = useFinance();
 
@@ -171,7 +141,13 @@ const finance = useFinance();
 const userId = "npub1mockuserid";
 
 // Available currencies
-const currencies = ["USD", "EUR", "THB", "JPY", "GBP"];
+const currencies = ["LAK", "USD", "EUR", "THB", "JPY", "GBP", "BTC"];
+
+// load settings
+const settings = ref({
+  default_currency: "USD",
+  display_unit: "fiat" as "fiat" | "sats",
+});
 
 // Form state
 const form = ref({
@@ -198,24 +174,9 @@ const showConversion = computed(() => {
 
 // Update exchange rate from API
 const updateExchangeRate = async () => {
-  form.value.sats_per_fiat = await finance.fetchExchangeRate(
-    form.value.fiat_currency
-  );
+  const rs = await finance.fetchExchangeRate(form.value.fiat_currency);
+  form.value.sats_per_fiat = rs;
 };
-
-// Process tag input
-watch(tagsInput, (newValue) => {
-  if (newValue.includes(",")) {
-    const parts = newValue.split(",");
-    const newTag = parts[0].trim();
-
-    if (newTag && !form.value.tags.includes(newTag)) {
-      form.value.tags.push(newTag);
-    }
-
-    tagsInput.value = parts.slice(1).join(",").trim();
-  }
-});
 
 // Remove a tag
 const removeTag = (tag: string) => {
@@ -248,9 +209,9 @@ const handleSubmit = () => {
     type: "expense",
     amount_fiat: 0,
     amount_sats: 0,
-    fiat_currency: form.value.fiat_currency,
+    fiat_currency: settings.value.default_currency,
     sats_per_fiat: form.value.sats_per_fiat,
-    unit_input: form.value.unit_input,
+    unit_input: settings.value.display_unit,
     note: "",
     tags: [],
     visibility: "private",
@@ -262,6 +223,16 @@ const handleSubmit = () => {
 
 // Initialize by fetching current exchange rate
 onMounted(async () => {
+  const setting = localStorage.getItem("user_settings");
+  if (setting) {
+    settings.value = {
+      ...settings.value,
+      ...JSON.parse(setting),
+    };
+    form.value.fiat_currency = settings.value.default_currency;
+    form.value.unit_input = settings.value.display_unit;
+  }
+
   await updateExchangeRate();
 });
 </script>
