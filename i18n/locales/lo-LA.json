@@ -1,0 +1,231 @@
+{
+  "common": {
+    "add": "ເພີ່ມ",
+    "edit": "ແກ້ໄຂ",
+    "delete": "ລົບ",
+    "save": "ບັນທຶກ",
+    "cancel": "ຍົກເລີກ",
+    "submit": "ສົ່ງ",
+    "search": "ຄົ້ນຫາ",
+    "filter": "ກັ່ນຕອງ",
+    "view_all": "ເບິ່ງທັງໝົດ",
+    "back": "ກັບຄືນ",
+    "next": "ຕໍ່ໄປ",
+    "previous": "ກ່ອນໜ້າ",
+    "close": "ປິດ",
+    "confirm": "ຢືນຢັນ",
+    "status": "ສະຖານະ",
+    "action": "ການດຳເນີນງານ",
+    "date": "ວັນທີ",
+    "time": "ເວລາ",
+    "name": "ຊື່",
+    "description": "ລາຍລະອຽດ",
+    "notes": "ບັນທຶກ",
+    "loading": "ກຳລັງໂຫຼດ...",
+    "success": "ສຳເລັດ",
+    "error": "ຜິດພາດ",
+    "warning": "ເຕືອນ",
+    "info": "ຂໍ້ມູນ",
+    "back_to_dashboard": "ກັບໄປໜ້າຫຼັກ",
+    "export": "ສົ່ງອອກ",
+    "priority": {
+      "high": "ສູງ",
+      "medium": "ປານກາງ",
+      "low": "ຕ່ຳ"
+    }
+  },
+  "garden": {
+    "title": "ລະບົບຄຸ້ມຄອງສວນ",
+    "description": "ລະບົບຄຸ້ມຄອງສວນແບບອັດສະລິຍະ ເພື່ອການຜະລິດທີ່ມີປະສິດທິພາບ"
+  },
+  "dashboard": {
+    "title": "ໜ້າຫຼັກ",
+    "total_plants": "ຈຳນວນພືດທັງໝົດ",
+    "active_plots": "ແປງທີ່ໃຊ້ງານ",
+    "pending_care": "ການດູແລທີ່ຄ້າງຢູ່",
+    "monthly_revenue": "ລາຍຮັບປະຈຳເດືອນ",
+    "recent_plants": "ພືດທີ່ປູກຫຼ້າສຸດ",
+    "quick_actions": "ການດຳເນີນງານດ່ວນ",
+    "pending_tasks": "ວຽກທີ່ຄ້າງຢູ່"
+  },
+  "time": {
+    "today": "ມື້ນີ້",
+    "this_week": "ອາທິດນີ້",
+    "this_month": "ເດືອນນີ້",
+    "yesterday": "ມື້ວານນີ້",
+    "last_week": "ອາທິດທີ່ຜ່ານມາ",
+    "last_month": "ເດືອນທີ່ຜ່ານມາ"
+  },
+  "plants": {
+    "vegetables": "ຜັກ",
+    "fruits": "ຫມາກໄມ້",
+    "herbs": "ສະໝຸນໄພ",
+    "title": "ຈັດການພືດ",
+    "register_new": "ລົງທະບຽນພືດໃໝ່",
+    "register": "ລົງທະບຽນ",
+    "register_description": "ລົງທະບຽນພືດໃໝ່ເຂົ້າລະບົບຄຸ້ມຄອງສວນ",
+    "name": "ຊື່ພືດ",
+    "category": "ປະເພດໃຫຍ່",
+    "type": "ປະເພດ",
+    "variety": "ພັນທຸ໌",
+    "quantity": "ຈຳນວນ",
+    "unit": "ໜ່ວຍ",
+    "plot": "ແປງ/ເຂດ",
+    "row": "ແຖວ",
+    "position": "ຕຳແໜ່ງ",
+    "planted_date": "ວັນທີ່ປູກ",
+    "expected_harvest": "ວັນທີ່ຄາດວ່າຈະເກັບກ່ຽວ",
+    "seed_source": "ແຫຼ່ງເມັດພັນ",
+    "planting_cost": "ຄ່າໃຊ້ຈ່າຍໃນການປູກ",
+    "notes": "ບັນທຶກເພີ່ມເຕີມ",
+    "generate_qr_code": "ສ້າງລະຫັດ QR",
+    "qr_code_description": "ສ້າງລະຫັດ QR ເພື່ອການຕິດຕາມແລະຄຸ້ມຄອງ",
+    "qr_code_generated": "ລະຫັດ QR ຖືກສ້າງແລ້ວ",
+    "basic_info": "ຂໍ້ມູນພື້ນຖານ",
+    "location_info": "ຂໍ້ມູນສະຖານທີ່",
+    "planting_info": "ຂໍ້ມູນການປູກ",
+    "additional_info": "ຂໍ້ມູນເພີ່ມເຕີມ",
+    "registration_success": "ລົງທະບຽນສຳເລັດ",
+    "registration_success_message": "ລົງທະບຽນ {name} ສຳເລັດແລ້ວ!",
+    "register_another": "ລົງທະບຽນອີກ",
+    "select_category": "ເລືອກປະເພດໃຫຍ່",
+    "select_type": "ເລືອກປະເພດ",
+    "select_unit": "ເລືອກໜ່ວຍ",
+    "name_placeholder": "ກະລຸນາໃສ່ຊື່ພືດ",
+    "variety_placeholder": "ເຊັ່ນ: ໝາກເລັ່ນແດງ",
+    "quantity_placeholder": "ຈຳນວນ",
+    "plot_placeholder": "ເຊັ່ນ: A-01",
+    "row_placeholder": "ເຊັ່ນ: 1",
+    "position_placeholder": "ເຊັ່ນ: ຊ້າຍ",
+    "seed_source_placeholder": "ເຊັ່ນ: ຮ້ານເມັດພັນທອງ",
+    "cost_placeholder": "ຄ່າໃຊ້ຈ່າຍ",
+    "notes_placeholder": "ບັນທຶກເພີ່ມເຕີມ...",
+    "categories": {
+      "vegetable": "ຜັກ",
+      "fruit": "ໝາກໄມ້",
+      "herb": "ສະໝຸນໄພ",
+      "flower": "ດອກໄມ້",
+      "grain": "ເມັດພືດ"
+    },
+    "types": {
+      "tomato": "ໝາກເລັ່ນ",
+      "lettuce": "ຜັກສະລັດ",
+      "cabbage": "ຜັກກາດ",
+      "carrot": "ແຄັດ",
+      "onion": "ຫົວໃຫຍ່",
+      "potato": "ມັນຝຣັ່ງ",
+      "mango": "ໝາກມ່ວງ",
+      "papaya": "ໝາກຫຸ່ງ",
+      "banana": "ໝາກກ້ວຍ",
+      "coconut": "ໝາກພ້າວ",
+      "lime": "ໝາກນາວ",
+      "basil": "ໃບໂຮງລະພາ",
+      "mint": "ໃບສະຫະມິດ",
+      "cilantro": "ຜັກຊີ",
+      "lemongrass": "ຫຍ້າສີທອນ",
+      "marigold": "ດອກດາວເຮືອງ",
+      "sunflower": "ດອກດາວເຮືອງ",
+      "rose": "ດອກກຸຫຼາບ",
+      "rice": "ເຂົ້າ",
+      "corn": "ສາລີ"
+    },
+    "units": {
+      "plants": "ຕົ້ນ",
+      "seeds": "ເມັດ",
+      "rows": "ແຖວ",
+      "square_meters": "ຕາແມັດ"
+    },
+    "status": {
+      "seedling": "ໄມ້ອ່ອນ",
+      "growing": "ກຳລັງເຕີບໂຕ",
+      "flowering": "ອອກດອກ",
+      "mature": "ໃຫຍ່ແລ້ວ",
+      "harvesting": "ກຳລັງເກັບກ່ຽວ"
+    },
+    "select_plant": "ເລືອກພືດ",
+    "examples": {
+      "tomato": "ໝາກເລັ່ນ",
+      "mango": "ໝາກມ່ວງ",
+      "lettuce": "ຫຍ້າສະລັດ",
+      "papaya": "ໝາກຫຸ່ງ"
+    }
+  },
+  "care": {
+    "title": "ການດູແລ",
+    "log_activity": "ບັນທຶກການດູແລ",
+    "watering": "ລົດນ້ຳ",
+    "fertilizing": "ໃສ່ປ๋ຸຍ",
+    "pruning": "ຕັດແຕ່ງ",
+    "pest_control": "ກຳຈັດແມງໄມ້",
+    "tasks": {
+      "watering": "ລົດນ້ຳ",
+      "fertilizing": "ໃສ່ປ๋ຸຍ",
+      "pruning": "ຕັດແຕ່ງກິ່ງ"
+    }
+  },
+  "sales": {
+    "title": "ການຂາຍ",
+    "record": "ບັນທຶກການຂາຍ",
+    "customer": "ລູກຄ້າ",
+    "price": "ລາຄາ",
+    "quantity": "ຈຳນວນ",
+    "total": "ລວມທັງໝົດ"
+  },
+  "validation": {
+    "required": "ຈຳເປັນຕ້ອງໃສ່",
+    "min_quantity": "ຈຳນວນຕ້ອງຫຼາຍກວ່າ 0",
+    "invalid_email": "ອີເມວບໍ່ຖືກຕ້ອງ",
+    "invalid_date": "ວັນທີບໍ່ຖືກຕ້ອງ",
+    "invalid_number": "ຕົວເລກບໍ່ຖືກຕ້ອງ"
+  },
+  "harvest": {
+    "record": "ບັນທຶກການເກັບກ່ຽວ",
+    "quantity": "ຈຳນວນທີ່ເກັບ",
+    "date": "ວັນທີ່ເກັບ",
+    "title": "ການເກັບກ່ຽວ",
+    "subtitle": "ຈັດການຂໍ້ມູນການເກັບກ່ຽວແລະສະຕ໊ອກສິນຄ້າ",
+    "add_harvest": "ເພີ່ມການເກັບກ່ຽວ",
+    "edit_harvest": "ແກ້ໄຂການເກັບກ່ຽວ",
+    "confirm_delete": "ທ່ານຕ້ອງການລຶບຂໍ້ມູນນີ້ບໍ່?",
+    "search_placeholder": "ຄົ້ນຫາຊື່ພືດ ຫຼື ລະຫັດ batch...",
+    "stats": {
+      "today_harvest": "ເກັບກ່ຽວມື້ນີ້",
+      "this_month": "ເກັບກ່ຽວເດືອນນີ້",
+      "estimated_value": "ມູນຄ່າປະເມີນ",
+      "total_batches": "ລວມ Batch"
+    },
+    "filters": {
+      "plant_type": "ປະເພດພືດ",
+      "date_range": "ໄລຍະເວລາ",
+      "status": "ສະຖານະ"
+    },
+    "table": {
+      "batch_id": "ລະຫັດ Batch",
+      "plant_name": "ຊື່ພືດ",
+      "harvest_date": "ວັນທີ່ເກັບກ່ຽວ",
+      "quantity": "ປະລິມານ",
+      "quality_grade": "ລະດັບຄຸນະພາບ",
+      "status": "ສະຖານະ"
+    },
+    "form": {
+      "plant_name": "ຊື່ພືດ",
+      "harvest_date": "ວັນທີ່ເກັບກ່ຽວ",
+      "weight": "ນ້ໍາໜັກ (ກິໂລກຣາມ)",
+      "quantity": "ຈໍານວນ (ກ້ອນ)",
+      "quality_grade": "ລະດັບຄຸນະພາບ",
+      "storage_location": "ສະຖານທີ່ເກັບຮັກສາ",
+      "notes": "ໝາຍເຫດ"
+    },
+    "status": {
+      "in_stock": "ມີໃນສະຕ໊ອກ",
+      "sold": "ຂາຍແລ້ວ",
+      "processing": "ກໍາລັງປຸງແຕ່ງ",
+      "expired": "ໝົດອາຍຸ"
+    },
+    "quality": {
+      "A": "A - ດີເລີດ",
+      "B": "B - ດີ",
+      "C": "C - ປານກາງ"
+    }
+  }
+}
