@@ -64,10 +64,10 @@ export function useFinance() {
     },
   ]);
 
-  const settings = ref<UserSettings>({
+  const settings = useState<UserSettings>("user_settings", () => ({
     default_currency: "LAK",
     display_unit: "fiat",
-  });
+  }));
 
   const currentExchangeRate = ref<number>(0.0413); // sats per LAK (default)
   const isLoading = ref<boolean>(false);
@@ -267,11 +267,14 @@ export function useFinance() {
     });
   };
 
+  const saveSettings = () => {
+     localStorage.setItem("user_settings", JSON.stringify(settings.value));
+  }
+
   // Save entries to localStorage
   const saveEntries = () => {
     try {
       localStorage.setItem("finance_entries", JSON.stringify(entries.value));
-      localStorage.setItem("user_settings", JSON.stringify(settings.value));
     } catch (err) {
       error.value = "Failed to save data";
       console.error("Failed to save to localStorage:", err);
@@ -350,6 +353,7 @@ export function useFinance() {
     filterEntries,
     loadEntries,
     saveEntries,
+    saveSettings,
     toggleDisplayUnit,
     fetchExchangeRate,
   };

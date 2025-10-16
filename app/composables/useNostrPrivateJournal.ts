@@ -1,6 +1,5 @@
 import { finalizeEvent } from "nostr-tools/pure";
 import { hexToBytes } from "@noble/hashes/utils";
-// Add these imports to your existing useNostr.ts
 import { nip04 } from "nostr-tools";
 import { xchacha20poly1305 } from "@noble/ciphers/chacha";
 import { randomBytes } from "@noble/hashes/utils";

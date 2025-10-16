@@ -96,7 +96,7 @@
             </UButton>
           </div> -->
 
-          <section class="divide-y divide-gray-100">
+          <section class="divide-y divide-gray-100 dark:divide-slate-700">
             <div class="py-3">
               <h2 class="text-lg font-semibold text-gray-700">
                 {{ formatGroupDate(dateGroup.date) }}

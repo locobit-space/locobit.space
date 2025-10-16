@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+  <div class="bg-white dark:bg-transparent rounded-lg shadow p-6">
     <h2 class="text-xl font-semibold mb-4">Add New Transaction</h2>
 
     <form @submit.prevent="handleSubmit">
@@ -135,19 +135,14 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 
-const finance = useFinance();
+const { currentExchangeRate, fetchExchangeRate, settings, addEntry } =
+  useFinance();
 
 // Mock user ID - would come from authentication system
 const userId = "npub1mockuserid";
 
 // Available currencies
 const currencies = ["LAK", "USD", "EUR", "THB", "JPY", "GBP", "BTC"];
-
-// load settings
-const settings = ref({
-  default_currency: "USD",
-  display_unit: "fiat" as "fiat" | "sats",
-});
 
 // Form state
 const form = ref({
@@ -156,7 +151,7 @@ const form = ref({
   amount_fiat: 0,
   amount_sats: 0,
   fiat_currency: "USD",
-  sats_per_fiat: finance.currentExchangeRate.value,
+  sats_per_fiat: currentExchangeRate.value,
   unit_input: "fiat" as "fiat" | "sats",
   note: "",
   tags: [] as string[],
@@ -174,7 +169,7 @@ const showConversion = computed(() => {
 
 // Update exchange rate from API
 const updateExchangeRate = async () => {
-  const rs = await finance.fetchExchangeRate(form.value.fiat_currency);
+  const rs = await fetchExchangeRate(form.value.fiat_currency);
   form.value.sats_per_fiat = rs;
 };
 
@@ -201,7 +196,7 @@ const handleSubmit = () => {
   }
 
   // Submit the entry
-  finance.addEntry(form.value);
+  addEntry(form.value);
 
   // Reset form
   form.value = {
@@ -223,16 +218,9 @@ const handleSubmit = () => {
 
 // Initialize by fetching current exchange rate
 onMounted(async () => {
-  const setting = localStorage.getItem("user_settings");
-  if (setting) {
-    settings.value = {
-      ...settings.value,
-      ...JSON.parse(setting),
-    };
-    form.value.fiat_currency = settings.value.default_currency;
-    form.value.unit_input = settings.value.display_unit;
-  }
-
+  console.log(settings.value);
+  form.value.fiat_currency = settings.value.default_currency;
+  form.value.unit_input = settings.value.display_unit;
   await updateExchangeRate();
 });
 </script>

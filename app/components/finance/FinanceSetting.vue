@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+  <div class="bg-white dark:bg-transparent rounded-lg shadow p-6">
     <h2 class="text-xl font-semibold mb-6">Settings</h2>
 
     <div class="space-y-6">
@@ -32,7 +32,7 @@
 
       <!-- Auto-fetch Exchange Rate -->
       <UFormField label="Exchange Rate Updates">
-        <UToggle v-model="autoFetchRates" @update:model-value="saveSettings" />
+        <USwitch v-model="autoFetchRates" @update:model-value="saveSettings" />
         <span class="text-sm text-gray-500 dark:text-gray-400 ml-2">
           Automatically fetch exchange rates when adding transactions
         </span>
@@ -157,7 +157,7 @@ const importFile = ref<File | null>(null);
 // Save settings
 const saveSettings = () => {
   finance.settings.value = { ...settings.value };
-  finance.saveEntries();
+  finance.saveSettings();
 
   // Show a success notification
   useToast().add({

@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-white dark:bg-gray-800 rounded-lg">
+  <div class="bg-white dark:bg-transparent rounded-lg">
     <div
       class="p-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-700"
     >
@@ -88,26 +88,26 @@
 
     <!-- Transactions List -->
     <div class="overflow-x-auto">
-      <table class="w-full border-collapse">
+      <table class="w-full border-collapse table-auto">
         <thead>
           <tr>
-            <th class="p-3 border-b border-gray-200 text-left font-semibold">
+            <!-- <th class="p-3 border-b border-gray-200 text-left font-semibold">
               Type
-            </th>
-            <th class="p-3 border-b border-gray-200 text-left font-semibold">
+            </th> -->
+            <th class="p-3 border-b border-gray-200 dark:border-slate-700 text-left font-semibold">
               Amount
             </th>
-            <th class="p-3 border-b border-gray-200 text-left font-semibold">
+            <th class="p-3 border-b border-gray-200 dark:border-slate-700 text-left font-semibold">
               Description
             </th>
-            <th class="p-3 border-b border-gray-200 text-left font-semibold">
+            <th class="p-3 border-b border-gray-200 dark:border-slate-700 text-left font-semibold">
               Tags
             </th>
-            <th class="p-3 border-b border-gray-200 text-left font-semibold">
+            <th class="p-3 border-b border-gray-200 dark:border-slate-700 text-left font-semibold">
               Date
             </th>
             <th
-              class="p-3 border-b border-gray-200 text-left font-semibold"
+              class="p-3 border-b border-gray-200 dark:border-slate-700 text-left font-semibold"
             ></th>
           </tr>
         </thead>
@@ -117,10 +117,10 @@
             :key="entry.id"
             class="hover:bg-gray-50 dark:hover:bg-gray-700"
           >
-            <td class="p-3 border-b border-gray-200">
+            <!-- <td class="p-3 border-b border-gray-200">
               {{ entry.type === "income" ? "Income" : "Expense" }}
-            </td>
-            <td class="p-3 border-b border-gray-200">
+            </td> -->
+            <td class="p-3 border-b border-gray-200 dark:border-slate-700 whitespace-nowrap">
               <div
                 class="font-medium"
                 :class="
@@ -138,7 +138,7 @@
                   }}{{ $n(Math.round(entry.amount_sats)) }} sats
                 </span>
               </div>
-              <div class="text-xs text-gray-500 dark:text-gray-400">
+              <div class="text-xs text-gray-500 dark:text-gray-400 dark:border-slate-700">
                 <span v-if="finance.settings.value.display_unit === 'fiat'">
                   ≈ {{ $n(Math.round(entry.amount_sats)) }} sats
                 </span>
@@ -147,8 +147,8 @@
                 </span>
               </div>
             </td>
-            <td class="p-3 border-b border-gray-200">{{ entry.note }}</td>
-            <td class="p-3 border-b border-gray-200">
+            <td class="p-3 border-b border-gray-200 dark:border-slate-700">{{ entry.note }}</td>
+            <td class="p-3 border-b border-gray-200 dark:border-slate-700">
               <div class="flex flex-wrap gap-1">
                 <UBadge
                   v-for="tag in entry.tags"
@@ -160,13 +160,13 @@
                 </UBadge>
               </div>
             </td>
-            <td class="p-3 border-b border-gray-200">
+            <td class="p-3 border-b border-gray-200 whitespace-nowrap dark:border-slate-700">
               <div>{{ formatDate(entry.created_at) }}</div>
               <div class="text-xs text-gray-500 dark:text-gray-400">
                 {{ formatTime(entry.created_at) }}
               </div>
             </td>
-            <td class="p-3 border-b border-gray-200">
+            <td class="p-3 border-b border-gray-200 dark:border-slate-700">
               <div class="flex items-center gap-2">
                 <UTooltip text="Edit">
                   <UButton
