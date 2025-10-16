@@ -1,10 +1,14 @@
 import { ref, computed, onMounted } from "vue";
+import { nip04 } from "nostr-tools";
+import { finalizeEvent } from "nostr-tools/pure";
+import { hexToBytes } from "@noble/ciphers/utils";
 
 // Define types for clarity
 interface FinanceEntry {
   id: string;
   user_id: string;
   type: "income" | "expense";
+  category: string;
   amount_fiat: number;
   amount_sats: number;
   fiat_currency: string;
@@ -32,37 +36,13 @@ interface Totals {
 
 export function useFinance() {
   const toast = useToast();
+
+  const { user } = useNostrUser();
+  const { publishEvent, queryEvents } = useNostrRelay();
+  const PRIVATE_NOTE_KIND = 30001;
+
   // Reactive state
-  const entries = ref<FinanceEntry[]>([
-    {
-      id: "1",
-      user_id: "npub1mockuserid",
-      type: "expense",
-      amount_fiat: 216255, // ~10 USD equivalent in LAK
-      amount_sats: 894, // Based on ~0.0413 sats/LAK
-      fiat_currency: "LAK",
-      sats_per_fiat: 0.0413, // Default; fetched dynamically
-      unit_input: "fiat",
-      note: "Groceries",
-      tags: ["food", "groceries"],
-      visibility: "private",
-      created_at: new Date().toISOString(),
-    },
-    {
-      id: "2",
-      user_id: "npub1mockuserid",
-      type: "income",
-      amount_fiat: 432510, // ~20 USD equivalent in LAK
-      amount_sats: 1787,
-      fiat_currency: "LAK",
-      sats_per_fiat: 0.0413,
-      unit_input: "fiat",
-      note: "Salary",
-      tags: ["work", "salary"],
-      visibility: "public",
-      created_at: new Date("2024-01-01").toISOString(),
-    },
-  ]);
+  const entries = ref<FinanceEntry[]>([]);
 
   const settings = useState<UserSettings>("user_settings", () => ({
     default_currency: "LAK",
@@ -148,7 +128,7 @@ export function useFinance() {
   };
 
   // Add a new entry
-  const addEntry = (
+  const addEntry = async (
     entry: Omit<
       FinanceEntry,
       "id" | "created_at" | "amount_sats" | "amount_fiat"
@@ -196,6 +176,44 @@ export function useFinance() {
       });
       throw new Error("Amount cannot be negative");
     }
+
+    const sensitiveData = {
+      amount_fiat: entry.amount_fiat,
+      amount_sats: entry.amount_sats,
+      note: entry.note || "Untitled",
+      tags: entry.tags,
+      category: entry.category,
+    };
+
+    const encryptedContent = nip04.encrypt(
+      user.value?.privateKey || "",
+      user.value?.publicKey || "",
+      JSON.stringify(sensitiveData)
+    );
+    // get the current date timestamp
+    const id = Math.floor(Date.now() / 1000);
+    const event = {
+      kind: PRIVATE_NOTE_KIND, // 30001
+      pubkey: user.value?.publicKey || "",
+      created_at: Math.floor(Date.now() / 1000),
+      tags: [
+        ["d", `${id}`],
+        ["t", "finance"],
+        ["type", entry.type],
+        ["fiat_currency", entry.fiat_currency],
+        ["sats_per_fiat", entry.sats_per_fiat.toString()],
+        ["unit_input", entry.unit_input],
+        ["visibility", entry.visibility],
+      ],
+      content: encryptedContent,
+    };
+
+    const signedEvent = finalizeEvent(
+      event,
+      hexToBytes(user.value?.privateKey || "")
+    );
+
+    publishEvent(signedEvent);
 
     toast.add({
       title: "Created new entry",
@@ -268,8 +286,8 @@ export function useFinance() {
   };
 
   const saveSettings = () => {
-     localStorage.setItem("user_settings", JSON.stringify(settings.value));
-  }
+    localStorage.setItem("user_settings", JSON.stringify(settings.value));
+  };
 
   // Save entries to localStorage
   const saveEntries = () => {
@@ -282,19 +300,51 @@ export function useFinance() {
   };
 
   // Load entries from localStorage
-  const loadEntries = () => {
+  const loadEntries = async () => {
     try {
-      const savedEntries = localStorage.getItem("finance_entries");
-      if (savedEntries) {
-        const parsed = JSON.parse(savedEntries);
-        if (Array.isArray(parsed)) entries.value = parsed;
+      // const savedEntries = localStorage.getItem("finance_entries");
+      // if (savedEntries) {
+      //   const parsed = JSON.parse(savedEntries);
+      //   if (Array.isArray(parsed)) entries.value = parsed;
+      // }
+      // const savedSettings = localStorage.getItem("user_settings");
+      // if (savedSettings) {
+      //   const parsed = JSON.parse(savedSettings);
+      //   if (parsed.default_currency && parsed.display_unit)
+      //     settings.value = parsed;
+      // }
+
+      const events = await queryEvents({
+        kinds: [PRIVATE_NOTE_KIND],
+        authors: [user.value?.publicKey || ""],
+        "#t": ["finance"],
+      });
+
+      for (const event of events) {
+        if (!event.content) continue;
+
+        const encryptedContent = event.content;
+        const decryptedContent = nip04.decrypt(
+          user.value?.privateKey || "",
+          user.value?.publicKey || "",
+          encryptedContent
+        );
+        const parsed = JSON.parse(decryptedContent);
+
+        const dateTag = event.tags.find((tag) => tag[0] === "d");
+        const date = dateTag ? dateTag[1] : "unknown";
+
+        const entry: FinanceEntry = {
+          ...parsed,
+          id: date,
+          created_at: new Date(event.created_at * 1000).toISOString(),
+          type: event.tags.find((tag) => tag[0] === "type")?.[1] || "unknown",
+        };
+        console.log(entry);
+        entries.value.push(entry);
       }
-      const savedSettings = localStorage.getItem("user_settings");
-      if (savedSettings) {
-        const parsed = JSON.parse(savedSettings);
-        if (parsed.default_currency && parsed.display_unit)
-          settings.value = parsed;
-      }
+
+      console.log(events);
     } catch (err) {
       console.error("Failed to load from localStorage:", err);
       error.value = "Failed to load data";
@@ -340,7 +390,11 @@ export function useFinance() {
     };
   });
 
+  // Available currencies
+  const currencies = ["LAK", "USD", "EUR", "THB", "JPY", "GBP", "BTC"];
+
   return {
+    currencies,
     entries,
     settings,
     currentExchangeRate,

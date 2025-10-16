@@ -85,7 +85,6 @@
         </div>
       </div>
     </div>
-
     <!-- Transactions List -->
     <div class="overflow-x-auto">
       <table class="w-full border-collapse table-auto">
@@ -94,16 +93,24 @@
             <!-- <th class="p-3 border-b border-gray-200 text-left font-semibold">
               Type
             </th> -->
-            <th class="p-3 border-b border-gray-200 dark:border-slate-700 text-left font-semibold">
+            <th
+              class="p-3 border-b border-gray-200 dark:border-slate-700 text-left font-semibold"
+            >
               Amount
             </th>
-            <th class="p-3 border-b border-gray-200 dark:border-slate-700 text-left font-semibold">
+            <th
+              class="p-3 border-b border-gray-200 dark:border-slate-700 text-left font-semibold"
+            >
               Description
             </th>
-            <th class="p-3 border-b border-gray-200 dark:border-slate-700 text-left font-semibold">
+            <th
+              class="p-3 border-b border-gray-200 dark:border-slate-700 text-left font-semibold"
+            >
               Tags
             </th>
-            <th class="p-3 border-b border-gray-200 dark:border-slate-700 text-left font-semibold">
+            <th
+              class="p-3 border-b border-gray-200 dark:border-slate-700 text-left font-semibold"
+            >
               Date
             </th>
             <th
@@ -120,7 +127,9 @@
             <!-- <td class="p-3 border-b border-gray-200">
               {{ entry.type === "income" ? "Income" : "Expense" }}
             </td> -->
-            <td class="p-3 border-b border-gray-200 dark:border-slate-700 whitespace-nowrap">
+            <td
+              class="p-3 border-b border-gray-200 dark:border-slate-700 whitespace-nowrap"
+            >
               <div
                 class="font-medium"
                 :class="
@@ -138,7 +147,9 @@
                   }}{{ $n(Math.round(entry.amount_sats)) }} sats
                 </span>
               </div>
-              <div class="text-xs text-gray-500 dark:text-gray-400 dark:border-slate-700">
+              <div
+                class="text-xs text-gray-500 dark:text-gray-400 dark:border-slate-700"
+              >
                 <span v-if="finance.settings.value.display_unit === 'fiat'">
                   ≈ {{ $n(Math.round(entry.amount_sats)) }} sats
                 </span>
@@ -147,7 +158,12 @@
                 </span>
               </div>
             </td>
-            <td class="p-3 border-b border-gray-200 dark:border-slate-700">{{ entry.note }}</td>
+            <td class="p-3 border-b border-gray-200 dark:border-slate-700">
+              <b>{{ entry.category }}</b>
+              <p class="text-sm text-slate-500 dark:text-300">
+                <small>{{ entry.note }}</small>
+              </p>
+            </td>
             <td class="p-3 border-b border-gray-200 dark:border-slate-700">
               <div class="flex flex-wrap gap-1">
                 <UBadge
@@ -160,7 +176,9 @@
                 </UBadge>
               </div>
             </td>
-            <td class="p-3 border-b border-gray-200 whitespace-nowrap dark:border-slate-700">
+            <td
+              class="p-3 border-b border-gray-200 whitespace-nowrap dark:border-slate-700"
+            >
               <div>{{ formatDate(entry.created_at) }}</div>
               <div class="text-xs text-gray-500 dark:text-gray-400">
                 {{ formatTime(entry.created_at) }}

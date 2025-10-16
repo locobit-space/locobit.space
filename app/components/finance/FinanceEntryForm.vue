@@ -1,7 +1,6 @@
 <template>
   <div class="bg-white dark:bg-transparent rounded-lg shadow p-6">
     <h2 class="text-xl font-semibold mb-4">Add New Transaction</h2>
-
     <form @submit.prevent="handleSubmit">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <!-- Transaction Type -->
@@ -27,6 +26,12 @@
               }"
               :items="['fiat', 'sats']"
             />
+          </UFormField>
+        </div>
+
+        <div>
+          <UFormField label="Category">
+            <USelect v-model="form.category" :items="categories" />
           </UFormField>
         </div>
 
@@ -135,19 +140,31 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 
-const { currentExchangeRate, fetchExchangeRate, settings, addEntry } =
-  useFinance();
+const {
+  currentExchangeRate,
+  fetchExchangeRate,
+  settings,
+  addEntry,
+  currencies,
+} = useFinance();
+
+const categories = [
+  "Groceries",
+  "Salary",
+  "Transport",
+  "Entertainment",
+  "Health",
+  "Other",
+];
 
 // Mock user ID - would come from authentication system
 const userId = "npub1mockuserid";
-
-// Available currencies
-const currencies = ["LAK", "USD", "EUR", "THB", "JPY", "GBP", "BTC"];
 
 // Form state
 const form = ref({
   user_id: userId,
   type: "expense" as "income" | "expense",
+  category: "Groceries",
   amount_fiat: 0,
   amount_sats: 0,
   fiat_currency: "USD",
@@ -202,6 +219,7 @@ const handleSubmit = () => {
   form.value = {
     user_id: userId,
     type: "expense",
+    category: "Groceries",
     amount_fiat: 0,
     amount_sats: 0,
     fiat_currency: settings.value.default_currency,
@@ -218,7 +236,6 @@ const handleSubmit = () => {
 
 // Initialize by fetching current exchange rate
 onMounted(async () => {
-  console.log(settings.value);
   form.value.fiat_currency = settings.value.default_currency;
   form.value.unit_input = settings.value.display_unit;
   await updateExchangeRate();

@@ -91,7 +91,7 @@ export const useNostrPrivateJournal = () => {
 
     try {
       // Encrypt the updated content
-      const encryptedContent = await nip04.encrypt(
+      const encryptedContent = nip04.encrypt(
         user.value.privateKey,
         user.value.publicKey,
         content
@@ -155,9 +155,6 @@ export const useNostrPrivateJournal = () => {
       if (until) filter.until = until;
 
       const events = await pool.querySync(RELAYS, filter);
-
-      console.log(events);
-
       oldItems.value = [...oldItems.value, ...events].sort(
         (a, b) => b.created_at - a.created_at
       );
@@ -168,7 +165,7 @@ export const useNostrPrivateJournal = () => {
         if (!event.content) continue;
 
         try {
-          const content = await nip04.decrypt(
+          const content = nip04.decrypt(
             user.value.privateKey,
             user.value.publicKey,
             event.content

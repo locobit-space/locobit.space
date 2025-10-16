@@ -4,16 +4,21 @@ import { ref } from "vue";
 import type { Event } from "nostr-tools";
 
 // Default relays
-const DEFAULT_RELAYS = [
+
+const _devRelays = [
+   "ws://localhost:8080",
+   "wss://relay.damus.io"
+  ];
+const _prodRelays = [
   "wss://relay.damus.io",
-  // Uncomment these as needed
   "wss://yabu.me",
   "wss://nos.lol",
-  // "wss://nostr-pub.wellorder.net",
   "wss://relay.nostr.band",
 ];
 
 export const useNostrRelay = () => {
+  const DEFAULT_RELAYS = import.meta.env.DEV ? _devRelays : _prodRelays;
+
   const relays = ref<string[]>([...DEFAULT_RELAYS]);
   const isConnected = ref<boolean>(false);
   const error = ref<any>(null);

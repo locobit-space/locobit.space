@@ -137,7 +137,7 @@ const showImportModal = ref(false);
 const showDeleteModal = ref(false);
 
 // Available currencies
-const currencies = ["LAK", "USD", "EUR", "JPY", "GBP", "THB", "BTC"];
+const currencies = finance.currencies;
 
 const unitItems = [
   { label: "Fiat", value: "fiat" },
