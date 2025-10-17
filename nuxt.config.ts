@@ -89,14 +89,14 @@ export default defineNuxtConfig({
   pwa: {
     registerType: "autoUpdate",
     manifest: {
-      name: "Sats & Fiat Wallet",
-      short_name: "SatsWallet",
-      description: "Manage Bitcoin (satoshi) and fiat transactions",
+      name: "LocoBit Space",
+      short_name: "LocoBit",
+      description: "LocoSats - Social and Bitcoin Lightning for the Web",
       theme_color: "#8C00FF", // Bitcoin orange
       background_color: "#FFFFFF",
       display: "standalone",
       scope: "/",
-      start_url: "/wallet",
+      start_url: "/",
       icons: [
         {
           src: "/icons/icon-192x192.png", // Folder icon for smaller displays

@@ -23,4 +23,8 @@
 
 <script setup>
 const { user } = useNostrUser();
+
+useHead({
+  title: "Journal",
+});
 </script>

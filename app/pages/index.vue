@@ -78,6 +78,10 @@
 import type { Event } from "nostr-tools";
 import { ref, onMounted } from "vue";
 
+useHead({
+  title: "LocoBit Space",
+});
+
 const {
   checkNewNotes,
   loadNotesOnce,
