@@ -1,6 +1,5 @@
 import { finalizeEvent } from "nostr-tools/pure";
 import { hexToBytes } from "@noble/hashes/utils";
-// Add these imports to your existing useNostr.ts
 import { nip04 } from "nostr-tools";
 import { xchacha20poly1305 } from "@noble/ciphers/chacha";
 import { randomBytes } from "@noble/hashes/utils";
@@ -12,11 +11,15 @@ export const useNostrPrivateJournal = () => {
 
   const { user } = useNostrUser();
   const { error, isLoading } = useNostrFeed();
-  const { DEFAULT_RELAYS: RELAYS } = useNostrRelay();
+  const { DEFAULT_RELAYS: RELAYS, queryEvents } = useNostrRelay();
   const journalNotes = ref<any[]>([]);
+
+  const oldItems = useState<any[]>("oldItems", () => []);
 
   // Kind 30001 is a standard for private notes/bookmarks
   const PRIVATE_NOTE_KIND = 30001;
+  const hasMore = useState<boolean>("hasMore", () => false);
+  const DEFAULT_LIMIT = 10;
 
   /**
    * Create a new private journal entry
@@ -43,8 +46,6 @@ export const useNostrPrivateJournal = () => {
 
       // get the current date timestamp
       const id = Math.floor(Date.now() / 1000);
-
-      console.log(date);
 
       const eventTemplate = {
         kind: PRIVATE_NOTE_KIND,
@@ -90,7 +91,7 @@ export const useNostrPrivateJournal = () => {
 
     try {
       // Encrypt the updated content
-      const encryptedContent = await nip04.encrypt(
+      const encryptedContent = nip04.encrypt(
         user.value.privateKey,
         user.value.publicKey,
         content
@@ -124,52 +125,78 @@ export const useNostrPrivateJournal = () => {
   };
 
   /**
-   * Load journal entries
-   * @returns Array of decrypted journal entries
+   * Load journal entries with pagination
+   * @param option limit, since (UNIX timestamp), until (optional)
    */
-  const loadJournalEntries = async () => {
+  const loadJournalEntries = async (
+    option: {
+      limit?: number;
+      since?: number;
+      until?: number;
+    } = {}
+  ) => {
     if (!user.value) return;
+
     isLoading.value = true;
-    journalNotes.value = [];
+
+    const limit = option.limit ?? DEFAULT_LIMIT;
+    const since = option.since ?? 0;
+    const until = option.until;
 
     try {
-      const events = await pool.querySync(RELAYS, {
+      const filter: any = {
         kinds: [PRIVATE_NOTE_KIND],
         authors: [user.value.publicKey],
-        "#t": ["journal"], // Filter by tag
-      });
+        "#t": ["journal"],
+        since,
+        limit,
+      };
 
-      // Process and decrypt entries
+      if (until) filter.until = until;
+
+      const events = await pool.querySync(RELAYS, filter);
+      oldItems.value = [...oldItems.value, ...events].sort(
+        (a, b) => b.created_at - a.created_at
+      );
+
+      const newEntries = [];
+
       for (const event of events) {
-        // 🧹 Skip empty (deleted) entries
         if (!event.content) continue;
 
         try {
-          const content = await nip04.decrypt(
+          const content = nip04.decrypt(
             user.value.privateKey,
             user.value.publicKey,
             event.content
           );
 
-          // Find the date tag
           const dateTag = event.tags.find((tag) => tag[0] === "d");
           const date = dateTag ? dateTag[1] : "unknown";
 
-          journalNotes.value.push({
-            ...event,
-            id: date, // Use date as ID for easier referencing
-            decryptedContent: content,
-            date,
-          });
+          // Avoid duplicates (use 'id' or date as unique key)
+          if (!journalNotes.value.find((e) => e.id === date)) {
+            newEntries.push({
+              ...event,
+              id: date,
+              decryptedContent: content,
+              date,
+            });
+          }
         } catch (decryptError) {
           console.error("Failed to decrypt entry:", decryptError);
         }
       }
 
-      // Sort by date (newest first)
-      journalNotes.value.sort((a, b) => {
-        return b.date.localeCompare(a.date);
-      });
+      journalNotes.value.push(...newEntries);
+
+      // Sort descending by date
+      journalNotes.value.sort((a, b) => b.date.localeCompare(a.date));
+
+      // Set hasMore flag
+      if (newEntries.length < limit) {
+        hasMore.value = false;
+      }
     } catch (e) {
       error.value = e;
     } finally {
@@ -177,6 +204,26 @@ export const useNostrPrivateJournal = () => {
     }
 
     return journalNotes.value;
+  };
+
+  /**
+   * Load more journal entries based on oldest known entry
+   */
+  const loadMoreJournalEntries = async () => {
+    console.log(journalNotes.value.length, hasMore.value, isLoading.value);
+
+    if (!hasMore.value || isLoading.value) return;
+
+    console.log("Loading more journal entries...");
+    const oldest = oldItems.value[oldItems.value.length - 1];
+    const untilTimestamp = oldest ? oldest.created_at - 1 : 0;
+
+    console.log(untilTimestamp);
+
+    await loadJournalEntries({
+      limit: DEFAULT_LIMIT,
+      until: untilTimestamp,
+    });
   };
 
   /**
@@ -203,7 +250,6 @@ export const useNostrPrivateJournal = () => {
    * @returns boolean success status
    */
   const removeJournalEntry = async (id: string) => {
-    console.log(id);
     if (!user.value) return false;
     isLoading.value = true;
 
@@ -271,8 +317,6 @@ export const useNostrPrivateJournal = () => {
     const response = await fetch(url);
     const buffer = await response.arrayBuffer();
 
-    console.log("Fetched encrypted file size:", buffer.byteLength);
-
     if (buffer.byteLength < 16) {
       throw new Error("Encrypted file is too small to contain a valid tag.");
     }
@@ -286,6 +330,7 @@ export const useNostrPrivateJournal = () => {
 
   return {
     journalNotes,
+    hasMore,
     createJournalEntry,
     updateJournalEntry,
     removeJournalEntry,
@@ -293,5 +338,6 @@ export const useNostrPrivateJournal = () => {
     getJournalEntryByDate,
     encryptFile,
     decryptFile,
+    loadMoreJournalEntries,
   };
 };

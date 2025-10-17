@@ -65,7 +65,7 @@
                 name="mdi:heart"
                 :class="[
                   'w-6 h-6',
-                  likedVideos.includes(video.id)
+                  likedVideos?.includes(video.id)
                     ? 'text-red-500'
                     : 'text-white',
                 ]"
@@ -96,7 +96,7 @@
                 name="mdi:bookmark"
                 :class="[
                   'w-6 h-6',
-                  bookmarks.includes(video.id) ? 'text-red-500' : 'text-white',
+                  bookmarks?.includes(video.id) ? 'text-red-500' : 'text-white',
                 ]"
               />
             </button>

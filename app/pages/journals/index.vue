@@ -17,7 +17,6 @@
             Please log in or create an account to use the private journal
             feature
           </p>
-          <UButton to="/login" color="primary">Go to Login</UButton>
         </div>
       </UCard>
     </div>

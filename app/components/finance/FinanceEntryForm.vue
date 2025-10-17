@@ -1,0 +1,282 @@
+<template>
+  <div class="bg-white dark:bg-transparent rounded-lg shadow p-6">
+    <h2 class="text-xl font-semibold mb-4">Add New Transaction</h2>
+    <form @submit.prevent="handleSubmit">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Transaction Type -->
+        <div>
+          <UFormField label="Transaction Type">
+            <URadioGroup
+              v-model="form.type"
+              :ui="{
+                fieldset: 'flex flex-row',
+              }"
+              :items="['income', 'expense']"
+            />
+          </UFormField>
+        </div>
+
+        <!-- Currency Unit Selection -->
+        <div>
+          <UFormField label="Enter amount in">
+            <URadioGroup
+              v-model="form.unit_input"
+              :ui="{
+                fieldset: 'flex flex-row',
+              }"
+              :items="['fiat', 'sats']"
+            />
+          </UFormField>
+        </div>
+
+        <div>
+          <UFormField label="Category">
+            <USelect v-model="form.category" :items="categories" />
+          </UFormField>
+        </div>
+
+        <!-- Amount Input -->
+        <div class="col-span-1 md:col-span-2">
+          <article>
+            <UFormField label="Amount">
+              <div class="flex items-center">
+                <UInput
+                  v-model="amount"
+                  type="number"
+                  step="any"
+                  :placeholder="`Amount in ${
+                    form.unit_input === 'fiat' ? form.fiat_currency : 'sats'
+                  }`"
+                  class="w-full"
+                />
+
+                <div
+                  v-if="showConversion"
+                  class="ml-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400"
+                >
+                  <span v-if="form.unit_input === 'fiat'">
+                    ≈ {{ Math.round(Number(amount) * form.sats_per_fiat) }} sats
+                  </span>
+                  <span v-else>
+                    ≈ {{ (Number(amount) / form.sats_per_fiat).toFixed(2) }}
+                    {{ form.fiat_currency }}
+                  </span>
+                </div>
+              </div>
+            </UFormField>
+          </article>
+          <!-- recent transactions price select -->
+          <article class="flex flex-wrap gap-2 mt-2">
+            <UBadge
+              v-for="(item, index) in recentTransactions.slice(0, 7)"
+              :key="index"
+              :label="$n(item.amount_fiat)"
+              variant="outline"
+              class="cursor-pointer"
+              :icon="
+                item.amount_fiat === Number(amount) ? 'i-heroicons-check' : ''
+              "
+              @click="amount = item.amount_fiat"
+            />
+          </article>
+        </div>
+
+        <!-- Fiat Currency Selection -->
+        <div>
+          <UFormField label="Fiat Currency">
+            <USelect
+              v-model="form.fiat_currency"
+              :items="currencies"
+              @update:model-value="updateExchangeRate"
+            />
+          </UFormField>
+        </div>
+
+        <!-- Exchange Rate -->
+        <div>
+          <UFormField label="Exchange Rate (sats per fiat)">
+            <div class="flex">
+              <UInput
+                v-model="form.sats_per_fiat"
+                type="number"
+                placeholder="Sats per fiat unit"
+                class="w-full"
+              />
+              <UButton
+                color="gray"
+                variant="ghost"
+                icon="i-heroicons-arrow-path"
+                class="ml-2"
+                @click="updateExchangeRate"
+              />
+            </div>
+          </UFormField>
+        </div>
+
+        <!-- Note -->
+        <div class="col-span-1 md:col-span-2">
+          <UFormField label="Note">
+            <UInput
+              v-model="form.note"
+              placeholder="Description"
+              class="w-full"
+            />
+          </UFormField>
+        </div>
+
+        <!-- Tags -->
+        <div class="col-span-1 md:col-span-2">
+          <UFormField label="Tags">
+            <UInputTags
+              v-model="form.tags"
+              placeholder="Enter tags separated by commas"
+              class="w-full"
+            />
+          </UFormField>
+        </div>
+
+        <!-- Visibility -->
+        <div class="col-span-1 md:col-span-2">
+          <UFormField label="Visibility">
+            <URadioGroup
+              v-model="form.visibility"
+              :items="['private', 'public']"
+            />
+          </UFormField>
+        </div>
+      </div>
+
+      <div class="mt-6 flex justify-end">
+        <UButton type="submit" color="primary">Add Transaction</UButton>
+      </div>
+    </form>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { UChip } from "#components";
+import { ref, computed } from "vue";
+
+const {
+  currentExchangeRate,
+  fetchExchangeRate,
+  settings,
+  addEntry,
+  currencies,
+  entries,
+} = useFinance();
+
+const categories = [
+  "Groceries",
+  "Salary",
+  "Transport",
+  "Entertainment",
+  "Health",
+  "Investments",
+  "Clothing",
+  "Utilities",
+  "Other",
+];
+
+// Form state
+const form = ref({
+  user_id: '',
+  type: "expense" as "income" | "expense",
+  category: "Groceries",
+  amount_fiat: 0,
+  amount_sats: 0,
+  fiat_currency: "USD",
+  sats_per_fiat: currentExchangeRate.value,
+  unit_input: "fiat" as "fiat" | "sats",
+  note: "",
+  tags: [] as string[],
+  visibility: "private" as "private" | "public",
+});
+
+// Amount input - we'll convert to the right field based on unit_input
+const amount = ref("");
+const tagsInput = ref("");
+
+// Show conversion only when amount is entered
+const showConversion = computed(() => {
+  return amount.value !== "" && Number(amount.value) > 0;
+});
+
+// recent transactions price select
+const recentTransactions = computed(() => {
+  // group by price
+  const _items = entries.value.reduce((acc, item) => {
+    const price = String(item.amount_fiat);
+    if (acc[price]) {
+      acc[price].push(item);
+    } else {
+      acc[price] = [item];
+    }
+    return acc;
+  }, {} as Record<string, (typeof entries.value)[number][]>);
+
+  return Object.keys(_items).map((price) => {
+    return {
+      amount_fiat: Number(price),
+      entries: _items[price],
+    };
+  });
+});
+
+// Update exchange rate from API
+const updateExchangeRate = async () => {
+  const rs = await fetchExchangeRate(form.value.fiat_currency);
+  form.value.sats_per_fiat = rs;
+};
+
+// Remove a tag
+const removeTag = (tag: string) => {
+  form.value.tags = form.value.tags.filter((t) => t !== tag);
+};
+
+// Form submission
+const handleSubmit = () => {
+  // Convert the amount based on the unit input
+  if (form.value.unit_input === "fiat") {
+    form.value.amount_fiat = Number(amount.value);
+    form.value.amount_sats = Number(amount.value) * form.value.sats_per_fiat;
+  } else {
+    form.value.amount_sats = Number(amount.value);
+    form.value.amount_fiat = Number(amount.value) / form.value.sats_per_fiat;
+  }
+
+  // Add any remaining tag
+  if (tagsInput.value.trim()) {
+    form.value.tags.push(tagsInput.value.trim());
+    tagsInput.value = "";
+  }
+
+  // Submit the entry
+  addEntry(form.value);
+
+  // Reset form
+  form.value = {
+    user_id: '',
+    type: "expense",
+    category: "Groceries",
+    amount_fiat: 0,
+    amount_sats: 0,
+    fiat_currency: settings.value.default_currency,
+    sats_per_fiat: form.value.sats_per_fiat,
+    unit_input: settings.value.display_unit,
+    note: "",
+    tags: [],
+    visibility: "private",
+  };
+
+  amount.value = "";
+  tagsInput.value = "";
+};
+
+// Initialize by fetching current exchange rate
+onMounted(async () => {
+  form.value.fiat_currency = settings.value.default_currency;
+  form.value.unit_input = settings.value.display_unit;
+  await updateExchangeRate();
+});
+</script>
