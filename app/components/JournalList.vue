@@ -15,7 +15,7 @@
           </h2>
         </div>
 
-        <div class="divide-y divide-gray-100">
+        <div class="divide-y divide-gray-100 dark:divide-slate-700">
           <div
             v-for="entry in dateGroup.entries"
             :key="entry.id"

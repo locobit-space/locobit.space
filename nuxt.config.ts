@@ -9,11 +9,7 @@ export default defineNuxtConfig({
 
   ssr: false,
 
-  css: ["~/assets/css/main.css"],
-
-  colorMode: {
-    preference: "light",
-  },
+  css: ['~/assets/css/main.css'],
 
   ui: {
     theme: {
@@ -55,6 +51,7 @@ export default defineNuxtConfig({
     "@nuxt/image",
     "@nuxt/test-utils",
     "@nuxt/ui",
+    "@nuxtjs/i18n",
   ],
   runtimeConfig: {
     supabaseServiceKey: process.env.SUPABASE_SERVICE_KEY, // Server-only
@@ -67,5 +64,22 @@ export default defineNuxtConfig({
         "wss://nostr-pub.wellorder.net",
       ],
     },
+  },
+
+  i18n: {
+    locales: [
+      {
+        code: "lo",
+        name: "Lao PDR",
+        file: "lo-LA.json",
+      },
+      {
+        code: "en",
+        name: "English (US)",
+        file: "en-US.json",
+      },
+    ],
+    defaultLocale: "lo",
+    vueI18n: "./i18n.config.ts",
   },
 });

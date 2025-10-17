@@ -1,7 +1,12 @@
 <template>
   <div>
     <nav class="space-y-1 flex-col md:flex hidden">
-      <h1 class="text-3xl font-bold hidden md:block py-2 mb-2" title="locobit.space">Locobit</h1>
+      <h1
+        class="text-3xl font-bold hidden md:block py-2 mb-2"
+        title="locobit.space"
+      >
+        Locobit
+      </h1>
 
       <UButton
         v-for="item in sidebarNavItems"
@@ -35,7 +40,7 @@
     </nav>
 
     <nav
-      class="md:hidden z-10 fixed bottom-0 backdrop-blur-2xl bg-white/30 w-full items-center justify-between flex"
+      class="md:hidden z-10 fixed left-0 bottom-0 backdrop-blur-2xl bg-white/30 w-full items-center justify-between flex"
     >
       <UButton
         v-for="item in itemForMobile"
@@ -68,42 +73,48 @@ const sidebarNavItems = computed(() => [
     isMobile: true,
   },
   {
-    label: "Notifications",
-    icon: "i-heroicons-bell",
-    to: "/notifications",
+    label: "Sats Wallet",
+    icon: "bitcoin-icons:lightning-outline",
+    to: "/locosats",
     isMobile: true,
   },
-  {
-    label: "Shorts",
-    icon: "simple-icons:youtubeshorts",
-    to: "/shorts",
-    isMobile: true,
-  },
-  {
-    label: "Search",
-    icon: "system-uicons:search",
-    to: "/search",
-    isMobile: true,
-  },
-  {
-    label: "Messages",
-    icon: "i-heroicons-chat-bubble-left-right",
-    to: "/messages",
-    isMobile: true,
-  },
+  // {
+  //   label: "Notifications",
+  //   icon: "i-heroicons-bell",
+  //   to: "/notifications",
+  //   isMobile: true,
+  // },
+  // {
+  //   label: "Bit Zap",
+  //   icon: "bitcoin-icons:lightning-outline",
+  //   to: "/zaps",
+  //   isMobile: true,
+  // },
+  // {
+  //   label: "Search",
+  //   icon: "system-uicons:search",
+  //   to: "/search",
+  //   isMobile: true,
+  // },
+  // {
+  //   label: "Messages",
+  //   icon: "i-heroicons-chat-bubble-left-right",
+  //   to: "/messages",
+  //   isMobile: true,
+  // },
   {
     label: "Journals",
     icon: "i-heroicons-book-open",
     to: "/journals",
     isMobile: false,
   },
-  {
-    label: "Bookmarks",
-    icon: "i-heroicons-bookmark",
-    to: "/bookmarks",
-    class: "hidden md:block",
-    isMobile: false,
-  },
+  // {
+  //   label: "Bookmarks",
+  //   icon: "i-heroicons-bookmark",
+  //   to: "/bookmarks",
+  //   class: "hidden md:block",
+  //   isMobile: false,
+  // },
   {
     label: "Profile",
     icon: "i-heroicons-user-circle",
