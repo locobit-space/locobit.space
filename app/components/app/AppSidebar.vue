@@ -5,7 +5,7 @@
         class="text-3xl font-bold hidden md:block py-2 mb-2"
         title="locobit.space"
       >
-        Locobit
+        <nuxt-link-locale to="/">LocoBit</nuxt-link-locale>
       </h1>
 
       <UButton

@@ -4,6 +4,10 @@
   </div>
 </template>
 
-<script setup lang="ts"></script>
+<script setup lang="ts">
+useHead({
+  title: "LocoBit Sats Settings",
+})
+</script>
 
 <style scoped></style>
