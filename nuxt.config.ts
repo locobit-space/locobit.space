@@ -9,7 +9,7 @@ export default defineNuxtConfig({
 
   ssr: false,
 
-  css: ['~/assets/css/main.css'],
+  css: ["~/assets/css/main.css"],
 
   ui: {
     theme: {
@@ -52,10 +52,13 @@ export default defineNuxtConfig({
     "@nuxt/test-utils",
     "@nuxt/ui",
     "@nuxtjs/i18n",
+    "@vite-pwa/nuxt",
   ],
   runtimeConfig: {
     supabaseServiceKey: process.env.SUPABASE_SERVICE_KEY, // Server-only
     public: {
+      version: process.env.npm_package_version,
+      buildDate: process.env.NUXT_PUBLIC_BUILD_DATE || new Date().toISOString(),
       supabaseUrl: process.env.SUPABASE_URL,
       relayUrls: [
         "wss://relay.damus.io",
@@ -81,5 +84,38 @@ export default defineNuxtConfig({
     ],
     defaultLocale: "lo",
     vueI18n: "./i18n.config.ts",
+  },
+
+  pwa: {
+    registerType: "autoUpdate",
+    manifest: {
+      name: "Sats & Fiat Wallet",
+      short_name: "SatsWallet",
+      description: "Manage Bitcoin (satoshi) and fiat transactions",
+      theme_color: "#8C00FF", // Bitcoin orange
+      background_color: "#FFFFFF",
+      display: "standalone",
+      scope: "/",
+      start_url: "/wallet",
+      icons: [
+        {
+          src: "/icons/icon-192x192.png", // Folder icon for smaller displays
+          sizes: "192x192",
+          type: "image/png",
+        },
+        {
+          src: "/icons/icon-512x512.png", // Folder icon for larger displays
+          sizes: "512x512",
+          type: "image/png",
+        },
+      ],
+    },
+    workbox: {
+      globPatterns: ["**/*.{js,css,html,png,jpg,svg}"],
+      globIgnores: ["**/node_modules/**/*", "sw.js", "workbox-*.js"],
+    },
+    devOptions: {
+      enabled: true,
+    },
   },
 });

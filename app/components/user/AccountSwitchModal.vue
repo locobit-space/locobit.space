@@ -151,10 +151,39 @@
                 ref="keyInput"
                 v-model="importKey"
                 placeholder="Enter your hex private key"
-                type="password"
+                :type="show ? 'text' : 'password'"
                 class="w-full"
+                icon="ic:outline-vpn-key"
+                trailing-icon="streamline:copy-paste-remix"
                 @keyup.enter="importUserKey"
-              />
+              >
+                <template #trailing>
+                  <div class="flex gap-2">
+                    <UTooltip
+                      text="Paste from clipboard"
+                      :content="{ side: 'right' }"
+                    >
+                      <UButton
+                        variant="link"
+                        size="sm"
+                        icon="streamline:copy-paste-remix"
+                        aria-label=""
+                        @click="pasteText"
+                      />
+                    </UTooltip>
+                    <UButton
+                      color="neutral"
+                      variant="link"
+                      size="sm"
+                      :icon="show ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                      :aria-label="show ? 'Hide password' : 'Show password'"
+                      :aria-pressed="show"
+                      aria-controls="password"
+                      @click="show = !show"
+                    />
+                  </div>
+                </template>
+              </UInput>
             </div>
 
             <nav class="flex gap-2">
@@ -199,21 +228,29 @@
 </template>
 
 <script setup lang="ts">
-import type { UserInfo } from "~~/types";
+import type { UserInfo } from "~/types";
 
 const { accounts, updateAccountsList, clearUserData, removeAccount } =
   useNostrStorage();
 const { currentUserInfo, user, createUser, setupUser } = useNostrUser();
 
+const show = ref(false);
 const isImportKey = ref(false);
 const importKey = ref("");
 const keyInput = ref<null | HTMLInputElement>(null);
 
 const toast = useToast();
-const switchAccountModal = ref(false);
+const switchAccountModal = useState("switchAccountModal", () => false);
 const switchAccountEffect = ref(false);
 const isCreateAccount = ref(false);
 const loading = ref(false);
+
+function pasteText() {
+  // paste from clipboard
+  navigator.clipboard.readText().then((text) => {
+    importKey.value = text;
+  });
+}
 
 async function switchAccount(account: UserInfo) {
   if (account.pubkey === user?.value?.publicKey) {
