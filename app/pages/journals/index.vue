@@ -9,18 +9,14 @@
     </div>
 
     <div v-if="!user">
-      <UCard class="max-w-md mx-auto">
-        <div class="text-center py-6">
-          <UIcon name="i-heroicons-lock-closed" class="text-4xl mb-4" />
-          <h2 class="text-xl font-bold mb-2">Login Required</h2>
-          <p class="mb-4">
-            Please log in or create an account to use the private journal
-            feature
-          </p>
-        </div>
-      </UCard>
+      <UAlert
+        type="warning"
+        variant="outline"
+        icon="i-heroicons-lock-closed"
+        title="Login Required"
+        description="Please log in or create an account to use the private journal feature"
+      />
     </div>
-
     <PrivateJournal v-else />
   </div>
 </template>

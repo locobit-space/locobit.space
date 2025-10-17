@@ -57,6 +57,30 @@
           {{ item.label }}
         </span>
       </UButton>
+      <UButton
+        v-if="user?.publicKey"
+        icon="i-heroicons-user-circle"
+        color="neutral"
+        variant="ghost"
+        block
+        size="xl"
+        class="text-2xl py-3"
+        :to="`/profile/${user?.publicKey}`"
+      >
+        <span class="hidden md:block">Profile</span>
+      </UButton>
+      <UButton
+        v-else
+        icon="i-heroicons-user-circle"
+        color="neutral"
+        variant="ghost"
+        block
+        size="xl"
+        class="text-2xl py-3"
+        @click="switchAccountModal = true"
+      >
+        <span class="hidden md:block">Profile</span>
+      </UButton>
     </nav>
   </div>
 </template>
@@ -64,7 +88,7 @@
 <script setup lang="ts">
 // Sidebar Navigation Items
 const { user, currentUserInfo } = useNostrUser();
-
+const switchAccountModal = useState("switchAccountModal", () => false);
 const sidebarNavItems = computed(() => [
   {
     label: "Home",
@@ -115,13 +139,13 @@ const sidebarNavItems = computed(() => [
   //   class: "hidden md:block",
   //   isMobile: false,
   // },
-  {
-    label: "Profile",
-    icon: "i-heroicons-user-circle",
-    to: `/profile/${user.value?.publicKey}`,
-    class: "hidden md:block",
-    isMobile: true,
-  },
+  //  {
+  //   label: "Profile",
+  //   icon: "i-heroicons-user-circle",
+  //   to: `/profile/${user.value?.publicKey}`,
+  //   class: "hidden md:block",
+  //   isMobile: true,
+  // },
   {
     label: "Settings",
     icon: "i-heroicons-cog",
