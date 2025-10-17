@@ -19,6 +19,7 @@
     "@nuxtjs/i18n": "10.0.5",
     "@supabase/supabase-js": "^2.49.4",
     "crypto-browserify": "^3.12.1",
+    "echarts": "^6.0.0",
     "eslint": "^9.0.0",
     "light-bolt11-decoder": "^3.2.0",
     "linkedom": "^0.18.9",

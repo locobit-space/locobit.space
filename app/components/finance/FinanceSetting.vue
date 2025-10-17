@@ -46,9 +46,17 @@
             color="blue"
             variant="soft"
             icon="i-heroicons-arrow-down-tray"
+            @click="exportData('csv')"
+          >
+            Export Data as CSV
+          </UButton>
+          <UButton
+            color="blue"
+            variant="soft"
+            icon="i-heroicons-arrow-down-tray"
             @click="exportData"
           >
-            Export Data
+            Export Data as JSON
           </UButton>
 
           <UButton
@@ -168,11 +176,50 @@ const saveSettings = () => {
 };
 
 // Export data as JSON file
-const exportData = () => {
+const exportData = (type = "json" as "json" | "csv") => {
   const data = {
     entries: finance.entries.value,
     settings: finance.settings.value,
   };
+
+  console.log(data);
+
+  if (type === "csv") {
+    const entriesArray = Array.isArray(data.entries) ? data.entries : [];
+    let rows: string[] = [];
+
+    if (entriesArray.length > 0) {
+      // Use keys of the first entry as header and build CSV rows safely
+      rows = [
+        Object.keys((entriesArray[0] ?? {}) as Record<string, any>).join(","),
+        ...entriesArray.map((entry) =>
+          Object.values(entry as Record<string, any>)
+            .map((v) =>
+              // escape values that contain commas or quotes
+              typeof v === "string" && (v.includes(",") || v.includes('"'))
+                ? `"${v.replace(/"/g, '""')}"`
+                : String(v)
+            )
+            .join(",")
+        ),
+      ];
+    }
+
+    const csv = `data:text/csv;charset=utf-8,${rows.join("\n")}`;
+    const encodedUri = encodeURI(csv);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "finance-tracker-export.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    useToast().add({
+      title: "Export Completed",
+      description: "Your data has been exported successfully.",
+      color: "green",
+    });
+    return;
+  }
 
   const blob = new Blob([JSON.stringify(data, null, 2)], {
     type: "application/json",

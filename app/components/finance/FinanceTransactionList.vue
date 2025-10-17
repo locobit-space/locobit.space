@@ -65,7 +65,15 @@
       </div>
 
       <div>
-        <div class="text-sm text-gray-500 dark:text-gray-400">Balance</div>
+        <div class="text-sm text-gray-500 dark:text-gray-400">
+          Balance
+          <UButton
+            icon="mynaui:chevron-down"
+            size="sm"
+            variant="ghost"
+            @click="showChart = !showChart"
+          />
+        </div>
         <div
           class="text-lg font-semibold"
           :class="
@@ -229,8 +237,9 @@
 </template>
 
 <script setup lang="ts">
+import { UButton } from "#components";
 import { ref, computed } from "vue";
-import type { FinanceEntry } from "~~/types";
+import type { FinanceEntry } from "~/types";
 
 const finance = useFinance();
 
@@ -238,7 +247,7 @@ const finance = useFinance();
 const search = ref("");
 const typeFilter = ref<"all" | "income" | "expense">("all");
 const dateFilter = ref<"all" | "today" | "week" | "month">("all");
-
+const showChart = ref(false);
 // Filter dropdown items
 const filterDropdownItems = computed(() => [
   [
@@ -249,8 +258,9 @@ const filterDropdownItems = computed(() => [
     {
       label: "All",
       icon: "i-heroicons-check",
-      active: typeFilter.value === "all",
-      click: () => (typeFilter.value = "all"),
+      type: "checkbox" as const,
+      checked: typeFilter.value === "all",
+      onUpdateChecked: () => (typeFilter.value = "all"),
     },
     {
       label: "Income",
@@ -258,8 +268,9 @@ const filterDropdownItems = computed(() => [
         typeFilter.value === "income"
           ? "i-heroicons-check"
           : "i-heroicons-arrow-trending-up",
-      active: typeFilter.value === "income",
-      click: () => (typeFilter.value = "income"),
+      type: "checkbox" as const,
+      checked: typeFilter.value === "income",
+      onUpdateChecked: () => (typeFilter.value = "income"),
     },
     {
       label: "Expense",
@@ -267,8 +278,9 @@ const filterDropdownItems = computed(() => [
         typeFilter.value === "expense"
           ? "i-heroicons-check"
           : "i-heroicons-arrow-trending-down",
-      active: typeFilter.value === "expense",
-      click: () => (typeFilter.value = "expense"),
+      type: "checkbox" as const,
+      checked: typeFilter.value === "expense",
+      onUpdateChecked: () => (typeFilter.value = "expense"),
     },
   ],
   [
@@ -279,26 +291,30 @@ const filterDropdownItems = computed(() => [
     {
       label: "All time",
       icon: dateFilter.value === "all" ? "i-heroicons-check" : null,
-      active: dateFilter.value === "all",
-      click: () => (dateFilter.value = "all"),
+      type: "checkbox" as const,
+      checked: dateFilter.value === "all",
+      onUpdateChecked: () => (dateFilter.value = "all"),
     },
     {
       label: "Today",
       icon: dateFilter.value === "today" ? "i-heroicons-check" : null,
-      active: dateFilter.value === "today",
-      click: () => (dateFilter.value = "today"),
+      type: "checkbox" as const,
+      checked: dateFilter.value === "today",
+      onUpdateChecked: () => (dateFilter.value = "today"),
     },
     {
       label: "This week",
       icon: dateFilter.value === "week" ? "i-heroicons-check" : null,
-      active: dateFilter.value === "week",
-      click: () => (dateFilter.value = "week"),
+      type: "checkbox" as const,
+      checked: dateFilter.value === "week",
+      onUpdateChecked: () => (dateFilter.value = "week"),
     },
     {
       label: "This month",
       icon: dateFilter.value === "month" ? "i-heroicons-check" : null,
-      active: dateFilter.value === "month",
-      click: () => (dateFilter.value = "month"),
+      type: "checkbox" as const,
+      checked: dateFilter.value === "month",
+      onUpdateChecked: () => (dateFilter.value = "month"),
     },
   ],
 ]);
@@ -341,6 +357,7 @@ const filteredEntries = computed(() => {
     const searchLower = search.value.toLowerCase();
     result = result.filter(
       (entry) =>
+        entry.category.toLowerCase().includes(searchLower) ||
         entry.note.toLowerCase().includes(searchLower) ||
         entry.tags.some((tag) => tag.toLowerCase().includes(searchLower))
     );

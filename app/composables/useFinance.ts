@@ -2,37 +2,8 @@ import { ref, computed, onMounted } from "vue";
 import { nip04 } from "nostr-tools";
 import { finalizeEvent } from "nostr-tools/pure";
 import { hexToBytes } from "@noble/ciphers/utils";
-
-// Define types for clarity
-interface FinanceEntry {
-  id: string;
-  user_id: string;
-  type: "income" | "expense";
-  category: string;
-  amount_fiat: number;
-  amount_sats: number;
-  fiat_currency: string;
-  sats_per_fiat: number; // Satoshis per 1 unit of fiat (e.g., LAK or USD)
-  unit_input: "fiat" | "sats";
-  note: string;
-  tags: string[];
-  visibility: "public" | "private";
-  created_at: string;
-}
-
-interface UserSettings {
-  default_currency: string; // e.g., "LAK", "USD"
-  display_unit: "fiat" | "sats";
-}
-
-interface Totals {
-  income: number;
-  expenses: number;
-  balance: number;
-  incomeSats: number;
-  expensesSats: number;
-  balanceSats: number;
-}
+import type { FinanceEntry, Totals, UserSettings } from "~/types";
+import { ExchangeRateService } from "../services/exchangeRateService";
 
 export function useFinance() {
   const toast = useToast();
@@ -42,7 +13,7 @@ export function useFinance() {
   const PRIVATE_NOTE_KIND = 30001;
 
   // Reactive state
-  const entries = ref<FinanceEntry[]>([]);
+  const entries = useState<FinanceEntry[]>("finance_entries", () => []);
 
   const settings = useState<UserSettings>("user_settings", () => ({
     default_currency: "LAK",
@@ -52,75 +23,31 @@ export function useFinance() {
   const currentExchangeRate = ref<number>(0.0413); // sats per LAK (default)
   const isLoading = ref<boolean>(false);
   const error = ref<string | null>(null);
-  const lastFetch = ref<number | null>(null); // Timestamp for caching
 
-  // Fetch BTC/fiat rate (sats per fiat unit) using no-key APIs
+  // Helper function to handle errors
+  const handleError = (err: unknown, defaultMessage: string): void => {
+    const message = err instanceof Error ? err.message : defaultMessage;
+    console.error(message, err);
+    error.value = message;
+    toast.add({
+      title: "Error",
+      description: message,
+      color: "red",
+    });
+  };
+  // Exchange rate
   const fetchExchangeRate = async (
     currency: string = settings.value.default_currency
   ): Promise<number> => {
-    // Cache: Reuse rate if fetched within 15 minutes
-    const lastExchangeRate = localStorage.getItem(
-      `exchange_rate_${currency.toLocaleLowerCase()}`
-    );
-
-    const isCache =
-      lastExchangeRate && Date.now() - lastFetch.value! < 15 * 60 * 1000;
-    if (isCache && lastExchangeRate) {
-      return Number(lastExchangeRate) || currentExchangeRate.value;
-    }
-
     isLoading.value = true;
     error.value = null;
+
     try {
-      // Fetch BTC/USD from Coingecko
-      const API_URL_BTC = "https://blockchain.info/ticker";
-      const API_COIN_GECKO =
-        "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd";
-      const btcResponse = await fetch(API_URL_BTC);
-      if (!btcResponse.ok)
-        throw new Error(`BTC fetch failed: ${btcResponse.status}`);
-      const btcData = await btcResponse.json();
-      // const btcUsd = btcData.bitcoin.usd; // e.g., 111692
-      const btcUsd = btcData.USD.last; // e.g., 111692
-      if (!btcUsd) throw new Error("BTC/USD rate not found");
-
-      let satsPerFiat: number;
-
-      if (currency.toLowerCase() === "usd") {
-        // For USD: sats per USD = 100,000,000 / BTC_USD
-        satsPerFiat = 100000000 / btcUsd;
-      } else {
-        // Fetch USD/fiat from Currency-API (e.g., for LAK)
-        const fiatResponse = await fetch(
-          "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json"
-        );
-        if (!fiatResponse.ok)
-          throw new Error(`Fiat fetch failed: ${fiatResponse.status}`);
-        const fiatData = await fiatResponse.json();
-        const usdPerFiat = fiatData.usd[currency.toLowerCase()]; // e.g., 21625.479 for LAK
-        if (!usdPerFiat)
-          throw new Error(`${currency} rate not found in fiat API`);
-
-        // sats per fiat = (sats per USD) / (USD per fiat unit)
-        const satsPerUsd = 100000000 / btcUsd;
-        satsPerFiat = satsPerUsd / usdPerFiat;
-      }
-
-      currentExchangeRate.value = parseFloat(satsPerFiat.toFixed(6)); // Precision to 6 decimals
-      lastFetch.value = Date.now();
-      // save to localStorage
-      localStorage.setItem(
-        `exchange_rate_${currency.toLowerCase()}`,
-        currentExchangeRate.value + ""
-      );
-      return currentExchangeRate.value;
+      const rate = await ExchangeRateService.fetchRate(currency);
+      currentExchangeRate.value = rate; // Precision to 6 decimals
+      return rate;
     } catch (err) {
-      error.value =
-        err instanceof Error ? err.message : "Failed to fetch exchange rate";
-      // Fallback: Use USD if LAK fails, or last known rate
-      if (currency.toLowerCase() !== "usd") {
-        return 100000000 / 111692; // Hardcoded fallback BTC/USD
-      }
+      handleError(err, "Failed to fetch exchange rate");
       return currentExchangeRate.value;
     } finally {
       isLoading.value = false;
@@ -135,10 +62,11 @@ export function useFinance() {
     > &
       Partial<Pick<FinanceEntry, "amount_sats" | "amount_fiat">>
   ) => {
+    const id = Math.floor(Date.now() / 1000);
     const newEntry: FinanceEntry = {
       ...entry,
       note: entry.note || "Untitled",
-      id: crypto.randomUUID(),
+      id: `${id}`,
       created_at: new Date().toISOString(),
       amount_fiat: 0,
       amount_sats: 0,
@@ -191,7 +119,6 @@ export function useFinance() {
       JSON.stringify(sensitiveData)
     );
     // get the current date timestamp
-    const id = Math.floor(Date.now() / 1000);
     const event = {
       kind: PRIVATE_NOTE_KIND, // 30001
       pubkey: user.value?.publicKey || "",
@@ -266,6 +193,29 @@ export function useFinance() {
     saveEntries();
   };
 
+  // Helper function to load data from localStorage
+  const loadFromLocalStorage = (): void => {
+    try {
+      const savedEntries = localStorage.getItem("finance_entries");
+      if (savedEntries) {
+        const parsed = JSON.parse(savedEntries);
+        if (Array.isArray(parsed)) {
+          entries.value = parsed;
+        }
+      }
+
+      const savedSettings = localStorage.getItem("user_settings");
+      if (savedSettings) {
+        const parsed = JSON.parse(savedSettings);
+        if (parsed.default_currency && parsed.display_unit) {
+          settings.value = parsed as UserSettings;
+        }
+      }
+    } catch (err) {
+      console.error("Failed to load from localStorage:", err);
+    }
+  };
+
   // Filter entries by tags or date range
   const filterEntries = (options: {
     tags?: string[];
@@ -300,55 +250,78 @@ export function useFinance() {
   };
 
   // Load entries from localStorage
-  const loadEntries = async () => {
+
+  const loadEntries = async (): Promise<void> => {
     try {
-      // const savedEntries = localStorage.getItem("finance_entries");
-      // if (savedEntries) {
-      //   const parsed = JSON.parse(savedEntries);
-      //   if (Array.isArray(parsed)) entries.value = parsed;
-      // }
-      // const savedSettings = localStorage.getItem("user_settings");
-      // if (savedSettings) {
-      //   const parsed = JSON.parse(savedSettings);
-      //   if (parsed.default_currency && parsed.display_unit)
-      //     settings.value = parsed;
-      // }
-
-      const events = await queryEvents({
-        kinds: [PRIVATE_NOTE_KIND],
-        authors: [user.value?.publicKey || ""],
-        "#t": ["finance"],
-      });
-
-      for (const event of events) {
-        if (!event.content) continue;
-
-        const encryptedContent = event.content;
-        const decryptedContent = nip04.decrypt(
-          user.value?.privateKey || "",
-          user.value?.publicKey || "",
-          encryptedContent
+      // Validate user authentication
+      if (!user.value?.publicKey || !user.value?.privateKey) {
+        throw new Error(
+          "User not authenticated. Please log in to view entries."
         );
-        const parsed = JSON.parse(decryptedContent);
-
-        const dateTag = event.tags.find((tag) => tag[0] === "d");
-        const date = dateTag ? dateTag[1] : "unknown";
-
-        const entry: FinanceEntry = {
-          ...parsed,
-          id: date,
-          created_at: new Date(event.created_at * 1000).toISOString(),
-          type: event.tags.find((tag) => tag[0] === "type")?.[1] || "unknown",
-        };
-        console.log(entry);
-        entries.value.push(entry);
       }
 
-      console.log(events);
+      // Load local storage data
+      loadFromLocalStorage();
+
+      if (!user.value) {
+        return;
+      }
+
+      // Fetch and process remote events
+      const _events = await queryEvents({
+        kinds: [PRIVATE_NOTE_KIND],
+        authors: [user.value.publicKey],
+        "#t": ["finance"],
+        // limit: 0,
+      });
+      const _items = [];
+
+      for (const event of _events) {
+        if (!event.content) continue;
+        try {
+          const decryptedContent = nip04.decrypt(
+            user.value.privateKey,
+            user.value.publicKey,
+            event.content
+          );
+          const parsedContent = JSON.parse(decryptedContent);
+          _items.push(createFinanceEntry(event, parsedContent));
+        } catch (err) {
+          console.error(`Failed to process event ${event.id}:`, err);
+        }
+      }
+      // remove duplicate entries
+      _items.push(...entries.value);
+      entries.value = _items
+        .filter(
+          (entry, index, self) =>
+            self.findIndex((e) => e.id === entry.id) === index
+        )
+        .sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
     } catch (err) {
-      console.error("Failed to load from localStorage:", err);
-      error.value = "Failed to load data";
+      handleError(err, "Failed to load entries");
     }
+  };
+
+  // Helper function to create a FinanceEntry from an event
+  const createFinanceEntry = (event: any, parsedContent: any): FinanceEntry => {
+    const getTagValue = (tagName: string, defaultValue: string | number = "") =>
+      event.tags.find((tag: string[]) => tag[0] === tagName)?.[1] ??
+      defaultValue;
+
+    return {
+      ...parsedContent,
+      id: getTagValue("d", "unknown"),
+      created_at: new Date(event.created_at * 1000).toISOString(),
+      type: getTagValue("type", "unknown"),
+      fiat_currency: getTagValue("fiat_currency", ""),
+      sats_per_fiat: Number(getTagValue("sats_per_fiat", 0)),
+      unit_input: getTagValue("unit_input", "fiat"),
+      visibility: getTagValue("visibility", "public"),
+    };
   };
 
   // Toggle display unit
@@ -358,27 +331,31 @@ export function useFinance() {
     saveEntries();
   };
 
+  const sumAmount = <K extends keyof FinanceEntry>(
+    entries: FinanceEntry[],
+    field: K
+  ): number => {
+    return entries.reduce((acc, entry) => {
+      const value = entry[field] as unknown as number | string | undefined;
+      const num = typeof value === "number" ? value : Number(value || 0);
+      return acc + (isNaN(num) ? 0 : num);
+    }, 0);
+  };
+
   // Calculate totals
   const totals = computed<Totals>(() => {
-    const incomeEntries = entries.value.filter((e) => e.type === "income");
-    const expenseEntries = entries.value.filter((e) => e.type === "expense");
+    const [incomeEntries, expenseEntries] = entries.value.reduce(
+      (acc, entry) => {
+        acc[entry.type === "income" ? 0 : 1].push(entry);
+        return acc;
+      },
+      [[], []] as [FinanceEntry[], FinanceEntry[]]
+    );
 
-    const income = incomeEntries.reduce(
-      (sum, entry) => sum + entry.amount_fiat,
-      0
-    );
-    const expenses = expenseEntries.reduce(
-      (sum, entry) => sum + entry.amount_fiat,
-      0
-    );
-    const incomeSats = incomeEntries.reduce(
-      (sum, entry) => sum + entry.amount_sats,
-      0
-    );
-    const expensesSats = expenseEntries.reduce(
-      (sum, entry) => sum + entry.amount_sats,
-      0
-    );
+    const income = sumAmount(incomeEntries, "amount_fiat");
+    const expenses = sumAmount(expenseEntries, "amount_fiat");
+    const incomeSats = sumAmount(incomeEntries, "amount_sats");
+    const expensesSats = sumAmount(expenseEntries, "amount_sats");
 
     return {
       income,

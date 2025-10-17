@@ -5,7 +5,7 @@
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
         <h2 class="text-xl font-semibold mb-4">Expenses by Category</h2>
         <div v-if="expensesData.length > 0" class="h-64">
-          <PieChart :data="expensesData" />
+          <CommonPieChart :data="expensesData" />
         </div>
         <div v-else class="h-64 flex items-center justify-center">
           <p class="text-gray-500 dark:text-gray-400">
@@ -17,8 +17,8 @@
       <!-- Income vs Expenses -->
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
         <h2 class="text-xl font-semibold mb-4">Income vs Expenses</h2>
-        <div v-if="monthlyData.length > 0" class="h-64">
-          <BarChart :data="monthlyData" />
+        <div v-if="monthlyDataChart.length > 0" class="h-64">
+          <CommonLineChart :series="monthlyDataChart" class="h-full" />
         </div>
         <div v-else class="h-64 flex items-center justify-center">
           <p class="text-gray-500 dark:text-gray-400">
@@ -34,7 +34,7 @@
       >
         <h2 class="text-xl font-semibold mb-4">Balance Trend</h2>
         <div v-if="balanceData.length > 0" class="h-64">
-          <LineChart :data="balanceData" />
+          <!-- <LineChart :data="balanceData" /> -->
         </div>
         <div v-else class="h-64 flex items-center justify-center">
           <p class="text-gray-500 dark:text-gray-400">
@@ -48,38 +48,56 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
+import type { FinanceEntry } from "~/types";
 
 const finance = useFinance();
 
+const monthLabels = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
 // Prepare data for expense categories pie chart
 const expensesData = computed(() => {
+  // Filter only expense entries
   const expenses = finance.entries.value.filter(
-    (entry) => entry.type === "expense"
+    (entry: FinanceEntry) => entry.type === "expense"
   );
 
-  // Group by tags
-  const tagGroups: Record<string, number> = {};
+  // Group by category using satoshis
+  const categoryTotals: Record<string, number> = expenses.reduce(
+    (acc, expense) => {
+      const category = expense.category || "Un categorized";
+      const satsAmount = expense.amount_sats || 0;
 
-  expenses.forEach((expense) => {
-    if (expense.tags.length === 0) {
-      // Handle entries with no tags
-      tagGroups["Uncategorized"] =
-        (tagGroups["Uncategorized"] || 0) + expense.amount_fiat;
-    } else {
-      // Use the first tag as the category
-      const category = expense.tags[0];
-      tagGroups[category] = (tagGroups[category] || 0) + expense.amount_fiat;
-    }
-  });
+      acc[category] = (acc[category] || 0) + satsAmount;
+      return acc;
+    },
+    {} as Record<string, number>
+  );
 
-  // Convert to chart format
-  return Object.entries(tagGroups).map(([label, value]) => ({
-    label,
-    value,
+  // Convert to pie chart format
+  return Object.entries(categoryTotals).map(([category, totalSats]) => ({
+    name: category,
+    value: Math.round(totalSats), // Round to whole satoshis
+    currency: "SATS",
   }));
 });
 
-// Prepare monthly income vs expense data
+// Current year (based on today's date: Oct 17, 2025)
+const currentYear = new Date().getFullYear();
+const displayUnit = ref<"fiat" | "sats">("fiat");
+
 const monthlyData = computed(() => {
   const months: Record<
     string,
@@ -118,6 +136,68 @@ const monthlyData = computed(() => {
       key,
     }))
     .sort((a, b) => a.key.localeCompare(b.key));
+});
+
+// Prepare monthly income vs expense data
+const monthlyDataChart = computed(() => {
+  // Initialize data for all 12 months
+  const months: Record<string, { income: number; expense: number }> = {};
+  monthLabels.forEach((_, index) => {
+    const monthKey = `${currentYear}-${index + 1}`;
+    months[monthKey] = { income: 0, expense: 0 };
+  });
+
+  // Aggregate entries by month
+  finance.entries.value.forEach((entry: FinanceEntry) => {
+    try {
+      const date = new Date(entry.created_at);
+      if (isNaN(date.getTime())) {
+        console.warn(`Invalid date in entry: ${entry.created_at}`);
+        return;
+      }
+
+      // Only process entries for the current year
+      if (date.getFullYear() !== currentYear) return;
+
+      const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
+      if (!months[monthKey]) return; // Skip if monthKey is not in current year
+
+      const amount =
+        displayUnit.value === "fiat"
+          ? entry.amount_fiat || 0
+          : Math.round(entry.amount_sats || 0);
+
+      if (entry.type === "income") {
+        months[monthKey].income += amount;
+      } else if (entry.type === "expense") {
+        months[monthKey].expense += amount;
+      }
+    } catch (err) {
+      console.error(`Error processing entry: ${err}`);
+    }
+  });
+
+  // Prepare chart data
+  return [
+    {
+      name: "Income",
+      type: "bar",
+      data: monthLabels.map((_, index) => {
+        const monthKey = `${currentYear}-${index + 1}`;
+        return months[monthKey]?.income || 0;
+      }),
+      backgroundColor: "#36A2EB",
+    },
+    {
+      name: "Expense",
+      type: "bar",
+      data: monthLabels.map((_, index) => {
+        const monthKey = `${currentYear}-${index + 1}`;
+        return months[monthKey]?.expense || 0;
+      }),
+      backgroundColor: "#FF6384",
+    },
+  ];
 });
 
 // Calculate balance trend data
