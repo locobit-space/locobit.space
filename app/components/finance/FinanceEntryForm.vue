@@ -175,6 +175,10 @@ const categories = [
   "Investments",
   "Clothing",
   "Utilities",
+  "Food",
+  "Lottery",
+  "Travel",
+  "Gifts",
   "Other",
 ];
 
