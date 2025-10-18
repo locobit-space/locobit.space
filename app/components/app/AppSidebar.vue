@@ -130,7 +130,7 @@ const sidebarNavItems = computed(() => [
     label: "Journals",
     icon: "i-heroicons-book-open",
     to: "/journals",
-    isMobile: false,
+    isMobile: true,
   },
   // {
   //   label: "Bookmarks",
@@ -150,7 +150,7 @@ const sidebarNavItems = computed(() => [
     label: "Settings",
     icon: "i-heroicons-cog",
     to: "/settings",
-    isMobile: false,
+    isMobile: true,
   },
 ]);
 
