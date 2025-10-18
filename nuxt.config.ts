@@ -1,4 +1,5 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+const isProd = process.env.NODE_ENV === "production";
 export default defineNuxtConfig({
   compatibilityDate: "2024-11-01",
   devtools: { enabled: true },
@@ -69,6 +70,10 @@ export default defineNuxtConfig({
     },
   },
 
+  app: {
+    baseURL: "/", // keep '/' if hosted at domain root
+  },
+
   i18n: {
     locales: [
       {
@@ -110,12 +115,36 @@ export default defineNuxtConfig({
         },
       ],
     },
-    workbox: {
-      globPatterns: ["**/*.{js,css,html,png,jpg,svg}"],
-      globIgnores: ["**/node_modules/**/*", "sw.js", "workbox-*.js"],
-    },
+    ...(isProd
+      ? {
+          workbox: {
+            globPatterns: [
+              "_nuxt/builds/**/*.json",
+              "**/*.{js,css,html,ico,png,svg,webp,woff2}",
+            ],
+            globIgnores: ["**/node_modules/**/*", "sw.js", "workbox-*.js"],
+            navigateFallback: "/", // for SPA-style navigation
+            runtimeCaching: [
+              {
+                // Example: cache same-origin /api requests
+                urlPattern: ({ url }) =>
+                  url.origin === self.location.origin &&
+                  url.pathname.startsWith("/api"),
+                handler: "NetworkFirst",
+                options: {
+                  cacheName: "api-cache",
+                  expiration: { maxEntries: 50, maxAgeSeconds: 86400 },
+                },
+              },
+            ],
+          },
+        }
+      : {}),
+    // Enable SW during local dev so you can see it in DevTools
     devOptions: {
       enabled: true,
+      type: "module",
+      navigateFallback: "/", // optional
     },
   },
 });
