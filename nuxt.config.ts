@@ -1,5 +1,4 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
-const isProd = process.env.NODE_ENV === "production";
 export default defineNuxtConfig({
   compatibilityDate: "2024-11-01",
   devtools: { enabled: true },
@@ -104,16 +103,21 @@ export default defineNuxtConfig({
       start_url: "/",
       icons: [
         {
-          src: "/icons/icon-192x192.png", // Folder icon for smaller displays
+          src: "/icons/icon-192-192.png", // Folder icon for smaller displays
           sizes: "192x192",
           type: "image/png",
         },
         {
-          src: "/icons/icon-512x512.png", // Folder icon for larger displays
+          src: "/icons/icon-512-512.png", // Folder icon for larger displays
           sizes: "512x512",
           type: "image/png",
         },
       ],
+    },
+    devOptions: {
+      enabled: true,
+      type: "module",
+      navigateFallback: "/",
     },
   },
 });
