@@ -115,36 +115,5 @@ export default defineNuxtConfig({
         },
       ],
     },
-    ...(isProd
-      ? {
-          workbox: {
-            globPatterns: [
-              "_nuxt/builds/**/*.json",
-              "**/*.{js,css,html,ico,png,svg,webp,woff2}",
-            ],
-            globIgnores: ["**/node_modules/**/*", "sw.js", "workbox-*.js"],
-            navigateFallback: "/", // for SPA-style navigation
-            runtimeCaching: [
-              {
-                // Example: cache same-origin /api requests
-                urlPattern: ({ url }) =>
-                  url.origin === self.location.origin &&
-                  url.pathname.startsWith("/api"),
-                handler: "NetworkFirst",
-                options: {
-                  cacheName: "api-cache",
-                  expiration: { maxEntries: 50, maxAgeSeconds: 86400 },
-                },
-              },
-            ],
-          },
-        }
-      : {}),
-    // Enable SW during local dev so you can see it in DevTools
-    devOptions: {
-      enabled: true,
-      type: "module",
-      navigateFallback: "/", // optional
-    },
   },
 });
