@@ -1,53 +1,54 @@
 <!-- pages/journals/index.vue -->
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-950">
     <!-- Header Section -->
-    <div class="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 text-white">
-      <div class="max-w-4xl mx-auto px-4 py-8">
-        <div class="flex items-center justify-between mb-6">
+    <div class="border-b border-gray-200 dark:border-gray-800">
+      <div class="max-w-4xl mx-auto px-4 py-5 sm:py-6">
+        <div class="flex items-center justify-between mb-5">
           <div>
-            <h1 class="text-3xl font-bold">{{ $t('journal.title') }}</h1>
-            <p class="text-white/80 mt-1">{{ $t('journal.subtitle') }}</p>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{{ $t('journal.title') }}</h1>
+            <p class="text-gray-500 dark:text-gray-400 text-sm mt-0.5">{{ $t('journal.subtitle') }}</p>
           </div>
           <UButton
-            color="neutral"
+            color="primary"
             variant="solid"
             icon="i-heroicons-plus"
-            size="lg"
+            size="sm"
             @click="() => openNewEntry()"
           >
-            {{ $t('journal.new_entry') }}
+            <span class="hidden sm:inline">{{ $t('journal.new_entry') }}</span>
+            <span class="sm:hidden">New</span>
           </UButton>
         </div>
 
         <!-- Stats Row -->
-        <div class="grid grid-cols-3 gap-4 mt-6">
-          <div class="bg-white/10 backdrop-blur rounded-xl p-4 text-center">
-            <div class="text-3xl font-bold">{{ totalEntries }}</div>
-            <div class="text-white/70 text-sm">{{ $t('journal.total_entries') }}</div>
+        <div class="grid grid-cols-3 gap-2 sm:gap-3">
+          <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-center">
+            <div class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{{ totalEntries }}</div>
+            <div class="text-gray-500 dark:text-gray-400 text-xs">{{ $t('journal.total_entries') }}</div>
           </div>
-          <div class="bg-white/10 backdrop-blur rounded-xl p-4 text-center">
-            <div class="text-3xl font-bold">{{ currentStreak }}</div>
-            <div class="text-white/70 text-sm">{{ $t('journal.day_streak') }}</div>
+          <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-center">
+            <div class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{{ currentStreak }}</div>
+            <div class="text-gray-500 dark:text-gray-400 text-xs">{{ $t('journal.day_streak') }}</div>
           </div>
-          <div class="bg-white/10 backdrop-blur rounded-xl p-4 text-center">
-            <div class="text-3xl font-bold">{{ thisMonth }}</div>
-            <div class="text-white/70 text-sm">{{ $t('journal.this_month') }}</div>
+          <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 text-center">
+            <div class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{{ thisMonth }}</div>
+            <div class="text-gray-500 dark:text-gray-400 text-xs">{{ $t('journal.this_month') }}</div>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Main Content -->
-    <div class="max-w-4xl mx-auto px-4 py-6 -mt-4">
+    <div class="max-w-4xl mx-auto px-4 py-5">
       <!-- Login Required -->
-      <div v-if="!user" class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 text-center">
-        <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-          <Icon name="heroicons:lock-closed" class="w-8 h-8 text-amber-600 dark:text-amber-400" />
+      <div v-if="!user" class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-8 text-center">
+        <div class="w-14 h-14 mx-auto mb-4 rounded-full bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center">
+          <Icon name="heroicons:lock-closed" class="w-7 h-7 text-amber-600 dark:text-amber-400" />
         </div>
-        <h3 class="text-xl font-semibold mb-2">{{ $t('journal.login_required') }}</h3>
-        <p class="text-gray-500 dark:text-gray-400 mb-4">{{ $t('journal.login_description') }}</p>
-        <UButton to="/settings" color="primary">{{ $t('common.login') }}</UButton>
+        <h3 class="text-lg font-semibold mb-2 text-gray-900 dark:text-white">{{ $t('journal.login_required') }}</h3>
+        <p class="text-gray-500 dark:text-gray-400 text-sm mb-4">{{ $t('journal.login_description') }}</p>
+        <UButton to="/settings" color="primary" size="sm">{{ $t('common.login') }}</UButton>
       </div>
 
       <template v-else>
@@ -96,38 +97,38 @@
         <!-- Writing Prompt Card -->
         <div 
           v-if="showPrompt && !journalNotes.length"
-          class="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-2xl p-6 mb-6 border border-amber-200 dark:border-amber-800"
+          class="bg-amber-50/50 dark:bg-amber-900/10 rounded-xl p-4 sm:p-5 mb-6 border border-amber-200/50 dark:border-amber-800/30"
         >
-          <div class="flex items-start gap-4">
-            <div class="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900 flex items-center justify-center flex-shrink-0">
-              <Icon name="heroicons:light-bulb" class="w-6 h-6 text-amber-600 dark:text-amber-400" />
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center flex-shrink-0">
+              <Icon name="heroicons:light-bulb" class="w-5 h-5 text-amber-600 dark:text-amber-400" />
             </div>
-            <div class="flex-1">
-              <h3 class="font-semibold text-amber-900 dark:text-amber-100 mb-1">{{ $t('journal.writing_prompt') }}</h3>
-              <p class="text-amber-800 dark:text-amber-200 italic">"{{ currentPrompt }}"</p>
-              <div class="flex gap-2 mt-3">
-                <UButton size="sm" color="amber" @click="openNewEntry(currentPrompt)">
+            <div class="flex-1 min-w-0">
+              <h3 class="font-medium text-amber-900 dark:text-amber-100 text-sm">{{ $t('journal.writing_prompt') }}</h3>
+              <p class="text-amber-700 dark:text-amber-200/80 text-sm mt-1 italic">"{{ currentPrompt }}"</p>
+              <div class="flex flex-wrap gap-2 mt-3">
+                <UButton size="xs" color="amber" @click="openNewEntry(currentPrompt)">
                   {{ $t('journal.start_writing') }}
                 </UButton>
-                <UButton size="sm" variant="ghost" color="amber" @click="refreshPrompt">
-                  <Icon name="heroicons:arrow-path" class="w-4 h-4 mr-1" />
+                <UButton size="xs" variant="ghost" color="amber" @click="refreshPrompt">
+                  <Icon name="heroicons:arrow-path" class="w-3.5 h-3.5 mr-1" />
                   {{ $t('journal.new_prompt') }}
                 </UButton>
               </div>
             </div>
-            <UButton variant="ghost" color="neutral" icon="i-heroicons-x-mark" @click="showPrompt = false" />
+            <UButton variant="ghost" color="neutral" icon="i-heroicons-x-mark" size="xs" @click="showPrompt = false" />
           </div>
         </div>
 
         <!-- Calendar View -->
-        <div v-if="viewMode === 'calendar'" class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-6">
+        <div v-if="viewMode === 'calendar'" class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 sm:p-6 mb-6">
           <div class="flex items-center justify-between mb-4">
-            <UButton variant="ghost" icon="i-heroicons-chevron-left" @click="prevMonth" />
-            <h3 class="text-lg font-semibold">{{ calendarTitle }}</h3>
-            <UButton variant="ghost" icon="i-heroicons-chevron-right" @click="nextMonth" />
+            <UButton variant="ghost" icon="i-heroicons-chevron-left" size="sm" @click="prevMonth" />
+            <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ calendarTitle }}</h3>
+            <UButton variant="ghost" icon="i-heroicons-chevron-right" size="sm" @click="nextMonth" />
           </div>
-          <div class="grid grid-cols-7 gap-1">
-            <div v-for="day in weekDays" :key="day" class="text-center text-xs font-medium text-gray-500 py-2">
+          <div class="grid grid-cols-7 gap-0.5 sm:gap-1">
+            <div v-for="day in weekDays" :key="day" class="text-center text-xs font-medium text-gray-400 dark:text-gray-500 py-2">
               {{ day }}
             </div>
             <button
@@ -135,14 +136,14 @@
               :key="i"
               class="aspect-square rounded-lg flex flex-col items-center justify-center text-sm transition-colors relative"
               :class="[
-                date.isCurrentMonth ? 'hover:bg-gray-100 dark:hover:bg-gray-700' : 'text-gray-300 dark:text-gray-600',
-                date.isToday ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 font-bold' : '',
+                date.isCurrentMonth ? 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800' : 'text-gray-300 dark:text-gray-700',
+                date.isToday ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 font-semibold' : '',
                 date.hasEntry ? 'font-medium' : ''
               ]"
               @click="date.isCurrentMonth && selectDate(date)"
             >
               {{ date.day }}
-              <div v-if="date.hasEntry" class="w-1.5 h-1.5 rounded-full bg-primary-500 absolute bottom-1" />
+              <div v-if="date.hasEntry" class="w-1 h-1 rounded-full bg-primary-500 absolute bottom-1" />
             </button>
           </div>
         </div>
@@ -151,11 +152,11 @@
         <div v-if="viewMode === 'list'" class="space-y-4">
           <!-- Loading State -->
           <template v-if="isLoading && !journalNotes.length">
-            <div v-for="i in 3" :key="i" class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
-              <div class="flex gap-4">
-                <USkeleton class="w-12 h-12 rounded-full" />
+            <div v-for="i in 3" :key="i" class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 sm:p-5">
+              <div class="flex gap-3">
+                <USkeleton class="w-10 h-10 rounded-full flex-shrink-0" />
                 <div class="flex-1 space-y-2">
-                  <USkeleton class="h-4 w-32" />
+                  <USkeleton class="h-3 w-24" />
                   <USkeleton class="h-3 w-full" />
                   <USkeleton class="h-3 w-2/3" />
                 </div>
@@ -164,14 +165,14 @@
           </template>
 
           <!-- Empty State -->
-          <div v-else-if="!journalNotes.length" class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-12 text-center">
-            <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-              <Icon name="heroicons:book-open" class="w-10 h-10 text-gray-400" />
+          <div v-else-if="!journalNotes.length" class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-10 text-center">
+            <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+              <Icon name="heroicons:book-open" class="w-8 h-8 text-gray-400" />
             </div>
-            <h3 class="text-xl font-semibold mb-2">{{ $t('journal.no_entries') }}</h3>
-            <p class="text-gray-500 dark:text-gray-400 mb-6">{{ $t('journal.no_entries_description') }}</p>
-            <UButton color="primary" @click="() => openNewEntry()">
-              <Icon name="heroicons:pencil" class="w-4 h-4 mr-2" />
+            <h3 class="text-lg font-semibold mb-2 text-gray-900 dark:text-white">{{ $t('journal.no_entries') }}</h3>
+            <p class="text-gray-500 dark:text-gray-400 text-sm mb-5">{{ $t('journal.no_entries_description') }}</p>
+            <UButton color="primary" size="sm" @click="() => openNewEntry()">
+              <Icon name="heroicons:pencil" class="w-4 h-4 mr-1.5" />
               {{ $t('journal.write_first') }}
             </UButton>
           </div>
@@ -184,13 +185,13 @@
               class="space-y-3"
             >
               <!-- Date Header -->
-              <div class="sticky top-0 z-10 bg-gray-50 dark:bg-gray-900 py-2">
+              <div class="sticky top-0 z-10 bg-gray-50 dark:bg-gray-950 py-2">
                 <div class="flex items-center gap-2">
-                  <div class="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
-                  <span class="text-sm font-medium text-gray-500 dark:text-gray-400 px-3">
+                  <div class="h-px flex-1 bg-gray-200 dark:bg-gray-800" />
+                  <span class="text-xs font-medium text-gray-400 dark:text-gray-500 px-2">
                     {{ formatGroupDate(dateGroup.created_at) }}
                   </span>
-                  <div class="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
+                  <div class="h-px flex-1 bg-gray-200 dark:bg-gray-800" />
                 </div>
               </div>
 
@@ -198,14 +199,14 @@
               <div
                 v-for="entry in dateGroup.entries"
                 :key="entry.id"
-                class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow cursor-pointer group"
+                class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden hover:border-gray-300 dark:hover:border-gray-700 transition-colors cursor-pointer group"
                 @click="viewFullEntry(entry)"
               >
-                <div class="p-6">
-                  <div class="flex items-start gap-4">
+                <div class="p-4 sm:p-5">
+                  <div class="flex items-start gap-3">
                     <!-- Mood Indicator -->
                     <div 
-                      class="w-12 h-12 rounded-full flex items-center justify-center text-2xl"
+                      class="w-10 h-10 rounded-full flex items-center justify-center text-xl flex-shrink-0"
                       :class="getMoodBgClass(entry.mood)"
                     >
                       {{ getMoodEmoji(entry.mood) }}
@@ -214,39 +215,39 @@
                     <!-- Content -->
                     <div class="flex-1 min-w-0">
                       <div class="flex items-center gap-2 mb-1">
-                        <span class="text-sm text-gray-500 dark:text-gray-400">
+                        <span class="text-xs text-gray-400 dark:text-gray-500">
                           {{ formatTime(entry.created_at) }}
                         </span>
                         <span v-if="entry.attachments?.length" class="text-gray-400">
-                          <Icon name="heroicons:paper-clip" class="w-4 h-4" />
+                          <Icon name="heroicons:paper-clip" class="w-3.5 h-3.5" />
                         </span>
                       </div>
-                      <p class="text-gray-700 dark:text-gray-300 line-clamp-3 whitespace-pre-wrap">
+                      <p class="text-gray-700 dark:text-gray-300 text-sm leading-relaxed line-clamp-3 whitespace-pre-wrap">
                         {{ entry.decryptedContent }}
                       </p>
                     </div>
 
                     <!-- Actions -->
-                    <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div class="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                       <UButton
                         variant="ghost"
                         color="neutral"
                         icon="i-heroicons-pencil-square"
-                        size="sm"
+                        size="xs"
                         @click.stop="editEntry(entry)"
                       />
                       <UButton
                         variant="ghost"
                         color="error"
                         icon="i-heroicons-trash"
-                        size="sm"
+                        size="xs"
                         @click.stop="confirmDelete(entry)"
                       />
                     </div>
                   </div>
 
                   <!-- Attachments Preview -->
-                  <EncryptedAttachmentList v-if="entry.tags?.length" :event="entry" class="mt-4" />
+                  <EncryptedAttachmentList v-if="entry.tags?.length" :event="entry" class="mt-3" />
                 </div>
               </div>
             </div>
@@ -332,38 +333,38 @@
     <!-- View Entry Modal -->
     <UModal v-model:open="showViewModal" :ui="{ content: 'max-w-2xl' }">
       <template #content>
-        <div class="p-6" v-if="selectedEntry">
-          <div class="flex items-center gap-4 mb-6">
+        <div class="p-5 sm:p-6" v-if="selectedEntry">
+          <div class="flex items-center gap-3 mb-5">
             <div 
-              class="w-14 h-14 rounded-full flex items-center justify-center text-2xl"
+              class="w-12 h-12 rounded-full flex items-center justify-center text-xl"
               :class="getMoodBgClass(selectedEntry.mood)"
             >
               {{ getMoodEmoji(selectedEntry.mood) }}
             </div>
             <div>
-              <div class="text-lg font-semibold">
+              <div class="text-base font-semibold text-gray-900 dark:text-white">
                 {{ formatGroupDate(selectedEntry.created_at) }}
               </div>
-              <div class="text-sm text-gray-500">
+              <div class="text-sm text-gray-500 dark:text-gray-400">
                 {{ formatTime(selectedEntry.created_at) }}
               </div>
             </div>
           </div>
 
-          <div class="prose dark:prose-invert max-w-none mb-6">
-            <p class="whitespace-pre-wrap text-gray-700 dark:text-gray-300">
+          <div class="mb-5">
+            <p class="whitespace-pre-wrap text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
               {{ selectedEntry.decryptedContent }}
             </p>
           </div>
 
           <EncryptedAttachmentList v-if="selectedEntry.tags?.length" :event="selectedEntry" />
 
-          <div class="flex justify-end gap-2 mt-6 pt-4 border-t dark:border-gray-700">
-            <UButton variant="ghost" @click="showViewModal = false">
+          <div class="flex justify-end gap-2 mt-5 pt-4 border-t border-gray-100 dark:border-gray-800">
+            <UButton variant="ghost" size="sm" @click="showViewModal = false">
               {{ $t('common.close') }}
             </UButton>
-            <UButton color="primary" @click="editFromView">
-              <Icon name="heroicons:pencil" class="w-4 h-4 mr-1" />
+            <UButton color="primary" size="sm" @click="editFromView">
+              <Icon name="heroicons:pencil" class="w-3.5 h-3.5 mr-1" />
               {{ $t('common.edit') }}
             </UButton>
           </div>
@@ -374,17 +375,17 @@
     <!-- Delete Confirmation -->
     <UModal v-model:open="showDeleteConfirm">
       <template #content>
-        <div class="p-6 text-center">
-          <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-            <Icon name="heroicons:trash" class="w-8 h-8 text-red-600 dark:text-red-400" />
+        <div class="p-5 text-center">
+          <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
+            <Icon name="heroicons:trash" class="w-6 h-6 text-red-600 dark:text-red-400" />
           </div>
-          <h3 class="text-lg font-semibold mb-2">{{ $t('journal.delete_confirm_title') }}</h3>
-          <p class="text-gray-500 dark:text-gray-400 mb-6">{{ $t('journal.delete_confirm_message') }}</p>
-          <div class="flex justify-center gap-3">
-            <UButton variant="ghost" @click="showDeleteConfirm = false">
+          <h3 class="text-base font-semibold mb-1.5 text-gray-900 dark:text-white">{{ $t('journal.delete_confirm_title') }}</h3>
+          <p class="text-gray-500 dark:text-gray-400 text-sm mb-5">{{ $t('journal.delete_confirm_message') }}</p>
+          <div class="flex justify-center gap-2">
+            <UButton variant="ghost" size="sm" @click="showDeleteConfirm = false">
               {{ $t('common.cancel') }}
             </UButton>
-            <UButton color="error" @click="doDelete">
+            <UButton color="error" size="sm" @click="doDelete">
               {{ $t('common.delete') }}
             </UButton>
           </div>
@@ -764,11 +765,11 @@ const getMoodEmoji = (mood: string) => {
 
 const getMoodBgClass = (mood: string) => {
   const classes: Record<string, string> = {
-    great: 'bg-green-100 dark:bg-green-900/30',
-    good: 'bg-blue-100 dark:bg-blue-900/30',
-    okay: 'bg-gray-100 dark:bg-gray-700',
-    bad: 'bg-orange-100 dark:bg-orange-900/30',
-    terrible: 'bg-red-100 dark:bg-red-900/30'
+    great: 'bg-green-50 dark:bg-green-900/20',
+    good: 'bg-blue-50 dark:bg-blue-900/20',
+    okay: 'bg-gray-100 dark:bg-gray-800',
+    bad: 'bg-orange-50 dark:bg-orange-900/20',
+    terrible: 'bg-red-50 dark:bg-red-900/20'
   }
   return classes[mood] || classes.okay
 }

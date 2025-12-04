@@ -1,11 +1,11 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
+  <div class="min-h-screen bg-gray-50 dark:bg-gradient-to-br dark:from-gray-900 dark:via-black dark:to-gray-900">
     <!-- Desktop Layout -->
     <div class="hidden lg:flex h-screen">
       <!-- Left Panel - Tools -->
-      <div class="w-80 bg-gray-900/50 border-r border-gray-800 flex flex-col">
+      <div class="w-80 bg-white dark:bg-gray-900/50 border-r border-gray-200 dark:border-gray-800 flex flex-col">
         <!-- Header -->
-        <div class="p-4 border-b border-gray-800">
+        <div class="p-4 border-b border-gray-200 dark:border-gray-800">
           <div class="flex items-center gap-3">
             <UButton 
               icon="i-heroicons-arrow-left" 
@@ -13,7 +13,7 @@
               variant="ghost"
               @click="$router.back()"
             />
-            <h1 class="text-xl font-bold text-white">{{ $t('social.create_story') }}</h1>
+            <h1 class="text-xl font-bold text-gray-900 dark:text-white">{{ $t('social.create_story') }}</h1>
           </div>
         </div>
 
@@ -21,7 +21,7 @@
         <div class="flex-1 overflow-y-auto p-4 space-y-6">
           <!-- Media Upload -->
           <div class="space-y-3">
-            <h3 class="text-sm font-medium text-gray-400 uppercase tracking-wide">Media</h3>
+            <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Media</h3>
             <div class="grid grid-cols-2 gap-3">
               <button 
                 class="desktop-tool-card"
@@ -30,7 +30,7 @@
                 <div class="tool-icon-lg bg-gradient-to-br from-pink-500 to-orange-400">
                   <Icon name="heroicons:photo" class="w-6 h-6" />
                 </div>
-                <span class="text-sm text-gray-300">{{ $t('social.gallery') }}</span>
+                <span class="text-sm text-gray-600 dark:text-gray-300">{{ $t('social.gallery') }}</span>
               </button>
               
               <button 
@@ -40,19 +40,18 @@
                 <div class="tool-icon-lg bg-gradient-to-br from-blue-500 to-cyan-400">
                   <Icon name="heroicons:camera" class="w-6 h-6" />
                 </div>
-                <span class="text-sm text-gray-300">{{ $t('social.camera') }}</span>
+                <span class="text-sm text-gray-600 dark:text-gray-300">{{ $t('social.camera') }}</span>
               </button>
             </div>
           </div>
 
           <!-- Text Tools -->
           <div class="space-y-3">
-            <h3 class="text-sm font-medium text-gray-400 uppercase tracking-wide">{{ $t('social.text') }}</h3>
+            <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">{{ $t('social.text') }}</h3>
             <UTextarea 
               v-model="storyText"
               :placeholder="$t('social.type_something')"
               :rows="3"
-              class="bg-gray-800/50"
             />
             
             <!-- Font Selection -->
@@ -61,7 +60,7 @@
                 v-for="font in fonts"
                 :key="font.name"
                 class="px-3 py-1.5 rounded-lg text-sm transition-all"
-                :class="selectedFont === font.value ? 'bg-primary-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'"
+                :class="selectedFont === font.value ? 'bg-primary-500 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'"
                 :style="{ fontFamily: font.value }"
                 @click="selectedFont = font.value"
               >
@@ -75,7 +74,7 @@
                 v-for="color in textColors"
                 :key="color"
                 class="w-8 h-8 rounded-full border-2 transition-transform hover:scale-110"
-                :class="textColor === color ? 'border-white scale-110' : 'border-transparent'"
+                :class="textColor === color ? 'border-primary-500 dark:border-white scale-110' : 'border-gray-200 dark:border-transparent'"
                 :style="{ backgroundColor: color }"
                 @click="textColor = color"
               />
@@ -87,8 +86,8 @@
                 v-for="bg in bgColors"
                 :key="bg.value"
                 class="w-8 h-8 rounded-lg border-2 transition-transform hover:scale-110 flex items-center justify-center"
-                :class="textBgColor === bg.value ? 'border-white scale-110' : 'border-gray-600'"
-                :style="{ backgroundColor: bg.value === 'transparent' ? '#374151' : bg.value }"
+                :class="textBgColor === bg.value ? 'border-primary-500 dark:border-white scale-110' : 'border-gray-200 dark:border-gray-600'"
+                :style="{ backgroundColor: bg.value === 'transparent' ? '' : bg.value }"
                 @click="textBgColor = bg.value"
               >
                 <Icon v-if="bg.value === 'transparent'" name="heroicons:x-mark" class="w-4 h-4 text-gray-400" />
@@ -98,13 +97,13 @@
 
           <!-- Stickers -->
           <div class="space-y-3">
-            <h3 class="text-sm font-medium text-gray-400 uppercase tracking-wide">{{ $t('social.stickers') }}</h3>
+            <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">{{ $t('social.stickers') }}</h3>
             <div class="flex gap-2 overflow-x-auto pb-2">
               <button 
                 v-for="cat in stickerCategories"
                 :key="cat.name"
                 class="px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-all"
-                :class="selectedStickerCat === cat.name ? 'bg-primary-500 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'"
+                :class="selectedStickerCat === cat.name ? 'bg-primary-500 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'"
                 @click="selectedStickerCat = cat.name"
               >
                 {{ cat.icon }}
@@ -114,7 +113,7 @@
               <button 
                 v-for="emoji in currentStickers"
                 :key="emoji"
-                class="text-xl p-1.5 hover:bg-gray-700 rounded-lg transition-transform hover:scale-125"
+                class="text-xl p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-transform hover:scale-125"
                 @click="addSticker(emoji)"
               >
                 {{ emoji }}
@@ -124,7 +123,7 @@
 
           <!-- Filters (only if media selected) -->
           <div v-if="selectedMedia && mediaType === 'image'" class="space-y-3">
-            <h3 class="text-sm font-medium text-gray-400 uppercase tracking-wide">{{ $t('social.filters') }}</h3>
+            <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">{{ $t('social.filters') }}</h3>
             <div class="flex gap-2 overflow-x-auto pb-2">
               <button 
                 v-for="filter in filters"
@@ -142,19 +141,18 @@
                     :style="{ filter: filter.css }"
                   />
                 </div>
-                <span class="text-xs text-gray-400">{{ filter.name }}</span>
+                <span class="text-xs text-gray-500 dark:text-gray-400">{{ filter.name }}</span>
               </button>
             </div>
           </div>
         </div>
 
         <!-- Caption & Post -->
-        <div class="p-4 border-t border-gray-800 space-y-4">
+        <div class="p-4 border-t border-gray-200 dark:border-gray-800 space-y-4">
           <UTextarea 
             v-model="caption"
             :placeholder="$t('social.add_caption')"
             :rows="2"
-            class="bg-gray-800/50"
           />
           <UButton 
             block 
@@ -171,15 +169,15 @@
       </div>
 
       <!-- Center - Story Preview -->
-      <div class="flex-1 flex items-center justify-center p-8 bg-black/30">
+      <div class="flex-1 flex items-center justify-center p-8 bg-gray-100 dark:bg-black/30">
         <div class="relative">
           <!-- Phone Frame -->
-          <div class="relative w-[320px] h-[640px] bg-gray-900 rounded-[3rem] p-3 shadow-2xl border-4 border-gray-800">
+          <div class="relative w-[320px] h-[640px] bg-gray-200 dark:bg-gray-900 rounded-[3rem] p-3 shadow-2xl border-4 border-gray-300 dark:border-gray-800">
             <!-- Notch -->
-            <div class="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-7 bg-gray-900 rounded-b-2xl z-10" />
+            <div class="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-7 bg-gray-200 dark:bg-gray-900 rounded-b-2xl z-10" />
             
             <!-- Story Content -->
-            <div class="relative w-full h-full bg-gray-800 rounded-[2.25rem] overflow-hidden">
+            <div class="relative w-full h-full bg-gray-300 dark:bg-gray-800 rounded-[2.25rem] overflow-hidden">
               <!-- Media Preview -->
               <div v-if="selectedMedia" class="absolute inset-0">
                 <video 
@@ -201,12 +199,12 @@
               </div>
 
               <!-- Placeholder -->
-              <div v-else class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-700 to-gray-900">
+              <div v-else class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-900">
                 <div class="text-center p-6">
-                  <div class="w-16 h-16 mx-auto mb-4 bg-gray-600/50 rounded-full flex items-center justify-center">
-                    <Icon name="heroicons:photo" class="w-8 h-8 text-gray-400" />
+                  <div class="w-16 h-16 mx-auto mb-4 bg-gray-300 dark:bg-gray-600/50 rounded-full flex items-center justify-center">
+                    <Icon name="heroicons:photo" class="w-8 h-8 text-gray-500 dark:text-gray-400" />
                   </div>
-                  <p class="text-gray-400 text-sm">{{ $t('social.add_photo_or_video') }}</p>
+                  <p class="text-gray-500 dark:text-gray-400 text-sm">{{ $t('social.add_photo_or_video') }}</p>
                 </div>
               </div>
 
@@ -252,8 +250,8 @@
               <div class="absolute top-4 left-4 right-12 flex items-center gap-2 z-10">
                 <div class="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-pink-500" />
                 <div>
-                  <p class="text-white text-xs font-medium">Your Story</p>
-                  <p class="text-gray-300 text-xs">Just now</p>
+                  <p class="text-white text-xs font-medium drop-shadow">Your Story</p>
+                  <p class="text-white/80 text-xs drop-shadow">Just now</p>
                 </div>
               </div>
             </div>
@@ -262,7 +260,7 @@
           <!-- Clear Stickers Button -->
           <button 
             v-if="stickers.length > 0"
-            class="absolute -bottom-12 left-1/2 -translate-x-1/2 text-sm text-gray-400 hover:text-white transition-colors"
+            class="absolute -bottom-12 left-1/2 -translate-x-1/2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
             @click="stickers = []"
           >
             Clear all stickers
@@ -271,32 +269,32 @@
       </div>
 
       <!-- Right Panel - Tips -->
-      <div class="w-72 bg-gray-900/30 border-l border-gray-800 p-6 hidden xl:block">
-        <h3 class="text-lg font-bold text-white mb-4">Story Tips</h3>
+      <div class="w-72 bg-white dark:bg-gray-900/30 border-l border-gray-200 dark:border-gray-800 p-6 hidden xl:block">
+        <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Story Tips</h3>
         <div class="space-y-4">
           <div class="flex gap-3 text-sm">
-            <div class="w-8 h-8 rounded-full bg-primary-500/20 flex items-center justify-center flex-shrink-0">
-              <Icon name="heroicons:light-bulb" class="w-4 h-4 text-primary-400" />
+            <div class="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-500/20 flex items-center justify-center flex-shrink-0">
+              <Icon name="heroicons:light-bulb" class="w-4 h-4 text-primary-600 dark:text-primary-400" />
             </div>
-            <p class="text-gray-400">Stories disappear after 24 hours, perfect for casual moments!</p>
+            <p class="text-gray-600 dark:text-gray-400">Stories disappear after 24 hours, perfect for casual moments!</p>
           </div>
           <div class="flex gap-3 text-sm">
-            <div class="w-8 h-8 rounded-full bg-pink-500/20 flex items-center justify-center flex-shrink-0">
-              <Icon name="heroicons:sparkles" class="w-4 h-4 text-pink-400" />
+            <div class="w-8 h-8 rounded-full bg-pink-100 dark:bg-pink-500/20 flex items-center justify-center flex-shrink-0">
+              <Icon name="heroicons:sparkles" class="w-4 h-4 text-pink-600 dark:text-pink-400" />
             </div>
-            <p class="text-gray-400">Add stickers and text to make your story more engaging</p>
+            <p class="text-gray-600 dark:text-gray-400">Add stickers and text to make your story more engaging</p>
           </div>
           <div class="flex gap-3 text-sm">
-            <div class="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-              <Icon name="heroicons:photo" class="w-4 h-4 text-blue-400" />
+            <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+              <Icon name="heroicons:photo" class="w-4 h-4 text-blue-600 dark:text-blue-400" />
             </div>
-            <p class="text-gray-400">Use filters to enhance your photos with one tap</p>
+            <p class="text-gray-600 dark:text-gray-400">Use filters to enhance your photos with one tap</p>
           </div>
           <div class="flex gap-3 text-sm">
-            <div class="w-8 h-8 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0">
-              <Icon name="heroicons:bolt" class="w-4 h-4 text-yellow-400" />
+            <div class="w-8 h-8 rounded-full bg-yellow-100 dark:bg-yellow-500/20 flex items-center justify-center flex-shrink-0">
+              <Icon name="heroicons:bolt" class="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
             </div>
-            <p class="text-gray-400">Your followers will see your story at the top of their feed</p>
+            <p class="text-gray-600 dark:text-gray-400">Your followers will see your story at the top of their feed</p>
           </div>
         </div>
 
@@ -304,17 +302,17 @@
         <div class="mt-8">
           <h4 class="text-sm font-medium text-gray-500 mb-3">Keyboard Shortcuts</h4>
           <div class="space-y-2 text-xs">
-            <div class="flex justify-between text-gray-400">
+            <div class="flex justify-between text-gray-500 dark:text-gray-400">
               <span>Post Story</span>
-              <kbd class="px-2 py-0.5 bg-gray-800 rounded">⌘ + Enter</kbd>
+              <kbd class="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-gray-600 dark:text-gray-300">⌘ + Enter</kbd>
             </div>
-            <div class="flex justify-between text-gray-400">
+            <div class="flex justify-between text-gray-500 dark:text-gray-400">
               <span>Add Media</span>
-              <kbd class="px-2 py-0.5 bg-gray-800 rounded">⌘ + O</kbd>
+              <kbd class="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-gray-600 dark:text-gray-300">⌘ + O</kbd>
             </div>
-            <div class="flex justify-between text-gray-400">
+            <div class="flex justify-between text-gray-500 dark:text-gray-400">
               <span>Go Back</span>
-              <kbd class="px-2 py-0.5 bg-gray-800 rounded">Esc</kbd>
+              <kbd class="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-gray-600 dark:text-gray-300">Esc</kbd>
             </div>
           </div>
         </div>
@@ -324,7 +322,7 @@
     <!-- Mobile Layout -->
     <div class="lg:hidden min-h-screen flex flex-col">
       <!-- Header -->
-      <div class="sticky top-0 z-40 flex items-center justify-between p-4 bg-black/80 backdrop-blur-lg">
+      <div class="sticky top-0 z-40 flex items-center justify-between p-4 bg-white/80 dark:bg-black/80 backdrop-blur-lg border-b border-gray-200 dark:border-transparent">
         <UButton 
           icon="i-heroicons-x-mark" 
           color="neutral" 
@@ -332,7 +330,7 @@
           @click="$router.back()"
         />
         
-        <h1 class="text-white font-semibold">{{ $t('social.create_story') }}</h1>
+        <h1 class="text-gray-900 dark:text-white font-semibold">{{ $t('social.create_story') }}</h1>
         
         <UButton 
           color="primary"
@@ -345,8 +343,8 @@
       </div>
 
       <!-- Story Preview -->
-      <div class="flex-1 flex items-center justify-center p-4">
-        <div class="relative aspect-[9/16] w-full max-w-sm bg-gray-900 overflow-hidden rounded-2xl">
+      <div class="flex-1 flex items-center justify-center p-4 bg-gray-100 dark:bg-transparent">
+        <div class="relative aspect-[9/16] w-full max-w-sm bg-gray-200 dark:bg-gray-900 overflow-hidden rounded-2xl shadow-lg">
           <!-- Media Preview -->
           <div v-if="selectedMedia" class="absolute inset-0">
             <video 
@@ -368,12 +366,12 @@
           </div>
 
           <!-- Placeholder -->
-          <div v-else class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
+          <div v-else class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900">
             <div class="text-center p-8">
-              <div class="w-20 h-20 mx-auto mb-4 bg-gray-700/50 rounded-full flex items-center justify-center">
+              <div class="w-20 h-20 mx-auto mb-4 bg-gray-200 dark:bg-gray-700/50 rounded-full flex items-center justify-center">
                 <Icon name="heroicons:photo" class="w-10 h-10 text-gray-400" />
               </div>
-              <p class="text-gray-400 mb-4">{{ $t('social.add_photo_or_video') }}</p>
+              <p class="text-gray-500 dark:text-gray-400 mb-4">{{ $t('social.add_photo_or_video') }}</p>
               <UButton color="primary" @click="openMediaPicker">
                 <Icon name="heroicons:plus" class="w-4 h-4 mr-2" />
                 {{ $t('social.gallery') }}
@@ -422,15 +420,13 @@
       </div>
 
       <!-- Tools Panel -->
-      <div class="bg-black/90 backdrop-blur-lg p-4 space-y-4 pb-8">
+      <div class="bg-white dark:bg-black/90 backdrop-blur-lg p-4 space-y-4 pb-8 border-t border-gray-200 dark:border-gray-800">
         <!-- Caption Input -->
         <div class="flex gap-2">
           <UInput 
             v-model="caption"
             :placeholder="$t('social.add_caption')"
             class="flex-1"
-            color="neutral"
-            variant="subtle"
           />
         </div>
 
@@ -440,35 +436,35 @@
             <div class="tool-icon bg-gradient-to-br from-pink-500 to-orange-400">
               <Icon name="heroicons:photo" class="w-5 h-5" />
             </div>
-            <span class="text-xs text-gray-400">{{ $t('social.gallery') }}</span>
+            <span class="text-xs text-gray-500 dark:text-gray-400">{{ $t('social.gallery') }}</span>
           </button>
           
           <button class="tool-btn" @click="openCamera">
             <div class="tool-icon bg-gradient-to-br from-blue-500 to-cyan-400">
               <Icon name="heroicons:camera" class="w-5 h-5" />
             </div>
-            <span class="text-xs text-gray-400">{{ $t('social.camera') }}</span>
+            <span class="text-xs text-gray-500 dark:text-gray-400">{{ $t('social.camera') }}</span>
           </button>
           
           <button class="tool-btn" @click="showTextEditor = true">
             <div class="tool-icon bg-gradient-to-br from-purple-500 to-pink-400">
               <Icon name="heroicons:pencil" class="w-5 h-5" />
             </div>
-            <span class="text-xs text-gray-400">{{ $t('social.text') }}</span>
+            <span class="text-xs text-gray-500 dark:text-gray-400">{{ $t('social.text') }}</span>
           </button>
           
           <button class="tool-btn" @click="showStickers = true">
             <div class="tool-icon bg-gradient-to-br from-yellow-500 to-orange-400">
               <Icon name="heroicons:face-smile" class="w-5 h-5" />
             </div>
-            <span class="text-xs text-gray-400">{{ $t('social.stickers') }}</span>
+            <span class="text-xs text-gray-500 dark:text-gray-400">{{ $t('social.stickers') }}</span>
           </button>
           
           <button class="tool-btn" @click="showFilters = true" :disabled="!selectedMedia">
             <div class="tool-icon bg-gradient-to-br from-green-500 to-teal-400" :class="{ 'opacity-50': !selectedMedia }">
               <Icon name="heroicons:sparkles" class="w-5 h-5" />
             </div>
-            <span class="text-xs text-gray-400">{{ $t('social.filters') }}</span>
+            <span class="text-xs text-gray-500 dark:text-gray-400">{{ $t('social.filters') }}</span>
           </button>
         </div>
       </div>
@@ -887,22 +883,33 @@ useHead({
   transform: scale(0.95);
 }
 
-/* Desktop tool cards */
+/* Desktop tool cards - Light mode */
 .desktop-tool-card {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
   padding: 1rem;
-  background: rgba(55, 65, 81, 0.3);
+  background: rgb(243 244 246); /* gray-100 */
   border-radius: 0.75rem;
   transition: all 0.15s;
   border: 1px solid transparent;
 }
 
 .desktop-tool-card:hover {
-  background: rgba(55, 65, 81, 0.5);
+  background: rgb(229 231 235); /* gray-200 */
   border-color: rgba(139, 92, 246, 0.3);
+}
+
+/* Desktop tool cards - Dark mode */
+:root.dark .desktop-tool-card,
+.dark .desktop-tool-card {
+  background: rgba(55, 65, 81, 0.3);
+}
+
+:root.dark .desktop-tool-card:hover,
+.dark .desktop-tool-card:hover {
+  background: rgba(55, 65, 81, 0.5);
 }
 
 .tool-icon-lg {
