@@ -91,68 +91,48 @@ const { user, currentUserInfo } = useNostrUser();
 const switchAccountModal = useState("switchAccountModal", () => false);
 const sidebarNavItems = computed(() => [
   {
-    label: "Home",
+    label: "Feed",
     icon: "i-heroicons-home",
-    to: "/",
+    to: "/feed",
+    isMobile: true,
+  },
+  {
+    label: "Discover",
+    icon: "i-heroicons-magnifying-glass",
+    to: "/discover",
+    isMobile: true,
+  },
+  {
+    label: "Shorts",
+    icon: "i-heroicons-play-circle",
+    to: "/shorts",
     isMobile: true,
   },
   {
     label: "Sats Wallet",
     icon: "bitcoin-icons:lightning-outline",
     to: "/locosats",
-    isMobile: true,
+    isMobile: false,
   },
-  // {
-  //   label: "Notifications",
-  //   icon: "i-heroicons-bell",
-  //   to: "/notifications",
-  //   isMobile: true,
-  // },
-  // {
-  //   label: "Bit Zap",
-  //   icon: "bitcoin-icons:lightning-outline",
-  //   to: "/zaps",
-  //   isMobile: true,
-  // },
-  // {
-  //   label: "Search",
-  //   icon: "system-uicons:search",
-  //   to: "/search",
-  //   isMobile: true,
-  // },
-  // {
-  //   label: "Messages",
-  //   icon: "i-heroicons-chat-bubble-left-right",
-  //   to: "/messages",
-  //   isMobile: true,
-  // },
   {
     label: "Journals",
     icon: "i-heroicons-book-open",
     to: "/journals",
-    isMobile: true,
+    isMobile: false,
   },
-  // {
-  //   label: "Bookmarks",
-  //   icon: "i-heroicons-bookmark",
-  //   to: "/bookmarks",
-  //   class: "hidden md:block",
-  //   isMobile: false,
-  // },
-  //  {
-  //   label: "Profile",
-  //   icon: "i-heroicons-user-circle",
-  //   to: `/profile/${user.value?.publicKey}`,
-  //   class: "hidden md:block",
-  //   isMobile: true,
-  // },
+  {
+    label: "Bookmarks",
+    icon: "i-heroicons-bookmark",
+    to: "/bookmarks",
+    isMobile: false,
+  },
   {
     label: "Settings",
     icon: "i-heroicons-cog",
     to: "/settings",
-    isMobile: true,
+    isMobile: false,
   },
 ]);
 
-const itemForMobile = sidebarNavItems.value.filter((item) => item.isMobile);
+const itemForMobile = computed(() => sidebarNavItems.value.filter((item) => item.isMobile));
 </script>

@@ -5,69 +5,139 @@
     >
       <AppHeader class="" @filter="handleFilter" />
     </nav>
-    <CommonContainer class="py-8">
+    
+    <!-- Stories Bar -->
+    <SocialStoriesBar class="bg-white dark:bg-gray-900" />
+    
+    <CommonContainer class="py-4">
       <!-- Floating Check New Notes button that appears when scrolling down -->
-      <div
-        v-if="showScrollButton"
-        class="fixed top-16 left-1/2 transform -translate-x-1/2 transition-opacity duration-300"
-        :class="showScrollButton ? 'opacity-100' : 'opacity-0'"
-        style="z-index: 99"
-      >
-        <UButton
-          color="neutral"
-          class="shadow-md z-50 rounded-2xl"
-          variant="soft"
-          :icon="
-            isLoading
-              ? 'svg-spinners:180-ring-with-bg'
-              : 'system-uicons:refresh'
-          "
-          @click="
-            () => {
-              refreshNotes();
-              scrollToTop();
-            }
-          "
+      <Transition name="slide-down">
+        <div
+          v-if="showScrollButton && hasNewNotes"
+          class="fixed top-20 left-1/2 transform -translate-x-1/2 transition-all duration-300 z-[99]"
         >
-          Check New Notes
-        </UButton>
+          <UButton
+            color="primary"
+            class="shadow-lg rounded-full px-6"
+            :icon="
+              isLoading
+                ? 'svg-spinners:180-ring-with-bg'
+                : 'heroicons:arrow-up'
+            "
+            @click="
+              () => {
+                refreshNotes();
+                scrollToTop();
+                hasNewNotes = false;
+              }
+            "
+          >
+            {{ $t('social.new_posts') }}
+          </UButton>
+        </div>
+      </Transition>
+
+      <!-- Scroll to top button -->
+      <Transition name="fade">
+        <UButton
+          v-if="showScrollButton"
+          color="neutral"
+          variant="soft"
+          icon="i-heroicons-arrow-up"
+          class="shadow-lg fixed right-4 h-12 w-12 bottom-28 flex items-center justify-center rounded-full z-50"
+          size="xl"
+          @click="scrollToTop"
+        />
+      </Transition>
+
+      <!-- Shorts Quick Access -->
+      <div class="mb-4 px-4">
+        <NuxtLink 
+          to="/shorts" 
+          class="flex items-center gap-3 p-3 bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 rounded-xl text-white"
+        >
+          <div class="p-2 bg-white/20 rounded-lg">
+            <Icon name="heroicons:play-circle" class="w-6 h-6" />
+          </div>
+          <div class="flex-1">
+            <p class="font-bold">{{ $t('social.shorts') }}</p>
+            <p class="text-xs opacity-80">{{ $t('social.watch_short_videos') }}</p>
+          </div>
+          <Icon name="heroicons:chevron-right" class="w-5 h-5" />
+        </NuxtLink>
       </div>
 
-      <UButton
-        color="neutral"
-        variant="ghost"
-        icon="i-heroicons-arrow-up"
-        class="shadow-md fixed right-4 h-10 w-10 bottom-28 flex items-center justify-center rounded-full z-50"
-        size="xl"
-        @click="scrollToTop"
+      <!-- Pull to Refresh Indicator -->
+      <div 
+        v-if="isPulling" 
+        class="flex justify-center py-4"
       >
-      </UButton>
+        <Icon 
+          name="svg-spinners:180-ring-with-bg" 
+          class="w-6 h-6 text-primary-500"
+          :class="{ 'animate-spin': isRefreshing }"
+        />
+      </div>
 
       <!-- Feed -->
-      <div>
-        <div v-if="isLoading" class="px-4">
+      <div 
+        ref="feedContainer"
+        @touchstart="handlePullStart"
+        @touchmove="handlePullMove"
+        @touchend="handlePullEnd"
+      >
+        <!-- Loading skeleton -->
+        <div v-if="isLoading && notes.length === 0" class="px-4">
           <article class="flex flex-col gap-4">
             <NoteSkeleton v-for="i in 3" :key="i" />
           </article>
         </div>
 
-        <div v-if="notes.length === 0 && !isLoading" class="text-center py-8">
-          <p class="text-gray-500">No notes found. Be the first to post!</p>
+        <!-- Empty state -->
+        <div v-else-if="notes.length === 0 && !isLoading" class="text-center py-16">
+          <Icon name="heroicons:document-text" class="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <p class="text-gray-500 mb-4">{{ $t('social.no_posts_yet') }}</p>
+          <UButton to="/create-note" color="primary">
+            {{ $t('social.create_first_post') }}
+          </UButton>
         </div>
-        <!-- {{ notes }} -->
+
+        <!-- Notes feed with enhanced interactions -->
         <div class="space-y-4 divide-y divide-slate-100 dark:divide-slate-800">
-          <NoteCard
-            v-for="note in notes"
+          <div 
+            v-for="note in notes" 
             :key="note.id"
-            :note="note"
-            @content-clicked="viewEvent(note.id)"
-          />
+            class="note-item"
+            @dblclick="handleDoubleTap(note)"
+          >
+            <!-- Double tap heart animation -->
+            <Transition name="heart-pop">
+              <div 
+                v-if="doubleTapNoteId === note.id" 
+                class="absolute inset-0 flex items-center justify-center pointer-events-none z-10"
+              >
+                <Icon name="heroicons:heart-solid" class="w-20 h-20 text-red-500 drop-shadow-lg" />
+              </div>
+            </Transition>
+            
+            <NoteCard
+              :note="note"
+              @content-clicked="viewEvent(note.id)"
+            />
+          </div>
         </div>
 
-        <div v-if="isLoading" class="px-4">
-          <article class="flex flex-col gap-4">
-            <NoteSkeleton v-for="i in 3" :key="i" />
-          </article>
+        <!-- Load more indicator -->
+        <div v-if="isLoading && notes.length > 0" class="py-8">
+          <div class="flex justify-center">
+            <Icon name="svg-spinners:180-ring-with-bg" class="w-8 h-8 text-primary-500" />
+          </div>
+        </div>
+
+        <!-- End of feed -->
+        <div v-if="!hasMore && notes.length > 0" class="text-center py-8">
+          <Icon name="heroicons:check-circle" class="w-8 h-8 text-green-500 mx-auto mb-2" />
+          <p class="text-gray-500 text-sm">{{ $t('social.youre_all_caught_up') }}</p>
         </div>
       </div>
     </CommonContainer>
@@ -92,14 +162,27 @@ const {
 } = useNostrFeed();
 
 const { viewEvent, loadAlgorithmicFeed } = useNostrFeedAlgorithm();
+const { trackInteraction } = useNostrFeedAlgorithm();
+const toast = useToast();
 
 // States
 const hasNewContent = ref(false);
 const isLoadingMore = ref(false);
 const currentPage = ref(1);
 const itemsPerPage = ref(10);
+const showScrollButton = ref(false);
+const hasNewNotes = ref(false);
+const hasMore = ref(true);
+const feedContainer = ref<HTMLElement | null>(null);
 
-const showScrollButton = ref(false); // New ref to control button visibility
+// Pull to refresh
+const isPulling = ref(false);
+const isRefreshing = ref(false);
+const pullStartY = ref(0);
+
+// Double tap like
+const doubleTapNoteId = ref<string | null>(null);
+const lastTapTime = ref(0);
 
 async function handleFilter(filter: any) {
   currentPage.value = 1;
@@ -156,7 +239,6 @@ const getReplyCount = (note: Event): number => {
 
 const refreshFeed = async () => {
   currentPage.value = 1;
-
   notes.value = [];
 
   if (filterTab.value.key === "for-you") {
@@ -194,12 +276,53 @@ const refreshNotes = () => {
   loadNotesOnce();
 };
 
-// New function to scroll to top
+// Scroll to top function
 const scrollToTop = () => {
   window.scrollTo({
     top: 0,
     behavior: "smooth",
   });
+};
+
+// Pull to refresh handlers
+const handlePullStart = (e: TouchEvent) => {
+  if (window.scrollY === 0) {
+    pullStartY.value = e.touches[0].clientY;
+    isPulling.value = true;
+  }
+};
+
+const handlePullMove = (e: TouchEvent) => {
+  if (!isPulling.value) return;
+  
+  const pullDistance = e.touches[0].clientY - pullStartY.value;
+  if (pullDistance > 80 && !isRefreshing.value) {
+    isRefreshing.value = true;
+  }
+};
+
+const handlePullEnd = async () => {
+  if (isRefreshing.value) {
+    await refreshFeed();
+    toast.add({ title: 'Feed refreshed!' });
+  }
+  isPulling.value = false;
+  isRefreshing.value = false;
+};
+
+// Double tap to like
+const handleDoubleTap = (note: Event) => {
+  const now = Date.now();
+  if (now - lastTapTime.value < 300) {
+    // Double tap detected
+    doubleTapNoteId.value = note.id;
+    trackInteraction(note, 'like');
+    
+    setTimeout(() => {
+      doubleTapNoteId.value = null;
+    }, 1000);
+  }
+  lastTapTime.value = now;
 };
 
 const setupInfiniteScroll = () => {
@@ -220,15 +343,82 @@ const handleScroll = async () => {
 
   // Load more notes when near bottom
   const bottomOfWindow =
-    window.innerHeight + window.scrollY >= document.body.offsetHeight - 300; // 300px before bottom
+    window.innerHeight + window.scrollY >= document.body.offsetHeight - 300;
   if (bottomOfWindow && !isLoading.value) {
-    const { key, value } = filterTab.value;
     loadMore();
+  }
+};
+
+// Check for new notes periodically
+const checkForNewNotes = async () => {
+  const hasNew = await checkNewNotes();
+  if (hasNew) {
+    hasNewNotes.value = true;
   }
 };
 
 onMounted(() => {
   refreshFeed();
   setupInfiniteScroll();
+  
+  // Check for new notes every 30 seconds
+  setInterval(checkForNewNotes, 30000);
 });
 </script>
+
+<style scoped>
+.note-item {
+  position: relative;
+}
+
+/* Transitions */
+.slide-down-enter-active,
+.slide-down-leave-active {
+  transition: all 0.3s ease;
+}
+
+.slide-down-enter-from,
+.slide-down-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-20px);
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.heart-pop-enter-active {
+  animation: heartPop 0.8s ease-out;
+}
+
+.heart-pop-leave-active {
+  animation: heartFade 0.3s ease-out;
+}
+
+@keyframes heartPop {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+@keyframes heartFade {
+  to {
+    opacity: 0;
+  }
+}
+</style>
