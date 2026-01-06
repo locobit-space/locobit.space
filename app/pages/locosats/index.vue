@@ -73,24 +73,24 @@
       <!-- Quick Actions -->
       <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-3 sm:p-4 mb-5">
         <div class="grid grid-cols-4 gap-1.5 sm:gap-2">
-          <button
-            @click="openQuickAdd('expense')"
+          <NuxtLink
+            to="/locosats/create?type=expense"
             class="flex flex-col items-center gap-1.5 sm:gap-2 p-2 sm:p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           >
             <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
               <Icon name="heroicons:minus" class="w-5 h-5 sm:w-6 sm:h-6 text-red-600 dark:text-red-400" />
             </div>
             <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ $t('finance.expense') }}</span>
-          </button>
-          <button
-            @click="openQuickAdd('income')"
+          </NuxtLink>
+          <NuxtLink
+            to="/locosats/create?type=income"
             class="flex flex-col items-center gap-1.5 sm:gap-2 p-2 sm:p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           >
             <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-green-50 dark:bg-green-900/20 flex items-center justify-center">
               <Icon name="heroicons:plus" class="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" />
             </div>
             <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ $t('finance.income') }}</span>
-          </button>
+          </NuxtLink>
           <NuxtLink
             to="/locosats/report"
             class="flex flex-col items-center gap-1.5 sm:gap-2 p-2 sm:p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
@@ -221,145 +221,19 @@
       </div>
     </div>
 
-    <!-- Quick Add Modal -->
-    <UModal v-model:open="showQuickAdd">
-      <template #content>
-        <div class="p-5">
-          <h3 class="text-base font-semibold mb-4 text-gray-900 dark:text-white">
-            {{ quickAddType === 'income' ? $t('finance.add_income') : $t('finance.add_expense') }}
-          </h3>
-          
-          <!-- Amount Input -->
-          <div class="mb-4">
-            <label class="text-xs text-gray-500 dark:text-gray-400 mb-1 block">{{ $t('finance.amount') }}</label>
-            <div class="relative">
-              <input
-                v-model="quickAddAmount"
-                type="number"
-                class="w-full text-2xl sm:text-3xl font-bold p-3 sm:p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-transparent focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none text-gray-900 dark:text-white"
-                :placeholder="quickAddUnit === 'sats' ? '0 sats' : '0'"
-                autofocus
-              />
-              <button
-                @click="quickAddUnit = quickAddUnit === 'fiat' ? 'sats' : 'fiat'"
-                class="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 px-2 sm:px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded-md text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-              >
-                {{ quickAddUnit === 'fiat' ? finance.settings.value.default_currency : 'sats' }}
-              </button>
-            </div>
-          </div>
-
-          <!-- Category Quick Select -->
-          <div class="mb-4">
-            <label class="text-xs text-gray-500 dark:text-gray-400 mb-2 block">{{ $t('finance.category') }}</label>
-            <div class="flex flex-wrap gap-1.5">
-              <button
-                v-for="cat in quickCategories"
-                :key="cat"
-                @click="quickAddCategory = cat"
-                class="px-2.5 py-1.5 rounded-md text-xs transition-colors"
-                :class="quickAddCategory === cat 
-                  ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 ring-1 ring-primary-500/50' 
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'"
-              >
-                {{ cat }}
-              </button>
-            </div>
-          </div>
-
-          <!-- Note -->
-          <div class="mb-5">
-            <label class="text-xs text-gray-500 dark:text-gray-400 mb-1 block">{{ $t('finance.note') }}</label>
-            <UInput v-model="quickAddNote" :placeholder="$t('finance.note_placeholder')" size="sm" />
-          </div>
-
-          <!-- Actions -->
-          <div class="flex gap-2">
-            <UButton variant="ghost" class="flex-1" size="sm" @click="showQuickAdd = false">
-              {{ $t('common.cancel') }}
-            </UButton>
-            <UButton 
-              :color="quickAddType === 'income' ? 'green' : 'red'"
-              class="flex-1" 
-              size="sm"
-              :loading="isSaving"
-              @click="submitQuickAdd"
-            >
-              {{ $t('common.save') }}
-            </UButton>
-          </div>
-        </div>
-      </template>
-    </UModal>
-
     <!-- Floating Action Button -->
-    <button
-      @click="openQuickAdd('expense')"
+    <NuxtLink
+      to="/locosats/create"
       class="fixed bottom-5 right-5 w-12 h-12 rounded-full bg-primary-500 text-white shadow-md hover:bg-primary-600 hover:shadow-lg transition-all flex items-center justify-center z-50"
     >
       <Icon name="heroicons:plus" class="w-6 h-6" />
-    </button>
+    </NuxtLink>
   </div>
 </template>
 
 <script setup lang="ts">
 const finance = useFinance()
 const { t } = useI18n()
-
-// Quick Add State
-const showQuickAdd = ref(false)
-const quickAddType = ref<'income' | 'expense'>('expense')
-const quickAddAmount = ref<number | string>('')
-const quickAddCategory = ref('Other')
-const quickAddNote = ref('')
-const quickAddUnit = ref<'fiat' | 'sats'>('fiat')
-const isSaving = ref(false)
-
-const quickCategories = [
-  'Food',
-  'Transport',
-  'Shopping',
-  'Entertainment',
-  'Bills',
-  'Salary',
-  'Freelance',
-  'Other'
-]
-
-// Open Quick Add
-const openQuickAdd = (type: 'income' | 'expense') => {
-  quickAddType.value = type
-  quickAddAmount.value = ''
-  quickAddCategory.value = type === 'income' ? 'Salary' : 'Food'
-  quickAddNote.value = ''
-  quickAddUnit.value = finance.settings.value.display_unit
-  showQuickAdd.value = true
-}
-
-// Submit Quick Add
-const submitQuickAdd = async () => {
-  if (!quickAddAmount.value) return
-  
-  isSaving.value = true
-  try {
-    await finance.addEntry({
-      type: quickAddType.value,
-      category: quickAddCategory.value,
-      amount_fiat: quickAddUnit.value === 'fiat' ? Number(quickAddAmount.value) : 0,
-      amount_sats: quickAddUnit.value === 'sats' ? Number(quickAddAmount.value) : 0,
-      unit_input: quickAddUnit.value,
-      fiat_currency: finance.settings.value.default_currency,
-      sats_per_fiat: finance.currentExchangeRate.value,
-      note: quickAddNote.value || quickAddCategory.value,
-      tags: [quickAddCategory.value.toLowerCase()],
-      visibility: 'private',
-      user_id: ''
-    })
-    showQuickAdd.value = false
-  } finally {
-    isSaving.value = false
-  }
-}
 
 // Recent Transactions
 const recentTransactions = computed(() => {
