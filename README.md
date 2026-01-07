@@ -1,4 +1,4 @@
-# locobit.space
+# bitos.space
 
 # Enterprise Social Network (Decentralized on Nostr)
 

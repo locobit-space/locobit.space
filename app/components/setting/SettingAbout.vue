@@ -2,9 +2,9 @@
   <div class="">
     <!-- Logo and Title Section -->
     <div class="flex flex-col items-center">
-      <h1 class="text-2xl mt-6 font-medium">LocoBit Nostr client</h1>
+      <h1 class="text-2xl mt-6 font-medium">BitOS Nostr client</h1>
       <p class="mt-2 text-sm text-center text-gray-500 dark:text-gray-400">
-        LocoBit is a free and open source Nostr client. <br />
+        BitOS is a free and open source Nostr client. <br />
         Sats/Fiat Manager Budget Tracker
       </p>
     </div>

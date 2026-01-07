@@ -3,9 +3,9 @@
     <nav class="space-y-1 flex-col md:flex hidden">
       <h1
         class="text-3xl font-bold hidden md:block py-2 mb-2"
-        title="locobit.space"
+        title="bitos.space"
       >
-        <nuxt-link-locale to="/">LocoBit</nuxt-link-locale>
+        <nuxt-link-locale to="/">BitOS</nuxt-link-locale>
       </h1>
 
       <UButton

@@ -1,6 +1,6 @@
 {
-  "name": "loco_sats",
-  "description": "LocoSats - Social and Bitcoin Lightning for the Web",
+  "name": "bitos",
+  "description": "BitOS - Social and Bitcoin Lightning for the Web",
   "private": true,
   "version": "0.16.0",
   "type": "module",

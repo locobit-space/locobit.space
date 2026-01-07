@@ -39,19 +39,23 @@
 
       <!-- Scroll to top button -->
       <Transition name="fade">
-        <UButton
+        <div
           v-if="showScrollButton"
-          color="neutral"
-          variant="soft"
-          icon="i-heroicons-arrow-up"
-          class="shadow-lg fixed right-4 h-12 w-12 bottom-28 flex items-center justify-center rounded-full z-50"
-          size="xl"
-          @click="scrollToTop"
-        />
+          class="fixed right-4 bottom-28 z-50"
+        >
+          <UButton
+            color="neutral"
+            variant="soft"
+            icon="i-heroicons-arrow-up"
+            class="shadow-lg h-12 w-12 flex items-center justify-center rounded-full"
+            size="xl"
+            @click="scrollToTop"
+          />
+        </div>
       </Transition>
 
       <!-- Shorts Quick Access -->
-      <div class="mb-4 px-4">
+      <div class="mb-4">
         <NuxtLink 
           to="/shorts" 
           class="flex items-center gap-3 p-3 bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 rounded-xl text-white"

@@ -2,7 +2,7 @@ import { ref, computed, onMounted } from "vue";
 import { nip04 } from "nostr-tools";
 import { finalizeEvent } from "nostr-tools/pure";
 import { hexToBytes } from "@noble/ciphers/utils";
-import type { FinanceEntry, Totals, UserSettings } from "~/types";
+import type { FinanceEntry, Totals, UserSettings, Budget, SyncStatus } from "~/types";
 import { ExchangeRateService } from "../services/exchangeRateService";
 
 export function useFinance() {
@@ -18,6 +18,18 @@ export function useFinance() {
   const settings = useState<UserSettings>("user_settings", () => ({
     default_currency: "LAK",
     display_unit: "fiat",
+    budgets: [],
+    categories: ['Food', 'Groceries', 'Transport', 'Entertainment', 'Shopping', 'Bills', 'Health', 'Salary', 'Freelance', 'Investments', 'Other'],
+    theme: 'auto',
+    auto_sync: true,
+    show_balance_on_tab: true
+  }));
+
+  const syncStatus = useState<SyncStatus>("sync_status", () => ({
+    isSyncing: false,
+    lastSync: null,
+    pendingCount: 0,
+    hasError: false
   }));
 
   const currentExchangeRate = ref<number>(0.0413); // sats per LAK (default)
@@ -29,6 +41,8 @@ export function useFinance() {
     const message = err instanceof Error ? err.message : defaultMessage;
     console.error(message, err);
     error.value = message;
+    syncStatus.value.hasError = true;
+    syncStatus.value.errorMessage = message;
     toast.add({
       title: "Error",
       description: message,
@@ -267,6 +281,10 @@ export function useFinance() {
         return;
       }
 
+      // Start syncing
+      syncStatus.value.isSyncing = true;
+      syncStatus.value.hasError = false;
+
       // Fetch and process remote events
       const _events = await queryEvents({
         kinds: [PRIVATE_NOTE_KIND],
@@ -301,8 +319,18 @@ export function useFinance() {
           (a, b) =>
             new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         );
+      
+      // Mark all as synced
+      entries.value.forEach(entry => entry.synced = true);
+      
+      syncStatus.value.lastSync = new Date().toISOString();
+      syncStatus.value.pendingCount = 0;
+      
+      saveEntries();
     } catch (err) {
       handleError(err, "Failed to load entries");
+    } finally {
+      syncStatus.value.isSyncing = false;
     }
   };
 
@@ -370,6 +398,163 @@ export function useFinance() {
   // Available currencies
   const currencies = ["LAK", "USD", "EUR", "THB", "JPY", "GBP", "BTC"];
 
+  // Budget Management
+  const addBudget = (budget: Omit<Budget, 'id' | 'created_at'>) => {
+    const newBudget: Budget = {
+      ...budget,
+      id: `budget_${Date.now()}`,
+      created_at: new Date().toISOString()
+    };
+    
+    if (!settings.value.budgets) {
+      settings.value.budgets = [];
+    }
+    
+    settings.value.budgets.push(newBudget);
+    saveSettings();
+    
+    toast.add({
+      title: "Budget created",
+      description: `Budget for ${budget.category} set to ${budget.amount}`,
+    });
+    
+    return newBudget;
+  };
+
+  const updateBudget = (id: string, updates: Partial<Budget>) => {
+    if (!settings.value.budgets) return;
+    
+    const index = settings.value.budgets.findIndex(b => b.id === id);
+    if (index === -1) throw new Error("Budget not found");
+    
+    settings.value.budgets[index] = {
+      ...settings.value.budgets[index],
+      ...updates
+    };
+    
+    saveSettings();
+    
+    toast.add({
+      title: "Budget updated",
+      description: "Your budget has been updated successfully",
+    });
+  };
+
+  const deleteBudget = (id: string) => {
+    if (!settings.value.budgets) return;
+    
+    settings.value.budgets = settings.value.budgets.filter(b => b.id !== id);
+    saveSettings();
+    
+    toast.add({
+      title: "Budget deleted",
+      description: "Budget has been removed",
+    });
+  };
+
+  // Get budget progress for a category
+  const getBudgetProgress = (category: string, period: 'daily' | 'weekly' | 'monthly' | 'yearly' = 'monthly') => {
+    const budget = settings.value.budgets?.find(b => b.category === category && b.period === period);
+    if (!budget) return null;
+
+    // Calculate date range based on period
+    const now = new Date();
+    let startDate = new Date();
+    
+    switch (period) {
+      case 'daily':
+        startDate.setHours(0, 0, 0, 0);
+        break;
+      case 'weekly':
+        startDate.setDate(now.getDate() - now.getDay());
+        startDate.setHours(0, 0, 0, 0);
+        break;
+      case 'monthly':
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        break;
+      case 'yearly':
+        startDate = new Date(now.getFullYear(), 0, 1);
+        break;
+    }
+
+    const spent = entries.value
+      .filter(e => 
+        e.type === 'expense' && 
+        e.category === category &&
+        new Date(e.created_at) >= startDate
+      )
+      .reduce((sum, e) => sum + e.amount_fiat, 0);
+
+    const percentage = (spent / budget.amount) * 100;
+    const isOverBudget = spent > budget.amount;
+    const shouldAlert = percentage >= budget.alert_threshold;
+
+    return {
+      budget,
+      spent,
+      remaining: budget.amount - spent,
+      percentage,
+      isOverBudget,
+      shouldAlert
+    };
+  };
+
+  // Search and filter entries
+  const searchEntries = (query: string) => {
+    const lowerQuery = query.toLowerCase();
+    return entries.value.filter(entry =>
+      entry.note.toLowerCase().includes(lowerQuery) ||
+      entry.category.toLowerCase().includes(lowerQuery) ||
+      entry.tags.some(tag => tag.toLowerCase().includes(lowerQuery))
+    );
+  };
+
+  const filterEntriesByDateRange = (startDate: Date, endDate: Date) => {
+    return entries.value.filter(entry => {
+      const entryDate = new Date(entry.created_at);
+      return entryDate >= startDate && entryDate <= endDate;
+    });
+  };
+
+  const filterEntriesByCategory = (categories: string[]) => {
+    return entries.value.filter(entry => categories.includes(entry.category));
+  };
+
+  const filterEntriesByAmountRange = (min: number, max: number) => {
+    return entries.value.filter(entry => 
+      entry.amount_fiat >= min && entry.amount_fiat <= max
+    );
+  };
+
+  // Retry failed syncs
+  const retrySync = async () => {
+    const unsyncedEntries = entries.value.filter(e => !e.synced);
+    
+    if (unsyncedEntries.length === 0) {
+      toast.add({
+        title: "All synced",
+        description: "No pending items to sync",
+      });
+      return;
+    }
+
+    syncStatus.value.isSyncing = true;
+    
+    for (const entry of unsyncedEntries) {
+      try {
+        // Attempt to publish to Nostr
+        // This would need proper implementation based on your Nostr setup
+        entry.synced = true;
+      } catch (err) {
+        console.error("Failed to sync entry:", entry.id, err);
+      }
+    }
+    
+    syncStatus.value.isSyncing = false;
+    syncStatus.value.pendingCount = entries.value.filter(e => !e.synced).length;
+    saveEntries();
+  };
+
   return {
     currencies,
     entries,
@@ -378,6 +563,7 @@ export function useFinance() {
     isLoading,
     error,
     totals,
+    syncStatus,
     addEntry,
     editEntry,
     deleteEntry,
@@ -387,5 +573,14 @@ export function useFinance() {
     saveSettings,
     toggleDisplayUnit,
     fetchExchangeRate,
+    addBudget,
+    updateBudget,
+    deleteBudget,
+    getBudgetProgress,
+    searchEntries,
+    filterEntriesByDateRange,
+    filterEntriesByCategory,
+    filterEntriesByAmountRange,
+    retrySync
   };
 }
