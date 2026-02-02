@@ -170,11 +170,11 @@
     "color": "Color"
   },
   "home": {
-    "welcome_title": "Welcome to LocoBit Space",
+    "welcome_title": "Welcome to BitOS Space",
     "welcome_subtitle": "A decentralized social experience powered by Nostr and Bitcoin Lightning",
     "explore_feed": "Explore Feed",
     "discover": "Discover",
-    "features_title": "Why LocoBit Space?",
+    "features_title": "Why BitOS Space?",
     "feature_shorts": "Short Videos",
     "feature_shorts_desc": "TikTok-style vertical videos with swipe navigation",
     "feature_decentralized": "Decentralized",

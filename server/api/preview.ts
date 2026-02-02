@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
     const response = await fetch(url, {
       headers: {
         "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         Accept:
           "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
       },
@@ -28,12 +28,37 @@ export default defineEventHandler(async (event) => {
     }
 
     const html = await response.text();
+
+    // Defensive check for empty content
+    if (!html || html.trim().length === 0) {
+      return {
+        url,
+        domain: new URL(url).hostname.replace("www.", ""),
+        title: new URL(url).hostname.replace("www.", ""),
+        description: "",
+        image: undefined,
+        type: undefined,
+      };
+    }
+
     const { document } = parseHTML(html);
+
+    // Defensive check for invalid document structure
+    if (!document || !document.documentElement) {
+      return {
+        url,
+        domain: new URL(url).hostname.replace("www.", ""),
+        title: new URL(url).hostname.replace("www.", ""),
+        description: "",
+        image: undefined,
+        type: undefined,
+      };
+    }
 
     const getMetaContent = (names: string[]) => {
       for (const name of names) {
         const meta = document.querySelector(
-          `meta[property="${name}"], meta[name="${name}"]`
+          `meta[property="${name}"], meta[name="${name}"]`,
         );
         if (meta?.content) return meta.content;
       }
@@ -42,12 +67,15 @@ export default defineEventHandler(async (event) => {
 
     const hostname = new URL(url).hostname.replace("www.", "");
 
+    // Safely access title
+    const docTitle = document.title || "";
+
     let preview = {
       url,
       domain: hostname,
       title:
         getMetaContent(["og:title", "twitter:title", "title"]) ||
-        document.title ||
+        docTitle ||
         hostname,
       description:
         getMetaContent([
@@ -65,6 +93,8 @@ export default defineEventHandler(async (event) => {
         preview.type = "social-media";
         break;
       case "youtube.com":
+        preview.type = "video";
+        break;
       case "youtu.be":
         preview.type = "video";
         break;
@@ -88,10 +118,35 @@ export default defineEventHandler(async (event) => {
 
     return preview;
   } catch (error) {
-    console.error("Preview fetch error:", error);
-    throw createError({
-      statusCode: 500,
-      message: "Failed to fetch URL preview",
-    });
+    // Only log actual system errors, generic fetch failures are common (timeouts etc)
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const isExpectedError =
+      errorMessage.includes("Forbidden") ||
+      errorMessage.includes("404") ||
+      errorMessage.includes("fetch failed");
+
+    if (!isExpectedError) {
+      console.warn(`Preview fetch failed for ${url}:`, errorMessage);
+    }
+
+    // Return a basic fallback object on error instead of throwing 500
+    // This allows the UI to render a simple link instead of breaking
+    try {
+      const hostname = new URL(url).hostname.replace("www.", "");
+      return {
+        url,
+        domain: hostname,
+        title: hostname,
+        description: "",
+        image: undefined,
+        type: undefined,
+      };
+    } catch (e) {
+      // If even URL parsing fails, throw or return minimal
+      throw createError({
+        statusCode: 500,
+        message: "Failed to fetch URL preview",
+      });
+    }
   }
 });

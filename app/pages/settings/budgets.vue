@@ -108,7 +108,9 @@
                 <div
                   class="h-full rounded-full transition-all duration-500"
                   :class="getProgressBarColor(budget)"
-                  :style="{ width: `${Math.min(getBudgetProgress(budget)!.percentage, 100)}%` }"
+                  :style="{
+                    width: `${Math.min(getBudgetProgress(budget)!.percentage, 100)}%`,
+                  }"
                 />
               </div>
             </div>
@@ -116,17 +118,29 @@
             <div
               v-if="getBudgetProgress(budget)!.shouldAlert"
               class="flex items-start gap-2 p-3 rounded-lg"
-              :class="getBudgetProgress(budget)!.isOverBudget ? 'bg-red-50 dark:bg-red-900/20' : 'bg-amber-50 dark:bg-amber-900/20'"
+              :class="
+                getBudgetProgress(budget)!.isOverBudget
+                  ? 'bg-red-50 dark:bg-red-900/20'
+                  : 'bg-amber-50 dark:bg-amber-900/20'
+              "
             >
               <Icon
                 name="heroicons:exclamation-triangle"
                 class="w-5 h-5 mt-0.5"
-                :class="getBudgetProgress(budget)!.isOverBudget ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400'"
+                :class="
+                  getBudgetProgress(budget)!.isOverBudget
+                    ? 'text-red-600 dark:text-red-400'
+                    : 'text-amber-600 dark:text-amber-400'
+                "
               />
               <div class="flex-1">
                 <p
                   class="text-sm font-medium"
-                  :class="getBudgetProgress(budget)!.isOverBudget ? 'text-red-700 dark:text-red-300' : 'text-amber-700 dark:text-amber-300'"
+                  :class="
+                    getBudgetProgress(budget)!.isOverBudget
+                      ? 'text-red-700 dark:text-red-300'
+                      : 'text-amber-700 dark:text-amber-300'
+                  "
                 >
                   <span v-if="getBudgetProgress(budget)!.isOverBudget">
                     Over budget by
@@ -279,7 +293,7 @@ const availableCategories = computed(() => {
     finance.settings.value.budgets?.map((b) => b.category) || [];
   return (finance.settings.value.categories || [])
     .filter(
-      (cat) => !existingCategories.includes(cat) || cat === form.value.category
+      (cat) => !existingCategories.includes(cat) || cat === form.value.category,
     )
     .map((cat) => ({ label: cat, value: cat }));
 });
@@ -408,6 +422,6 @@ const closeModal = () => {
 };
 
 useHead({
-  title: "Budget Management - LocoBit Space",
+  title: "Budget Management - BitOS Space",
 });
 </script>

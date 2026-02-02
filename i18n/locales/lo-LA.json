@@ -308,11 +308,11 @@
     "color": "ສີ"
   },
   "home": {
-    "welcome_title": "ຍິນດີຕ້ອນຮັບສູ່ LocoBit Space",
+    "welcome_title": "ຍິນດີຕ້ອນຮັບສູ່ BitOS Space",
     "welcome_subtitle": "ປະສົບການສັງຄົມແບບກະຈາຍ ໂດຍໃຊ້ Nostr ແລະ Bitcoin Lightning",
     "explore_feed": "ສຳຫຼວດຟີດ",
     "discover": "ຄົ້ນພົບ",
-    "features_title": "ເປັນຫຍັງຕ້ອງ LocoBit Space?",
+    "features_title": "ເປັນຫຍັງຕ້ອງ BitOS Space?",
     "feature_shorts": "ວິດີໂອສັ້ນ",
     "feature_shorts_desc": "ວິດີໂອແນວຕັ້ງແບບ TikTok ດ້ວຍການປັດນຳທາງ",
     "feature_decentralized": "ກະຈາຍສູນ",

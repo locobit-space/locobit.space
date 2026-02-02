@@ -5,10 +5,10 @@
     >
       <AppHeader class="" @filter="handleFilter" />
     </nav>
-    
+
     <!-- Stories Bar -->
     <SocialStoriesBar class="bg-white dark:bg-gray-900" />
-    
+
     <CommonContainer class="py-4">
       <!-- Floating Check New Notes button that appears when scrolling down -->
       <Transition name="slide-down">
@@ -20,9 +20,7 @@
             color="primary"
             class="shadow-lg rounded-full px-6"
             :icon="
-              isLoading
-                ? 'svg-spinners:180-ring-with-bg'
-                : 'heroicons:arrow-up'
+              isLoading ? 'svg-spinners:180-ring-with-bg' : 'heroicons:arrow-up'
             "
             @click="
               () => {
@@ -32,17 +30,14 @@
               }
             "
           >
-            {{ $t('social.new_posts') }}
+            {{ $t("social.new_posts") }}
           </UButton>
         </div>
       </Transition>
 
       <!-- Scroll to top button -->
       <Transition name="fade">
-        <div
-          v-if="showScrollButton"
-          class="fixed right-4 bottom-28 z-50"
-        >
+        <div v-if="showScrollButton" class="fixed right-4 bottom-28 z-50">
           <UButton
             color="neutral"
             variant="soft"
@@ -56,35 +51,34 @@
 
       <!-- Shorts Quick Access -->
       <div class="mb-4">
-        <NuxtLink 
-          to="/shorts" 
+        <NuxtLink
+          to="/shorts"
           class="flex items-center gap-3 p-3 bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 rounded-xl text-white"
         >
           <div class="p-2 bg-white/20 rounded-lg">
             <Icon name="heroicons:play-circle" class="w-6 h-6" />
           </div>
           <div class="flex-1">
-            <p class="font-bold">{{ $t('social.shorts') }}</p>
-            <p class="text-xs opacity-80">{{ $t('social.watch_short_videos') }}</p>
+            <p class="font-bold">{{ $t("social.shorts") }}</p>
+            <p class="text-xs opacity-80">
+              {{ $t("social.watch_short_videos") }}
+            </p>
           </div>
           <Icon name="heroicons:chevron-right" class="w-5 h-5" />
         </NuxtLink>
       </div>
 
       <!-- Pull to Refresh Indicator -->
-      <div 
-        v-if="isPulling" 
-        class="flex justify-center py-4"
-      >
-        <Icon 
-          name="svg-spinners:180-ring-with-bg" 
+      <div v-if="isPulling" class="flex justify-center py-4">
+        <Icon
+          name="svg-spinners:180-ring-with-bg"
           class="w-6 h-6 text-primary-500"
           :class="{ 'animate-spin': isRefreshing }"
         />
       </div>
 
       <!-- Feed -->
-      <div 
+      <div
         ref="feedContainer"
         @touchstart="handlePullStart"
         @touchmove="handlePullMove"
@@ -98,50 +92,64 @@
         </div>
 
         <!-- Empty state -->
-        <div v-else-if="notes.length === 0 && !isLoading" class="text-center py-16">
-          <Icon name="heroicons:document-text" class="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <p class="text-gray-500 mb-4">{{ $t('social.no_posts_yet') }}</p>
+        <div
+          v-else-if="notes.length === 0 && !isLoading"
+          class="text-center py-16"
+        >
+          <Icon
+            name="heroicons:document-text"
+            class="w-16 h-16 text-gray-300 mx-auto mb-4"
+          />
+          <p class="text-gray-500 mb-4">{{ $t("social.no_posts_yet") }}</p>
           <UButton to="/create-note" color="primary">
-            {{ $t('social.create_first_post') }}
+            {{ $t("social.create_first_post") }}
           </UButton>
         </div>
 
         <!-- Notes feed with enhanced interactions -->
         <div class="space-y-4 divide-y divide-slate-100 dark:divide-slate-800">
-          <div 
-            v-for="note in notes" 
+          <div
+            v-for="note in notes"
             :key="note.id"
             class="note-item"
             @dblclick="handleDoubleTap(note)"
           >
             <!-- Double tap heart animation -->
             <Transition name="heart-pop">
-              <div 
-                v-if="doubleTapNoteId === note.id" 
+              <div
+                v-if="doubleTapNoteId === note.id"
                 class="absolute inset-0 flex items-center justify-center pointer-events-none z-10"
               >
-                <Icon name="heroicons:heart-solid" class="w-20 h-20 text-red-500 drop-shadow-lg" />
+                <Icon
+                  name="heroicons:heart-solid"
+                  class="w-20 h-20 text-red-500 drop-shadow-lg"
+                />
               </div>
             </Transition>
-            
-            <NoteCard
-              :note="note"
-              @content-clicked="viewEvent(note.id)"
-            />
+
+            <NoteCard :note="note" @content-clicked="viewEvent(note.id)" />
           </div>
         </div>
 
         <!-- Load more indicator -->
         <div v-if="isLoading && notes.length > 0" class="py-8">
           <div class="flex justify-center">
-            <Icon name="svg-spinners:180-ring-with-bg" class="w-8 h-8 text-primary-500" />
+            <Icon
+              name="svg-spinners:180-ring-with-bg"
+              class="w-8 h-8 text-primary-500"
+            />
           </div>
         </div>
 
         <!-- End of feed -->
         <div v-if="!hasMore && notes.length > 0" class="text-center py-8">
-          <Icon name="heroicons:check-circle" class="w-8 h-8 text-green-500 mx-auto mb-2" />
-          <p class="text-gray-500 text-sm">{{ $t('social.youre_all_caught_up') }}</p>
+          <Icon
+            name="heroicons:check-circle"
+            class="w-8 h-8 text-green-500 mx-auto mb-2"
+          />
+          <p class="text-gray-500 text-sm">
+            {{ $t("social.youre_all_caught_up") }}
+          </p>
         </div>
       </div>
     </CommonContainer>
@@ -153,7 +161,7 @@ import type { Event } from "nostr-tools";
 import { ref, onMounted } from "vue";
 
 useHead({
-  title: "LocoBit Space",
+  title: "BitOS Space",
 });
 
 const {
@@ -298,7 +306,7 @@ const handlePullStart = (e: TouchEvent) => {
 
 const handlePullMove = (e: TouchEvent) => {
   if (!isPulling.value) return;
-  
+
   const pullDistance = e.touches[0].clientY - pullStartY.value;
   if (pullDistance > 80 && !isRefreshing.value) {
     isRefreshing.value = true;
@@ -308,7 +316,7 @@ const handlePullMove = (e: TouchEvent) => {
 const handlePullEnd = async () => {
   if (isRefreshing.value) {
     await refreshFeed();
-    toast.add({ title: 'Feed refreshed!' });
+    toast.add({ title: "Feed refreshed!" });
   }
   isPulling.value = false;
   isRefreshing.value = false;
@@ -320,8 +328,8 @@ const handleDoubleTap = (note: Event) => {
   if (now - lastTapTime.value < 300) {
     // Double tap detected
     doubleTapNoteId.value = note.id;
-    trackInteraction(note, 'like');
-    
+    trackInteraction(note, "like");
+
     setTimeout(() => {
       doubleTapNoteId.value = null;
     }, 1000);
@@ -364,7 +372,7 @@ const checkForNewNotes = async () => {
 onMounted(() => {
   refreshFeed();
   setupInfiniteScroll();
-  
+
   // Check for new notes every 30 seconds
   setInterval(checkForNewNotes, 30000);
 });

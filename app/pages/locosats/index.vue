@@ -1,11 +1,11 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-950">
+  <div class="min-h-screen">
     <!-- Sync Status Bar -->
     <div
       v-if="
         finance.syncStatus.value.isSyncing || finance.syncStatus.value.hasError
       "
-      class="bg-blue-500 dark:bg-blue-600 text-white px-4 py-2 text-xs sm:text-sm text-center"
+      class="px-4 py-2 text-xs sm:text-sm text-center"
     >
       <Icon
         v-if="finance.syncStatus.value.isSyncing"
@@ -29,31 +29,28 @@
     </div>
 
     <!-- Header with Balance -->
-    <div
-      class="border-b border-gray-200 dark:border-gray-800 bg-gradient-to-br from-primary-500 to-primary-600 dark:from-primary-600 dark:to-primary-700"
-    >
+    <div>
       <div class="max-w-4xl mx-auto px-4 py-6 sm:py-8">
         <!-- Balance Card -->
         <div class="text-center mb-5 sm:mb-6">
           <div class="flex items-center justify-center gap-2 mb-2">
-            <p class="text-white/80 text-xs sm:text-sm">
+            <p class="text-xs sm:text-sm">
               {{ $t("finance.total_balance") }}
             </p>
             <Icon
               v-if="finance.syncStatus.value.pendingCount > 0"
               name="heroicons:cloud-arrow-up"
-              class="w-4 h-4 text-white/60 animate-pulse"
-              
+              class="w-4 h-4 animate-pulse"
             />
           </div>
-          <div class="text-4xl sm:text-5xl font-bold text-white mb-2">
+          <div class="text-4xl sm:text-5xl font-bold mb-2">
             <template v-if="finance.settings.value.display_unit === 'sats'">
               <Icon
                 name="lets-icons:lightning-light"
                 class="w-8 h-8 sm:w-10 sm:h-10 inline text-amber-400"
               />
               {{ $n(Math.round(finance.totals.value.balanceSats)) }}
-              <span class="text-xl sm:text-2xl text-white/80">sats</span>
+              <span class="text-xl sm:text-2xl">sats</span>
             </template>
             <template v-else>
               {{
@@ -65,7 +62,7 @@
           </div>
           <button
             @click="finance.toggleDisplayUnit"
-            class="text-white/70 text-xs sm:text-sm hover:text-white transition-colors inline-flex items-center gap-1"
+            class="text-xs sm:text-sm transition-colors inline-flex items-center gap-1"
           >
             <Icon name="heroicons:arrows-right-left" class="w-3.5 h-3.5" />
             <span v-if="finance.settings.value.display_unit === 'sats'">
@@ -89,14 +86,12 @@
               >
                 <Icon
                   name="heroicons:arrow-down-left"
-                  class="w-4 h-4 text-green-100"
+                  class="w-4 h-4 text-green-600"
                 />
               </div>
-              <span class="text-white/80 text-xs">{{
-                $t("finance.income")
-              }}</span>
+              <span class="text-xs">{{ $t("finance.income") }}</span>
             </div>
-            <div class="text-lg sm:text-xl font-semibold text-green-100">
+            <div class="text-lg sm:text-xl font-semibold text-green-500">
               <span v-if="finance.settings.value.display_unit === 'sats'">
                 +{{ $n(Math.round(finance.totals.value.incomeSats)) }} sats
               </span>
@@ -115,14 +110,14 @@
               >
                 <Icon
                   name="heroicons:arrow-up-right"
-                  class="w-4 h-4 text-red-100"
+                  class="w-4 h-4 text-red-600"
                 />
               </div>
               <span class="text-white/80 text-xs">{{
                 $t("finance.expenses")
               }}</span>
             </div>
-            <div class="text-lg sm:text-xl font-semibold text-red-100">
+            <div class="text-lg sm:text-xl font-semibold text-red-500">
               <span v-if="finance.settings.value.display_unit === 'sats'">
                 -{{ $n(Math.round(finance.totals.value.expensesSats)) }} sats
               </span>
@@ -180,7 +175,7 @@
 
       <!-- Quick Actions -->
       <div
-        class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-3 sm:p-4 mb-5 shadow-sm"
+        class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-3 sm:p-4 mb-5"
       >
         <div class="grid grid-cols-4 gap-1.5 sm:gap-2">
           <NuxtLink
@@ -188,7 +183,7 @@
             class="flex flex-col items-center gap-1.5 sm:gap-2 p-2.5 sm:p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-all active:scale-95"
           >
             <div
-              class="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-md"
+              class="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-linear-to-br from-red-500 to-red-600 flex items-center justify-center shadow-md"
             >
               <Icon
                 name="heroicons:minus"
@@ -205,7 +200,7 @@
             class="flex flex-col items-center gap-1.5 sm:gap-2 p-2.5 sm:p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-all active:scale-95"
           >
             <div
-              class="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-md"
+              class="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-linear-to-br from-green-500 to-green-600 flex items-center justify-center shadow-md"
             >
               <Icon
                 name="heroicons:plus"
@@ -222,7 +217,7 @@
             class="flex flex-col items-center gap-1.5 sm:gap-2 p-2.5 sm:p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-all active:scale-95"
           >
             <div
-              class="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md"
+              class="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-linear-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md"
             >
               <Icon
                 name="heroicons:chart-bar"
@@ -239,7 +234,7 @@
             class="flex flex-col items-center gap-1.5 sm:gap-2 p-2.5 sm:p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-all active:scale-95"
           >
             <div
-              class="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-gray-500 to-gray-600 flex items-center justify-center shadow-md"
+              class="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-linear-to-br from-gray-500 to-gray-600 flex items-center justify-center shadow-md"
             >
               <Icon
                 name="heroicons:cog-6-tooth"
@@ -257,7 +252,7 @@
       <!-- Budget Goals (if any) -->
       <div
         v-if="budgetGoals.length"
-        class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 sm:p-5 mb-5 shadow-sm"
+        class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 sm:p-5 mb-5"
       >
         <div class="flex items-center justify-between mb-4">
           <h3
@@ -312,8 +307,8 @@
                     goal.percentage > 100
                       ? 'text-red-600 dark:text-red-400 font-bold'
                       : goal.percentage > goal.budget.alert_threshold
-                      ? 'text-amber-600 dark:text-amber-400 font-semibold'
-                      : 'text-gray-600 dark:text-gray-400'
+                        ? 'text-amber-600 dark:text-amber-400 font-semibold'
+                        : 'text-gray-600 dark:text-gray-400'
                   "
                   class="text-sm"
                 >
@@ -331,10 +326,10 @@
                 class="h-full rounded-full transition-all duration-500"
                 :class="
                   goal.percentage > 100
-                    ? 'bg-gradient-to-r from-red-500 to-red-600'
+                    ? 'bg-linear-to-r from-red-500 to-red-600'
                     : goal.percentage > goal.budget.alert_threshold
-                    ? 'bg-gradient-to-r from-amber-500 to-amber-600'
-                    : 'bg-gradient-to-r from-green-500 to-green-600'
+                      ? 'bg-linear-to-r from-amber-500 to-amber-600'
+                      : 'bg-linear-to-r from-green-500 to-green-600'
                 "
                 :style="{ width: `${Math.min(goal.percentage, 100)}%` }"
               />
@@ -368,7 +363,7 @@
 
       <!-- Recent Transactions -->
       <div
-        class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm"
+        class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden"
       >
         <div
           class="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between"
@@ -493,7 +488,7 @@
         <!-- Empty State -->
         <div v-else class="p-12 text-center">
           <div
-            class="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 flex items-center justify-center"
+            class="w-16 h-16 mx-auto mb-4 rounded-full bg-linear-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 flex items-center justify-center"
           >
             <Icon name="heroicons:banknotes" class="w-8 h-8 text-gray-400" />
           </div>
@@ -565,7 +560,7 @@
                 class="h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden"
               >
                 <div
-                  class="h-full rounded-full bg-gradient-to-r from-primary-500 to-primary-600 transition-all duration-500"
+                  class="h-full rounded-full bg-linear-to-r from-primary-500 to-primary-600 transition-all duration-500"
                   :style="{ width: `${cat.percentage}%` }"
                 />
               </div>
@@ -585,7 +580,7 @@
     <!-- Floating Action Button -->
     <NuxtLink
       to="/locosats/create"
-      class="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-200 flex items-center justify-center z-50 active:scale-95"
+      class="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-linear-to-br from-primary-500 to-primary-600 text-white shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-200 flex items-center justify-center z-50 active:scale-95"
     >
       <Icon name="heroicons:plus" class="w-7 h-7" />
     </NuxtLink>
@@ -738,7 +733,7 @@ const displayedTransactions = computed(() => {
       (entry) =>
         entry.note.toLowerCase().includes(query) ||
         entry.category.toLowerCase().includes(query) ||
-        entry.tags.some((tag) => tag.toLowerCase().includes(query))
+        entry.tags.some((tag) => tag.toLowerCase().includes(query)),
     );
   }
 
@@ -776,7 +771,7 @@ const budgetGoals = computed(() => {
     .map((budget) => {
       const progress = finance.getBudgetProgress(
         budget.category,
-        budget.period
+        budget.period,
       );
       if (!progress || progress.spent === 0) return null;
 
@@ -927,9 +922,12 @@ onMounted(async () => {
 let syncInterval: NodeJS.Timeout | null = null;
 onMounted(() => {
   if (finance.settings.value.auto_sync) {
-    syncInterval = setInterval(() => {
-      finance.loadEntries();
-    }, 5 * 60 * 1000); // 5 minutes
+    syncInterval = setInterval(
+      () => {
+        finance.loadEntries();
+      },
+      5 * 60 * 1000,
+    ); // 5 minutes
   }
 });
 
@@ -938,6 +936,6 @@ onUnmounted(() => {
 });
 
 useHead({
-  title: "Sats Wallet - LocoBit Space",
+  title: "Sats Wallet - BitOS Space",
 });
 </script>

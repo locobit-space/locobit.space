@@ -5,10 +5,7 @@ import type { Event } from "nostr-tools";
 
 // Default relays
 
-const _devRelays = [
-   "ws://localhost:8080",
-   "wss://relay.damus.io"
-  ];
+const _devRelays = ["ws://localhost:8080", "wss://relay.damus.io"];
 const _prodRelays = [
   "wss://relay.damus.io",
   "wss://yabu.me",
@@ -79,7 +76,7 @@ export const useNostrRelay = () => {
    */
   const queryEvents = async (
     filter: any,
-    selectedRelays?: string[]
+    selectedRelays?: string[],
   ): Promise<Event[]> => {
     try {
       const useRelays = selectedRelays || relays.value;
@@ -99,7 +96,7 @@ export const useNostrRelay = () => {
       onevent: (event: Event) => void;
       oneose?: () => void;
     },
-    selectedRelays?: string[]
+    selectedRelays?: string[],
   ) => {
     try {
       const useRelays = selectedRelays || relays.value;

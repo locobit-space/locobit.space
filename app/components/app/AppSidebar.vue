@@ -5,7 +5,9 @@
         class="text-3xl font-bold hidden md:block py-2 mb-2"
         title="bitos.space"
       >
-        <nuxt-link-locale to="/">BitOS</nuxt-link-locale>
+        <nuxt-link-locale to="/">
+          <img src="/logo.png" alt="BitOS" class="h-8 w-auto" />
+        </nuxt-link-locale>
       </h1>
 
       <UButton

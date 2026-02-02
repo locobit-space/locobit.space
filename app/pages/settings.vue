@@ -156,7 +156,11 @@
                 name="heroicons:magnifying-glass"
                 class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
               />
-              <UInput v-model="searchQuery" placeholder="Search..." icon="mynaui:search" />
+              <UInput
+                v-model="searchQuery"
+                placeholder="Search..."
+                icon="mynaui:search"
+              />
             </div>
           </div>
 
@@ -339,11 +343,11 @@ watch(
   () => route.path,
   () => {
     mobileMenuOpen.value = false;
-  }
+  },
 );
 
 useHead({
-  title: "Settings - LocoBit Space",
+  title: "Settings - BitOS Space",
 });
 </script>
 

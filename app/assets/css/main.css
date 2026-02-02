@@ -29,4 +29,16 @@
   --color-amethyst-800: #7026b1;
   --color-amethyst-900: #5d2191;
   --color-amethyst-950: #3a1362;
+
+  --color-nero-50: #fbfbfb;
+  --color-nero-100: #f1f1f1;
+  --color-nero-200: #e6e6e6;
+  --color-nero-300: #d0d0d0;
+  --color-nero-400: #a0a0a0;
+  --color-nero-500: #000000;
+  --color-nero-600: #1a1a1a;
+  --color-nero-700: #262626;
+  --color-nero-800: #404040;
+  --color-nero-900: #525252;
+  --color-nero-950: #737373;
 }
