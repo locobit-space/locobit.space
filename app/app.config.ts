@@ -1,8 +1,8 @@
 export default defineAppConfig({
   ui: {
     colors: {
-      primary: "amethyst",
-      neutral: "neutral",
+      primary: "nero",
+      neutral: "nero",
       amber: "amber",
       red: "red",
       green: "green",
@@ -25,6 +25,7 @@ export default defineAppConfig({
       zinc: "zinc",
       gray: "gray",
       stone: "stone",
+      nero: "nero",
     },
   },
 });

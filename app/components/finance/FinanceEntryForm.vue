@@ -68,7 +68,7 @@
           <!-- recent transactions price select -->
           <article class="flex flex-wrap gap-2 mt-2">
             <UBadge
-              v-for="(item, index) in recentTransactions.slice(0, 7)"
+              v-for="(item, index) in recentTransactions.slice(0, 10)"
               :key="index"
               :label="$n(item.amount_fiat)"
               variant="outline"
@@ -198,12 +198,12 @@ const form = ref({
 });
 
 // Amount input - we'll convert to the right field based on unit_input
-const amount = ref("");
+const amount = ref(0);
 const tagsInput = ref("");
 
 // Show conversion only when amount is entered
 const showConversion = computed(() => {
-  return amount.value !== "" && Number(amount.value) > 0;
+  return amount.value !== 0 && Number(amount.value) > 0;
 });
 
 // recent transactions price select
@@ -273,7 +273,7 @@ const handleSubmit = () => {
     visibility: "private",
   };
 
-  amount.value = "";
+  amount.value = 0;
   tagsInput.value = "";
 };
 

@@ -41,6 +41,7 @@ export default defineNuxtConfig({
         "warning",
         "info",
         "success",
+        "nero",
       ],
     },
   },
@@ -57,8 +58,8 @@ export default defineNuxtConfig({
   runtimeConfig: {
     supabaseServiceKey: process.env.SUPABASE_SERVICE_KEY, // Server-only
     public: {
-      version: process.env.npm_package_version,
-      buildDate: process.env.NUXT_PUBLIC_BUILD_DATE || new Date().toISOString(),
+      version: process.env.npm_package_version || "0.1.0",
+      buildDate: new Date().toISOString(),
       supabaseUrl: process.env.SUPABASE_URL,
       relayUrls: [
         "wss://relay.damus.io",
@@ -93,15 +94,40 @@ export default defineNuxtConfig({
   pwa: {
     registerType: "autoUpdate",
     manifest: {
-      name: "LocoBit Space",
-      short_name: "LocoBit",
-      description: "LocoSats - Social and Bitcoin Lightning for the Web",
-      theme_color: "#8C00FF", // Bitcoin orange
+      name: "BitOS",
+      short_name: "BitOS",
+      description: "BitOS - Social and Bitcoin Lightning for the Web",
+      theme_color: "#0D0D0D", // Bitcoin orange
       background_color: "#FFFFFF",
       display: "standalone",
       scope: "/",
       start_url: "/",
       icons: [
+        {
+          src: "/icons/icon-48-48.png", // Folder icon for smaller displays
+          sizes: "48x48",
+          type: "image/png",
+        },
+        {
+          src: "/icons/icon-72-72.png", // Folder icon for smaller displays
+          sizes: "72x72",
+          type: "image/png",
+        },
+        {
+          src: "/icons/icon-96-96.png", // Folder icon for smaller displays
+          sizes: "96x96",
+          type: "image/png",
+        },
+        {
+          src: "/icons/icon-144-144.png", // Folder icon for smaller displays
+          sizes: "144x144",
+          type: "image/png",
+        },
+        {
+          src: "/icons/icon-152-152.png", // Folder icon for smaller displays
+          sizes: "152x152",
+          type: "image/png",
+        },
         {
           src: "/icons/icon-192-192.png", // Folder icon for smaller displays
           sizes: "192x192",

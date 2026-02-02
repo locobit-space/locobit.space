@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { user } = useNostrUser();
+
 </script>
 
 <template>
@@ -12,17 +12,6 @@ const { user } = useNostrUser();
       </div>
     </aside>
     <main class="flex-1 flex flex-col">
-      <UButton
-        v-if="user"
-        icon="i-heroicons-plus-circle"
-        color="primary"
-        to="/create-note"
-        square
-        size="xl"
-        class="fixed w-10 h-10 shadow-lg flex items-center rounded-full justify-center bottom-14 right-4 md:hidden"
-      >
-      </UButton>
-
       <slot />
       <div class="h-4 md:hidden"></div>
     </main>

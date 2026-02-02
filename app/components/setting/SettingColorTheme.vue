@@ -25,7 +25,7 @@ const colorsToOmit = [
 ];
 const primaryColors = Object.keys(colors)
   .filter((color) => !colorsToOmit.includes(color))
-  .concat("amethyst");
+  .concat(["amethyst", "nero"]);
 
 const primary = computed({
   get() {
@@ -44,7 +44,7 @@ function setBlackAsPrimary(value: boolean) {
 
 onMounted(() => {
   const blackAsPrimary = window.localStorage.getItem(
-    "nuxt-ui-black-as-primary"
+    "nuxt-ui-black-as-primary",
   );
   if (blackAsPrimary === "true") {
     setBlackAsPrimary(true);
