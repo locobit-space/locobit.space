@@ -107,7 +107,7 @@
               class="w-full"
             />
           </div>
-          <UButtonGroup>
+          <UFieldGroup>
             <UButton
               :color="viewMode === 'list' ? 'primary' : 'neutral'"
               :variant="viewMode === 'list' ? 'solid' : 'ghost'"
@@ -120,7 +120,7 @@
               icon="i-heroicons-calendar-days"
               @click="viewMode = 'calendar'"
             />
-          </UButtonGroup>
+          </UFieldGroup>
         </div>
 
         <!-- Mood Filter -->

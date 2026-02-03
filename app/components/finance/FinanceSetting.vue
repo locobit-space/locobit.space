@@ -19,7 +19,7 @@
 
     <!-- General Settings -->
     <div
-      class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm"
+      class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6"
     >
       <h3
         class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2"
@@ -171,7 +171,7 @@
 
     <!-- Categories Management -->
     <div
-      class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm"
+      class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6"
     >
       <div class="flex items-center justify-between mb-4">
         <h3
@@ -207,7 +207,7 @@
 
     <!-- Data Management -->
     <div
-      class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm"
+      class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6"
     >
       <h3
         class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2"
@@ -526,11 +526,11 @@ const importFile = ref<File | null>(null);
 const daysSinceFirstTransaction = computed(() => {
   if (finance.entries.value.length === 0) return 0;
   const firstDate = new Date(
-    finance.entries.value[finance.entries.value.length - 1].created_at
+    finance.entries.value[finance.entries.value.length - 1].created_at,
   );
   const now = new Date();
   return Math.floor(
-    (now.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24)
+    (now.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24),
   );
 });
 
@@ -554,7 +554,7 @@ const addCategory = () => {
 const removeCategory = (category: string) => {
   if (!settings.value.categories) return;
   settings.value.categories = settings.value.categories.filter(
-    (c) => c !== category
+    (c) => c !== category,
   );
   saveSettings();
   toast.add({
@@ -594,9 +594,9 @@ const exportData = (type = "json" as "json" | "csv") => {
             .map((v) =>
               typeof v === "string" && (v.includes(",") || v.includes('"'))
                 ? `"${v.replace(/"/g, '""')}"`
-                : String(v)
+                : String(v),
             )
-            .join(",")
+            .join(","),
         ),
       ];
     }

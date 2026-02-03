@@ -102,7 +102,7 @@
     </section>
 
     <!-- Trending Section -->
-    <section class="py-20 bg-gray-50 dark:bg-gray-800">
+    <section class="py-20">
       <div class="max-w-7xl mx-auto px-4">
         <div class="flex items-center justify-between mb-8">
           <h2 class="text-2xl font-bold text-gray-900 dark:text-white">

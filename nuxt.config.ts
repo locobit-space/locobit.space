@@ -146,4 +146,10 @@ export default defineNuxtConfig({
       navigateFallback: "/",
     },
   },
+
+  nitro: {
+    externals: {
+      inline: ["vue", "vue-router"],
+    },
+  },
 });

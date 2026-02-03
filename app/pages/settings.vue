@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-950">
+  <div class="min-h-screen">
     <!-- Mobile Header -->
     <div
       class="lg:hidden sticky top-0 z-40 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800"
@@ -123,7 +123,7 @@
       </aside>
 
       <!-- Main Content -->
-      <main class="flex-1 min-h-screen bg-gray-50 dark:bg-gray-950">
+      <main class="flex-1 min-h-screen">
         <div class="max-w-4xl mx-auto px-4 lg:px-6 py-4 lg:py-6">
           <NuxtPage />
         </div>

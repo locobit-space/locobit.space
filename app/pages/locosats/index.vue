@@ -413,7 +413,7 @@
             @click="viewTransaction(entry)"
           >
             <div
-              class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 shadow-sm group-hover:shadow-md transition-shadow"
+              class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 group-hover:shadow-md transition-shadow"
               :class="getCategoryBg(entry.category)"
             >
               <Icon
@@ -514,7 +514,7 @@
       <!-- Spending by Category (mini chart) -->
       <div
         v-if="categoryBreakdown.length"
-        class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 sm:p-5 mt-5 shadow-sm"
+        class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 sm:p-5 mt-5"
       >
         <h3
           class="text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2"
@@ -529,7 +529,7 @@
             class="flex items-center gap-3"
           >
             <div
-              class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 shadow-sm"
+              class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
               :class="getCategoryBg(cat.name)"
             >
               <Icon
@@ -580,13 +580,13 @@
     <!-- Floating Action Button -->
     <NuxtLink
       to="/locosats/create"
-      class="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-linear-to-br from-primary-500 to-primary-600 text-white shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-200 flex items-center justify-center z-50 active:scale-95"
+      class="fixed bottom-16 right-6 w-14 h-14 rounded-full bg-linear-to-br from-primary-500 to-primary-600 text-white shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-200 flex items-center justify-center z-50 active:scale-95"
     >
       <Icon name="heroicons:plus" class="w-7 h-7" />
     </NuxtLink>
 
     <!-- Transaction Detail Modal -->
-    <UModal v-model:open="showDetailModal" :ui="{ width: 'sm:max-w-md' }">
+    <UModal v-model:open="showDetailModal">
       <template #default>
         <div v-if="selectedTransaction" class="p-6">
           <div class="flex items-start justify-between mb-5">
