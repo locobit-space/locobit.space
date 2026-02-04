@@ -586,13 +586,17 @@
     </NuxtLink>
 
     <!-- Transaction Detail Modal -->
-    <UModal v-model:open="showDetailModal">
-      <template #default>
+    <UModal
+      v-model:open="showDetailModal"
+      title="Transaction"
+      description="Transaction Detail"
+    >
+      <template #content>
         <div v-if="selectedTransaction" class="p-6">
           <div class="flex items-start justify-between mb-5">
             <div class="flex items-center gap-3">
               <div
-                class="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm"
+                class="w-12 h-12 rounded-xl flex items-center justify-center"
                 :class="getCategoryBg(selectedTransaction.category)"
               >
                 <Icon
@@ -683,11 +687,11 @@
           </div>
 
           <!-- Actions -->
-          <div class="flex gap-2">
+          <div class="flex w-full gap-2">
             <UButton
               color="gray"
               variant="soft"
-              class="flex-1"
+              block
               @click="editTransactionHandler(selectedTransaction.id)"
             >
               <Icon name="heroicons:pencil" class="w-4 h-4 mr-2" />
@@ -696,7 +700,7 @@
             <UButton
               color="red"
               variant="soft"
-              class="flex-1"
+              block
               @click="deleteTransactionHandler(selectedTransaction.id)"
             >
               <Icon name="heroicons:trash" class="w-4 h-4 mr-2" />

@@ -92,19 +92,15 @@
         </div>
 
         <!-- Empty state -->
-        <div
+        <CommonEmptyState
           v-else-if="notes.length === 0 && !isLoading"
-          class="text-center py-16"
-        >
-          <Icon
-            name="heroicons:document-text"
-            class="w-16 h-16 text-gray-300 mx-auto mb-4"
-          />
-          <p class="text-gray-500 mb-4">{{ $t("social.no_posts_yet") }}</p>
-          <UButton to="/create-note" color="primary">
-            {{ $t("social.create_first_post") }}
-          </UButton>
-        </div>
+          :title="$t('social.no_posts_yet')"
+          :description="$t('social.no_posts_description')"
+          icon="heroicons:document-text"
+          :action-text="$t('social.create_first_post')"
+          action-to="/create-note"
+          action-icon="heroicons:plus"
+        />
 
         <!-- Notes feed with enhanced interactions -->
         <div class="space-y-4 divide-y divide-slate-100 dark:divide-slate-800">

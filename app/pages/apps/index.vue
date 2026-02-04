@@ -94,6 +94,10 @@
 const colorMode = useColorMode();
 const { locale, setLocale } = useI18n();
 
+useHead({
+  title: "BitOS Apps",
+});
+
 const isDark = computed(() => colorMode.value === "dark");
 
 const toggleTheme = () => {

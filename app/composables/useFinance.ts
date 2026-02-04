@@ -2,7 +2,13 @@ import { ref, computed, onMounted } from "vue";
 import { nip04 } from "nostr-tools";
 import { finalizeEvent } from "nostr-tools/pure";
 import { hexToBytes } from "@noble/ciphers/utils";
-import type { FinanceEntry, Totals, UserSettings, Budget, SyncStatus } from "~/types";
+import type {
+  FinanceEntry,
+  Totals,
+  UserSettings,
+  Budget,
+  SyncStatus,
+} from "~/types";
 import { ExchangeRateService } from "../services/exchangeRateService";
 
 export function useFinance() {
@@ -19,17 +25,29 @@ export function useFinance() {
     default_currency: "LAK",
     display_unit: "fiat",
     budgets: [],
-    categories: ['Food', 'Groceries', 'Transport', 'Entertainment', 'Shopping', 'Bills', 'Health', 'Salary', 'Freelance', 'Investments', 'Other'],
-    theme: 'auto',
+    categories: [
+      "Food",
+      "Groceries",
+      "Transport",
+      "Entertainment",
+      "Shopping",
+      "Bills",
+      "Health",
+      "Salary",
+      "Freelance",
+      "Investments",
+      "Other",
+    ],
+    theme: "auto",
     auto_sync: true,
-    show_balance_on_tab: true
+    show_balance_on_tab: true,
   }));
 
   const syncStatus = useState<SyncStatus>("sync_status", () => ({
     isSyncing: false,
     lastSync: null,
     pendingCount: 0,
-    hasError: false
+    hasError: false,
   }));
 
   const currentExchangeRate = ref<number>(0.0413); // sats per LAK (default)
@@ -51,7 +69,7 @@ export function useFinance() {
   };
   // Exchange rate
   const fetchExchangeRate = async (
-    currency: string = settings.value.default_currency
+    currency: string = settings.value.default_currency,
   ): Promise<number> => {
     isLoading.value = true;
     error.value = null;
@@ -74,7 +92,7 @@ export function useFinance() {
       FinanceEntry,
       "id" | "created_at" | "amount_sats" | "amount_fiat"
     > &
-      Partial<Pick<FinanceEntry, "amount_sats" | "amount_fiat">>
+      Partial<Pick<FinanceEntry, "amount_sats" | "amount_fiat">>,
   ) => {
     const id = Math.floor(Date.now() / 1000);
     const newEntry: FinanceEntry = {
@@ -92,12 +110,12 @@ export function useFinance() {
     if (entry.unit_input === "fiat" && entry.amount_fiat !== undefined) {
       newEntry.amount_fiat = entry.amount_fiat;
       newEntry.amount_sats = Math.round(
-        entry.amount_fiat * newEntry.sats_per_fiat
+        entry.amount_fiat * newEntry.sats_per_fiat,
       );
     } else if (entry.unit_input === "sats" && entry.amount_sats !== undefined) {
       newEntry.amount_sats = entry.amount_sats;
       newEntry.amount_fiat = Number(
-        (entry.amount_sats / newEntry.sats_per_fiat).toFixed(2)
+        (entry.amount_sats / newEntry.sats_per_fiat).toFixed(2),
       );
     } else {
       toast.add({
@@ -106,7 +124,7 @@ export function useFinance() {
           "Must provide amount_fiat for fiat input or amount_sats for sats input",
       });
       throw new Error(
-        "Must provide amount_fiat for fiat input or amount_sats for sats input"
+        "Must provide amount_fiat for fiat input or amount_sats for sats input",
       );
     }
 
@@ -130,7 +148,7 @@ export function useFinance() {
     const encryptedContent = nip04.encrypt(
       user.value?.privateKey || "",
       user.value?.publicKey || "",
-      JSON.stringify(sensitiveData)
+      JSON.stringify(sensitiveData),
     );
     // get the current date timestamp
     const event = {
@@ -151,15 +169,10 @@ export function useFinance() {
 
     const signedEvent = finalizeEvent(
       event,
-      hexToBytes(user.value?.privateKey || "")
+      hexToBytes(user.value?.privateKey || ""),
     );
 
     publishEvent(signedEvent);
-
-    toast.add({
-      title: "Created new entry",
-      description: newEntry.note || "Untitled",
-    });
     entries.value.unshift(newEntry);
     saveEntries();
     return newEntry;
@@ -183,14 +196,14 @@ export function useFinance() {
       updatedEntry.amount_fiat !== undefined
     ) {
       newEntry.amount_sats = Math.round(
-        updatedEntry.amount_fiat * newEntry.sats_per_fiat
+        updatedEntry.amount_fiat * newEntry.sats_per_fiat,
       );
     } else if (
       updatedEntry.unit_input === "sats" &&
       updatedEntry.amount_sats !== undefined
     ) {
       newEntry.amount_fiat = Number(
-        (updatedEntry.amount_sats / newEntry.sats_per_fiat).toFixed(2)
+        (updatedEntry.amount_sats / newEntry.sats_per_fiat).toFixed(2),
       );
     }
 
@@ -270,7 +283,7 @@ export function useFinance() {
       // Validate user authentication
       if (!user.value?.publicKey || !user.value?.privateKey) {
         throw new Error(
-          "User not authenticated. Please log in to view entries."
+          "User not authenticated. Please log in to view entries.",
         );
       }
 
@@ -300,7 +313,7 @@ export function useFinance() {
           const decryptedContent = nip04.decrypt(
             user.value.privateKey,
             user.value.publicKey,
-            event.content
+            event.content,
           );
           const parsedContent = JSON.parse(decryptedContent);
           _items.push(createFinanceEntry(event, parsedContent));
@@ -313,19 +326,19 @@ export function useFinance() {
       entries.value = _items
         .filter(
           (entry, index, self) =>
-            self.findIndex((e) => e.id === entry.id) === index
+            self.findIndex((e) => e.id === entry.id) === index,
         )
         .sort(
           (a, b) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
         );
-      
+
       // Mark all as synced
-      entries.value.forEach(entry => entry.synced = true);
-      
+      entries.value.forEach((entry) => (entry.synced = true));
+
       syncStatus.value.lastSync = new Date().toISOString();
       syncStatus.value.pendingCount = 0;
-      
+
       saveEntries();
     } catch (err) {
       handleError(err, "Failed to load entries");
@@ -361,7 +374,7 @@ export function useFinance() {
 
   const sumAmount = <K extends keyof FinanceEntry>(
     entries: FinanceEntry[],
-    field: K
+    field: K,
   ): number => {
     return entries.reduce((acc, entry) => {
       const value = entry[field] as unknown as number | string | undefined;
@@ -377,7 +390,7 @@ export function useFinance() {
         acc[entry.type === "income" ? 0 : 1].push(entry);
         return acc;
       },
-      [[], []] as [FinanceEntry[], FinanceEntry[]]
+      [[], []] as [FinanceEntry[], FinanceEntry[]],
     );
 
     const income = sumAmount(incomeEntries, "amount_fiat");
@@ -399,41 +412,41 @@ export function useFinance() {
   const currencies = ["LAK", "USD", "EUR", "THB", "JPY", "GBP", "BTC"];
 
   // Budget Management
-  const addBudget = (budget: Omit<Budget, 'id' | 'created_at'>) => {
+  const addBudget = (budget: Omit<Budget, "id" | "created_at">) => {
     const newBudget: Budget = {
       ...budget,
       id: `budget_${Date.now()}`,
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
     };
-    
+
     if (!settings.value.budgets) {
       settings.value.budgets = [];
     }
-    
+
     settings.value.budgets.push(newBudget);
     saveSettings();
-    
+
     toast.add({
       title: "Budget created",
       description: `Budget for ${budget.category} set to ${budget.amount}`,
     });
-    
+
     return newBudget;
   };
 
   const updateBudget = (id: string, updates: Partial<Budget>) => {
     if (!settings.value.budgets) return;
-    
-    const index = settings.value.budgets.findIndex(b => b.id === id);
+
+    const index = settings.value.budgets.findIndex((b) => b.id === id);
     if (index === -1) throw new Error("Budget not found");
-    
+
     settings.value.budgets[index] = {
       ...settings.value.budgets[index],
-      ...updates
+      ...updates,
     };
-    
+
     saveSettings();
-    
+
     toast.add({
       title: "Budget updated",
       description: "Your budget has been updated successfully",
@@ -442,10 +455,10 @@ export function useFinance() {
 
   const deleteBudget = (id: string) => {
     if (!settings.value.budgets) return;
-    
-    settings.value.budgets = settings.value.budgets.filter(b => b.id !== id);
+
+    settings.value.budgets = settings.value.budgets.filter((b) => b.id !== id);
     saveSettings();
-    
+
     toast.add({
       title: "Budget deleted",
       description: "Budget has been removed",
@@ -453,35 +466,41 @@ export function useFinance() {
   };
 
   // Get budget progress for a category
-  const getBudgetProgress = (category: string, period: 'daily' | 'weekly' | 'monthly' | 'yearly' = 'monthly') => {
-    const budget = settings.value.budgets?.find(b => b.category === category && b.period === period);
+  const getBudgetProgress = (
+    category: string,
+    period: "daily" | "weekly" | "monthly" | "yearly" = "monthly",
+  ) => {
+    const budget = settings.value.budgets?.find(
+      (b) => b.category === category && b.period === period,
+    );
     if (!budget) return null;
 
     // Calculate date range based on period
     const now = new Date();
     let startDate = new Date();
-    
+
     switch (period) {
-      case 'daily':
+      case "daily":
         startDate.setHours(0, 0, 0, 0);
         break;
-      case 'weekly':
+      case "weekly":
         startDate.setDate(now.getDate() - now.getDay());
         startDate.setHours(0, 0, 0, 0);
         break;
-      case 'monthly':
+      case "monthly":
         startDate = new Date(now.getFullYear(), now.getMonth(), 1);
         break;
-      case 'yearly':
+      case "yearly":
         startDate = new Date(now.getFullYear(), 0, 1);
         break;
     }
 
     const spent = entries.value
-      .filter(e => 
-        e.type === 'expense' && 
-        e.category === category &&
-        new Date(e.created_at) >= startDate
+      .filter(
+        (e) =>
+          e.type === "expense" &&
+          e.category === category &&
+          new Date(e.created_at) >= startDate,
       )
       .reduce((sum, e) => sum + e.amount_fiat, 0);
 
@@ -495,41 +514,42 @@ export function useFinance() {
       remaining: budget.amount - spent,
       percentage,
       isOverBudget,
-      shouldAlert
+      shouldAlert,
     };
   };
 
   // Search and filter entries
   const searchEntries = (query: string) => {
     const lowerQuery = query.toLowerCase();
-    return entries.value.filter(entry =>
-      entry.note.toLowerCase().includes(lowerQuery) ||
-      entry.category.toLowerCase().includes(lowerQuery) ||
-      entry.tags.some(tag => tag.toLowerCase().includes(lowerQuery))
+    return entries.value.filter(
+      (entry) =>
+        entry.note.toLowerCase().includes(lowerQuery) ||
+        entry.category.toLowerCase().includes(lowerQuery) ||
+        entry.tags.some((tag) => tag.toLowerCase().includes(lowerQuery)),
     );
   };
 
   const filterEntriesByDateRange = (startDate: Date, endDate: Date) => {
-    return entries.value.filter(entry => {
+    return entries.value.filter((entry) => {
       const entryDate = new Date(entry.created_at);
       return entryDate >= startDate && entryDate <= endDate;
     });
   };
 
   const filterEntriesByCategory = (categories: string[]) => {
-    return entries.value.filter(entry => categories.includes(entry.category));
+    return entries.value.filter((entry) => categories.includes(entry.category));
   };
 
   const filterEntriesByAmountRange = (min: number, max: number) => {
-    return entries.value.filter(entry => 
-      entry.amount_fiat >= min && entry.amount_fiat <= max
+    return entries.value.filter(
+      (entry) => entry.amount_fiat >= min && entry.amount_fiat <= max,
     );
   };
 
   // Retry failed syncs
   const retrySync = async () => {
-    const unsyncedEntries = entries.value.filter(e => !e.synced);
-    
+    const unsyncedEntries = entries.value.filter((e) => !e.synced);
+
     if (unsyncedEntries.length === 0) {
       toast.add({
         title: "All synced",
@@ -539,7 +559,7 @@ export function useFinance() {
     }
 
     syncStatus.value.isSyncing = true;
-    
+
     for (const entry of unsyncedEntries) {
       try {
         // Attempt to publish to Nostr
@@ -549,9 +569,11 @@ export function useFinance() {
         console.error("Failed to sync entry:", entry.id, err);
       }
     }
-    
+
     syncStatus.value.isSyncing = false;
-    syncStatus.value.pendingCount = entries.value.filter(e => !e.synced).length;
+    syncStatus.value.pendingCount = entries.value.filter(
+      (e) => !e.synced,
+    ).length;
     saveEntries();
   };
 
@@ -581,6 +603,6 @@ export function useFinance() {
     filterEntriesByDateRange,
     filterEntriesByCategory,
     filterEntriesByAmountRange,
-    retrySync
+    retrySync,
   };
 }

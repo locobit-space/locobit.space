@@ -1,0 +1,147 @@
+<div class="spa-loading-wrapper">
+  <style>
+    .spa-loading-wrapper {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background-color: #ffffff;
+      z-index: 99999;
+      font-family:
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        "Helvetica Neue",
+        Arial,
+        sans-serif;
+    }
+
+    .spa-loading-logo {
+      width: 120px;
+      height: auto;
+      margin-bottom: 32px;
+      /* Subtle pulse animation for the logo */
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    .spa-progress-container {
+      width: 240px;
+      height: 6px;
+      background-color: #f3f4f6; /* gray-100 */
+      border-radius: 9999px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+
+    .spa-progress-bar {
+      height: 100%;
+      background-color: #10b981; /* emerald-500, adjust to brand color */
+      width: 0%;
+      border-radius: 9999px;
+      transition: width 0.2s ease-out;
+    }
+
+    .spa-loading-text {
+      font-size: 14px;
+      color: #6b7280; /* gray-500 */
+      font-weight: 500;
+      letter-spacing: 0.025em;
+    }
+
+    .spa-loading-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #111827; /* gray-900 */
+      margin: 0 0 8px 0;
+      letter-spacing: -0.025em;
+    }
+
+    .spa-loading-desc {
+      font-size: 16px;
+      color: #4b5563; /* gray-600 */
+      margin: 0 0 32px 0;
+      text-align: center;
+    }
+
+    @keyframes pulse {
+      0%,
+      100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.8;
+      }
+    }
+
+    /* Dark mode support if applicable, can be adjusted based on user preference */
+    @media (prefers-color-scheme: dark) {
+      .spa-loading-wrapper {
+        background-color: #111827; /* gray-900 */
+      }
+      .spa-progress-container {
+        background-color: #374151; /* gray-700 */
+      }
+      .spa-loading-text {
+        color: #9ca3af; /* gray-400 */
+      }
+      .spa-loading-title {
+        color: #f9fafb; /* gray-50 */
+      }
+      .spa-loading-desc {
+        color: #d1d5db; /* gray-300 */
+      }
+      .spa-loading-logo {
+        filter: invert(1) brightness(2); /* Invert black logo to white for dark mode */
+      }
+    }
+  </style>
+
+  <img src="/logo.png" alt="Loading..." class="spa-loading-logo" />
+  <p class="spa-loading-desc">Social and Bitcoin Lightning for the Web</p>
+
+  <div class="spa-progress-container">
+    <div class="spa-progress-bar" id="spa-progress-bar"></div>
+  </div>
+
+  <div class="spa-loading-text" id="spa-loading-text">Loading... 0%</div>
+
+  <script>
+    (function () {
+      const progressBar = document.getElementById("spa-progress-bar");
+      const progressText = document.getElementById("spa-loading-text");
+      let progress = 0;
+      const totalDuration = 2000; // Target roughly 2 seconds to reach 90%
+      const intervalTime = 50;
+      const increment = 90 / (totalDuration / intervalTime);
+
+      const interval = setInterval(() => {
+        progress += increment;
+
+        // Add some randomness to make it feel more "real"
+        if (Math.random() > 0.5) {
+          progress += Math.random() * 2;
+        }
+
+        if (progress >= 90) {
+          progress = 90;
+          clearInterval(interval);
+        }
+
+        if (progressBar) {
+          progressBar.style.width = `${Math.min(progress, 100)}%`;
+        }
+        if (progressText) {
+          progressText.innerText = `Loading... ${Math.round(progress)}%`;
+        }
+      }, intervalTime);
+    })();
+  </script>
+</div>
