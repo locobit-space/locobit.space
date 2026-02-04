@@ -1,8 +1,8 @@
 <template>
-  <div class="">
+  <div class="w-full number">
     <!-- Logo and Title Section -->
     <div class="flex flex-col items-center">
-      <h1 class="text-2xl mt-6 font-medium">BitOS Nostr client</h1>
+      <h1 class="text-2xl font-medium">BitOS Nostr client</h1>
       <p class="mt-2 text-sm text-center text-gray-500 dark:text-gray-400">
         BitOS is a free and open source Nostr client. <br />
         Sats/Fiat Manager Budget Tracker
@@ -10,7 +10,7 @@
     </div>
 
     <!-- Version and Build Info -->
-    <div class="px-6">
+    <div class="">
       <div class="flex justify-between py-4">
         <div class="font-medium">Version</div>
         <div class="text-gray-400">v{{ version }}</div>

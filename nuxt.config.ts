@@ -9,7 +9,7 @@ export default defineNuxtConfig({
 
   ssr: false,
 
-  css: ["~/assets/css/main.css"],
+  css: ["~/assets/fonts/stylesheet.css", "~/assets/css/main.css"],
 
   ui: {
     theme: {

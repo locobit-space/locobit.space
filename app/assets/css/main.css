@@ -42,3 +42,15 @@
   --color-nero-900: #525252;
   --color-nero-950: #737373;
 }
+
+.lo {
+  font-family: "Chanthavong", "Noto Sans Lao", sans-serif;
+}
+
+.number {
+  font-family: "Outfit", "Satoshi", "Menlo", "Monaco", monospace;
+}
+
+.code {
+  font-family: "Menlo", "Monaco", monospace;
+}

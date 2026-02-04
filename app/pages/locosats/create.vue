@@ -226,8 +226,8 @@
     </div>
 
     <!-- Bottom Action Bar -->
-    <div class="p-4 md:mb-0">
-      <div class="max-w-2xl px-4 mx-auto">
+    <div class="md:mb-0 mb-2">
+      <div class="max-w-2xl px-4 py-2 mx-auto">
         <UButton
           color="primary"
           size="xl"
@@ -296,6 +296,12 @@ const categories = [
     color: "text-orange-600 dark:text-orange-400",
   },
   {
+    name: "Groceries",
+    icon: "heroicons:shopping-cart",
+    bg: "bg-green-50 dark:bg-green-900/30",
+    color: "text-green-600 dark:text-green-400",
+  },
+  {
     name: "Transport",
     icon: "heroicons:truck",
     bg: "bg-blue-50 dark:bg-blue-900/30",
@@ -326,10 +332,40 @@ const categories = [
     color: "text-red-600 dark:text-red-400",
   },
   {
+    name: "Investments",
+    icon: "heroicons:arrow-trending-up",
+    bg: "bg-teal-50 dark:bg-teal-900/30",
+    color: "text-teal-600 dark:text-teal-400",
+  },
+  {
+    name: "Education",
+    icon: "heroicons:academic-cap",
+    bg: "bg-indigo-50 dark:bg-indigo-900/30",
+    color: "text-indigo-600 dark:text-indigo-400",
+  },
+  {
+    name: "Travel",
+    icon: "heroicons:globe-alt",
+    bg: "bg-sky-50 dark:bg-sky-900/30",
+    color: "text-sky-600 dark:text-sky-400",
+  },
+  {
+    name: "Family",
+    icon: "heroicons:users",
+    bg: "bg-rose-50 dark:bg-rose-900/30",
+    color: "text-rose-600 dark:text-rose-400",
+  },
+  {
     name: "Salary",
     icon: "heroicons:banknotes",
     bg: "bg-emerald-50 dark:bg-emerald-900/30",
     color: "text-emerald-600 dark:text-emerald-400",
+  },
+  {
+    name: "Freelance",
+    icon: "heroicons:computer-desktop",
+    bg: "bg-cyan-50 dark:bg-cyan-900/30",
+    color: "text-cyan-600 dark:text-cyan-400",
   },
   {
     name: "Other",

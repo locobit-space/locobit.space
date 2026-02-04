@@ -2,7 +2,7 @@
   "name": "bitos",
   "description": "BitOS - Social and Bitcoin Lightning for the Web",
   "private": true,
-  "version": "0.16.0",
+  "version": "0.16.1",
   "type": "module",
   "scripts": {
     "build": "nuxt build",

@@ -850,7 +850,10 @@ const getCategoryIcon = (category: string) => {
     Health: "heroicons:heart",
     Salary: "heroicons:banknotes",
     Freelance: "heroicons:computer-desktop",
-    Investments: "heroicons:chart-bar-square",
+    Investments: "heroicons:arrow-trending-up",
+    Education: "heroicons:academic-cap",
+    Travel: "heroicons:globe-alt",
+    Family: "heroicons:users",
     Other: "heroicons:ellipsis-horizontal-circle",
   };
   return icons[category] || icons.Other;
@@ -867,7 +870,10 @@ const getCategoryBg = (category: string) => {
     Health: "bg-red-50 dark:bg-red-900/20",
     Salary: "bg-emerald-50 dark:bg-emerald-900/20",
     Freelance: "bg-cyan-50 dark:bg-cyan-900/20",
-    Investments: "bg-indigo-50 dark:bg-indigo-900/20",
+    Investments: "bg-teal-50 dark:bg-teal-900/20",
+    Education: "bg-indigo-50 dark:bg-indigo-900/20",
+    Travel: "bg-sky-50 dark:bg-sky-900/20",
+    Family: "bg-rose-50 dark:bg-rose-900/20",
     Other: "bg-gray-100 dark:bg-gray-800",
   };
   return bgs[category] || bgs.Other;
@@ -884,7 +890,10 @@ const getCategoryIconColor = (category: string) => {
     Health: "text-red-600 dark:text-red-400",
     Salary: "text-emerald-600 dark:text-emerald-400",
     Freelance: "text-cyan-600 dark:text-cyan-400",
-    Investments: "text-indigo-600 dark:text-indigo-400",
+    Investments: "text-teal-600 dark:text-teal-400",
+    Education: "text-indigo-600 dark:text-indigo-400",
+    Travel: "text-sky-600 dark:text-sky-400",
+    Family: "text-rose-600 dark:text-rose-400",
     Other: "text-gray-600 dark:text-gray-400",
   };
   return colors[category] || colors.Other;
