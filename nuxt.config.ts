@@ -142,11 +142,12 @@ export default defineNuxtConfig({
     },
     workbox: {
       navigateFallback: "/",
-      globPatterns: ["**/*.{js,css,html,png,svg,ico,woff2,woff,ttf}"],
+      navigateFallbackAllowlist: [/^(?!\/__).*/],
+      globPatterns: ["**/*.{js,css,html,png,svg,ico,woff2,woff,ttf,json}"],
       globIgnores: ["**/node_modules/**/*", "sw.js", "workbox-*.js"],
       cleanupOutdatedCaches: true,
-      navigateFallbackDenylist: [/^\/_payload\.json$/],
       runtimeCaching: [
+        // Fonts - Cache First (never change)
         {
           urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
           handler: "CacheFirst",
@@ -154,7 +155,7 @@ export default defineNuxtConfig({
             cacheName: "google-fonts-cache",
             expiration: {
               maxEntries: 10,
-              maxAgeSeconds: 60 * 60 * 24 * 365, // <== 365 days
+              maxAgeSeconds: 60 * 60 * 24 * 365, // 365 days
             },
             cacheableResponse: {
               statuses: [0, 200],
@@ -168,21 +169,84 @@ export default defineNuxtConfig({
             cacheName: "gstatic-fonts-cache",
             expiration: {
               maxEntries: 10,
-              maxAgeSeconds: 60 * 60 * 24 * 365, // <== 365 days
+              maxAgeSeconds: 60 * 60 * 24 * 365, // 365 days
             },
             cacheableResponse: {
               statuses: [0, 200],
             },
           },
         },
+        // Images - Cache First with fallback
         {
-          urlPattern: "/*",
-          handler: "NetworkFirst",
+          urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/i,
+          handler: "CacheFirst",
           options: {
-            cacheName: "nuxt-app-cache",
+            cacheName: "image-cache",
+            expiration: {
+              maxEntries: 100,
+              maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+            },
+            cacheableResponse: {
+              statuses: [0, 200],
+            },
+          },
+        },
+        // App routes - Cache First (enables offline)
+        {
+          urlPattern:
+            /^https?:\/\/[^/]+\/(locosats|journals|feed|profile|settings|apps)/,
+          handler: "CacheFirst",
+          options: {
+            cacheName: "app-routes-cache",
             expiration: {
               maxEntries: 50,
-              maxAgeSeconds: 60 * 60 * 24 * 1, // <== 1 day
+              maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
+            },
+            cacheableResponse: {
+              statuses: [0, 200],
+            },
+          },
+        },
+        // JS/CSS - Cache First with Network Fallback
+        {
+          urlPattern: /\.(?:js|css)$/i,
+          handler: "CacheFirst",
+          options: {
+            cacheName: "static-assets-cache",
+            expiration: {
+              maxEntries: 100,
+              maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+            },
+            cacheableResponse: {
+              statuses: [0, 200],
+            },
+          },
+        },
+        // API calls - Network First with Cache Fallback
+        {
+          urlPattern: /^https?:\/\/.*\/api\/.*/i,
+          handler: "NetworkFirst",
+          options: {
+            cacheName: "api-cache",
+            expiration: {
+              maxEntries: 50,
+              maxAgeSeconds: 60 * 60, // 1 hour
+            },
+            cacheableResponse: {
+              statuses: [0, 200],
+            },
+            networkTimeoutSeconds: 5,
+          },
+        },
+        // Everything else - Cache First (for offline support)
+        {
+          urlPattern: /.*/,
+          handler: "CacheFirst",
+          options: {
+            cacheName: "general-cache",
+            expiration: {
+              maxEntries: 100,
+              maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
             },
             cacheableResponse: {
               statuses: [0, 200],
