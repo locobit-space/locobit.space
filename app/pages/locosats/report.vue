@@ -1,301 +1,271 @@
 <template>
-  <div>
+  <div class="pb-20">
     <!-- Header -->
-    <div>
+    <div
+      class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-10"
+    >
       <div class="max-w-6xl mx-auto px-4 py-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
             <NuxtLink
               to="/locosats"
-              class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              class="p-2 -ml-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
             >
               <Icon name="heroicons:arrow-left" class="w-5 h-5" />
             </NuxtLink>
-            <h1 class="text-xl font-semibold">{{ $t("finance.reports") }}</h1>
+            <h1
+              class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-primary-400"
+            >
+              {{ $t("finance.reports") }}
+            </h1>
           </div>
-          <div class="flex items-center gap-2">
-            <UButton variant="ghost" @click="exportData">
-              <Icon name="heroicons:arrow-down-tray" class="w-4 h-4 mr-2" />
-              Export
-            </UButton>
-          </div>
+          <UButton variant="solid" @click="exportData">
+            <Icon name="heroicons:arrow-down-tray" class="w-4 h-4 mr-2" />
+            Export
+          </UButton>
         </div>
       </div>
     </div>
 
     <!-- Time Period Selector -->
-    <div class="max-w-6xl mx-auto px-4 py-4">
-      <div class="flex items-center gap-2 overflow-x-auto pb-2">
-        <UButton
+    <div class="max-w-6xl mx-auto px-4 py-6">
+      <div
+        class="bg-white dark:bg-gray-800 p-1.5 rounded-xl inline-flex gap-1 overflow-x-auto max-w-full"
+      >
+        <button
           v-for="period in periods"
           :key="period.value"
-          :color="selectedPeriod === period.value ? 'primary' : 'neutral'"
-          :variant="selectedPeriod === period.value ? 'solid' : 'ghost'"
-          size="sm"
+          class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap"
+          :class="
+            selectedPeriod === period.value
+              ? 'bg-primary-500 text-white'
+              : 'text-gray-500 dark:text-gray-400'
+          "
           @click="selectedPeriod = period.value"
         >
           {{ period.label }}
-        </UButton>
+        </button>
       </div>
     </div>
 
     <!-- Main Content -->
-    <div class="max-w-6xl mx-auto px-4 pb-8">
-      <!-- Summary Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
-          <div class="flex items-center gap-3 mb-2">
-            <div
-              class="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center"
-            >
-              <Icon
-                name="heroicons:arrow-trending-up"
-                class="w-5 h-5 text-green-600 dark:text-green-400"
-              />
+    <div class="max-w-5xl mx-auto px-4 pb-8 space-y-6">
+      <!-- Top Row: Summary & Distribution -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Summary Section (Minimal List Style) -->
+        <div
+          class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden divide-y divide-gray-100 dark:divide-gray-800 h-fit"
+        >
+          <!-- Balance -->
+          <div class="p-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div
+                class="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
+              >
+                <Icon name="heroicons:banknotes" class="w-5 h-5" />
+              </div>
+              <div>
+                <div class="text-sm text-gray-500 dark:text-gray-400">
+                  Net Balance
+                </div>
+                <div class="font-semibold text-gray-900 dark:text-gray-100">
+                  {{ periodStats.balance >= 0 ? "+" : ""
+                  }}{{ $n(periodStats.balance) }}
+                  <span class="text-xs font-normal text-gray-400">{{
+                    finance.settings.value.default_currency
+                  }}</span>
+                </div>
+              </div>
             </div>
-            <span class="text-sm text-gray-500 dark:text-gray-400"
-              >Total Income</span
+          </div>
+
+          <!-- Income -->
+          <div class="p-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div
+                class="p-2 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400"
+              >
+                <Icon name="heroicons:arrow-trending-up" class="w-5 h-5" />
+              </div>
+              <div>
+                <div class="text-sm text-gray-500 dark:text-gray-400">
+                  Income
+                </div>
+                <div class="font-semibold text-green-600 dark:text-green-400">
+                  +{{ $n(periodStats.income) }}
+                </div>
+              </div>
+            </div>
+            <div
+              class="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-full text-gray-500"
             >
+              {{ periodStats.incomeCount }} txns
+            </div>
           </div>
-          <div class="text-2xl font-bold text-green-600 dark:text-green-400">
-            +{{ $n(periodStats.income) }}
+
+          <!-- Expense -->
+          <div class="p-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div
+                class="p-2 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400"
+              >
+                <Icon name="heroicons:arrow-trending-down" class="w-5 h-5" />
+              </div>
+              <div>
+                <div class="text-sm text-gray-500 dark:text-gray-400">
+                  Expenses
+                </div>
+                <div class="font-semibold text-red-600 dark:text-red-400">
+                  -{{ $n(periodStats.expenses) }}
+                </div>
+              </div>
+            </div>
+            <div
+              class="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-full text-gray-500"
+            >
+              {{ periodStats.expenseCount }} txns
+            </div>
           </div>
-          <div class="text-sm text-gray-400 mt-1">
-            {{ periodStats.incomeCount }} transactions
+
+          <!-- Sats -->
+          <div class="p-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div
+                class="p-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400"
+              >
+                <Icon name="lets-icons:lightning-fill" class="w-5 h-5" />
+              </div>
+              <div>
+                <div class="text-sm text-gray-500 dark:text-gray-400">
+                  In Satoshis
+                </div>
+                <div class="font-semibold text-amber-600 dark:text-amber-400">
+                  {{ $n(Math.round(periodStats.balanceSats)) }} sats
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
-          <div class="flex items-center gap-3 mb-2">
-            <div
-              class="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center"
-            >
-              <Icon
-                name="heroicons:arrow-trending-down"
-                class="w-5 h-5 text-red-600 dark:text-red-400"
-              />
-            </div>
-            <span class="text-sm text-gray-500 dark:text-gray-400"
-              >Total Expenses</span
-            >
-          </div>
-          <div class="text-2xl font-bold text-red-600 dark:text-red-400">
-            -{{ $n(periodStats.expenses) }}
-          </div>
-          <div class="text-sm text-gray-400 mt-1">
-            {{ periodStats.expenseCount }} transactions
-          </div>
-        </div>
-
-        <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
-          <div class="flex items-center gap-3 mb-2">
-            <div
-              class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center"
-            >
-              <Icon
-                name="heroicons:banknotes"
-                class="w-5 h-5 text-blue-600 dark:text-blue-400"
-              />
-            </div>
-            <span class="text-sm text-gray-500 dark:text-gray-400"
-              >Net Balance</span
-            >
-          </div>
-          <div
-            class="text-2xl font-bold"
-            :class="
-              periodStats.balance >= 0
-                ? 'text-green-600 dark:text-green-400'
-                : 'text-red-600 dark:text-red-400'
-            "
+        <!-- Distribution (Pie Chart) -->
+        <div
+          class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-800 p-4 flex flex-col h-full"
+        >
+          <h3
+            class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-4 uppercase tracking-wide"
           >
-            {{ periodStats.balance >= 0 ? "+" : ""
-            }}{{ $n(periodStats.balance) }}
-          </div>
-          <div class="text-sm text-gray-400 mt-1">
-            {{ finance.settings.value.default_currency }}
-          </div>
-        </div>
-
-        <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
-          <div class="flex items-center gap-3 mb-2">
-            <div
-              class="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center"
-            >
-              <Icon
-                name="lets-icons:lightning-light"
-                class="w-5 h-5 text-amber-600 dark:text-amber-400"
-              />
-            </div>
-            <span class="text-sm text-gray-500 dark:text-gray-400"
-              >In Sats</span
-            >
-          </div>
-          <div class="text-2xl font-bold text-amber-600 dark:text-amber-400">
-            {{ $n(Math.round(periodStats.balanceSats)) }}
-          </div>
-          <div class="text-sm text-gray-400 mt-1">satoshis</div>
-        </div>
-      </div>
-
-      <!-- Charts Row -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <!-- Spending by Category -->
-        <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
-          <h3 class="text-lg font-semibold mb-4">Expenses by Category</h3>
-          <div v-if="categoryData.length > 0" class="h-64">
+            Distribution
+          </h3>
+          <div
+            v-if="categoryData.length > 0"
+            class="flex-1 min-h-[250px] relative"
+          >
             <CommonPieChart :data="categoryData" />
+            <!-- Minimal Donut Center Text -->
+            <div
+              class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
+            >
+              <span class="text-[10px] text-gray-400 uppercase tracking-wider"
+                >Total</span
+              >
+              <span class="text-lg font-bold text-gray-900 dark:text-white">{{
+                $n(periodStats.expenses)
+              }}</span>
+            </div>
           </div>
           <div
             v-else
-            class="h-64 flex items-center justify-center text-gray-400"
+            class="flex-1 flex items-center justify-center text-gray-400 bg-gray-50 dark:bg-gray-900/50 rounded-lg min-h-[250px]"
           >
-            No expense data yet
-          </div>
-        </div>
-
-        <!-- Income vs Expenses -->
-        <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
-          <h3 class="text-lg font-semibold mb-4">Income vs Expenses</h3>
-          <div v-if="monthlyChart.length > 0" class="h-64">
-            <CommonLineChart :series="monthlyChart" class="h-full" />
-          </div>
-          <div
-            v-else
-            class="h-64 flex items-center justify-center text-gray-400"
-          >
-            No data available
+            No data
           </div>
         </div>
       </div>
 
-      <!-- Insights Section -->
-      <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm mb-6">
-        <h3 class="text-lg font-semibold mb-4">
-          <Icon
-            name="heroicons:light-bulb"
-            class="w-5 h-5 inline mr-2 text-amber-500"
+      <!-- Analysis (Line Chart) - Full Width -->
+      <div
+        class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-800 p-6"
+      >
+        <div class="flex items-center justify-between mb-6">
+          <h3
+            class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide"
+          >
+            Analysis
+          </h3>
+          <div class="flex items-center gap-3 text-xs text-gray-500">
+            <span class="flex items-center gap-1.5"
+              ><span class="w-2 h-2 rounded-full bg-green-500"></span>
+              Income</span
+            >
+            <span class="flex items-center gap-1.5"
+              ><span class="w-2 h-2 rounded-full bg-red-500"></span>
+              Expense</span
+            >
+          </div>
+        </div>
+
+        <div v-if="trendChart.length > 0" class="h-72 w-full">
+          <CommonLineChart
+            :series="trendChart"
+            :option="chartOptions"
+            class="h-full"
           />
-          Insights & Tips
-        </h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <!-- Top Spending Category -->
-          <div
-            v-if="topCategory"
-            class="p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50"
-          >
-            <div class="flex items-center gap-3 mb-2">
-              <div
-                class="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center"
-              >
-                <Icon
-                  name="heroicons:arrow-trending-up"
-                  class="w-4 h-4 text-red-500"
-                />
-              </div>
-              <span class="font-medium">Top Spending</span>
-            </div>
-            <p class="text-sm text-gray-600 dark:text-gray-300">
-              <strong>{{ topCategory.name }}</strong> is your biggest expense
-              category at
-              <strong
-                >{{ $n(topCategory.amount) }}
-                {{ finance.settings.value.default_currency }}</strong
-              >
-              ({{ topCategory.percentage.toFixed(0) }}% of total)
-            </p>
-          </div>
-
-          <!-- Savings Rate -->
-          <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50">
-            <div class="flex items-center gap-3 mb-2">
-              <div
-                class="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center"
-              >
-                <Icon
-                  name="heroicons:chart-pie"
-                  class="w-4 h-4 text-green-500"
-                />
-              </div>
-              <span class="font-medium">Savings Rate</span>
-            </div>
-            <p class="text-sm text-gray-600 dark:text-gray-300">
-              <template v-if="savingsRate >= 0">
-                You're saving <strong>{{ savingsRate.toFixed(0) }}%</strong> of
-                your income.
-                <span v-if="savingsRate >= 20">Great job! 🎉</span>
-                <span v-else-if="savingsRate >= 10">Keep it up!</span>
-                <span v-else>Try to save at least 20%</span>
-              </template>
-              <template v-else>
-                You're spending more than you earn. Consider reducing expenses.
-              </template>
-            </p>
-          </div>
-
-          <!-- Average Daily Spending -->
-          <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50">
-            <div class="flex items-center gap-3 mb-2">
-              <div
-                class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center"
-              >
-                <Icon name="heroicons:calendar" class="w-4 h-4 text-blue-500" />
-              </div>
-              <span class="font-medium">Daily Average</span>
-            </div>
-            <p class="text-sm text-gray-600 dark:text-gray-300">
-              You spend about
-              <strong
-                >{{ $n(Math.round(dailyAverage)) }}
-                {{ finance.settings.value.default_currency }}</strong
-              >
-              per day on average.
-            </p>
-          </div>
+        </div>
+        <div
+          v-else
+          class="h-72 flex items-center justify-center text-gray-400 bg-gray-50 dark:bg-gray-900/50 rounded-lg"
+        >
+          No data available
         </div>
       </div>
 
-      <!-- Category Breakdown -->
-      <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
-        <h3 class="text-lg font-semibold mb-4">Category Breakdown</h3>
-        <div class="space-y-4">
+      <!-- Categories List (Settings Style) -->
+      <div>
+        <h3
+          class="px-1 text-sm font-medium text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wide"
+        >
+          Breakdown
+        </h3>
+        <div
+          class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden divide-y divide-gray-100 dark:divide-gray-800"
+        >
           <div
             v-for="cat in categoryBreakdown"
             :key="cat.name"
-            class="flex items-center gap-4"
+            class="p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
           >
-            <div
-              class="w-12 h-12 rounded-full flex items-center justify-center"
-              :class="getCategoryBg(cat.name)"
-            >
-              <Icon
-                :name="getCategoryIcon(cat.name)"
-                class="w-6 h-6"
-                :class="getCategoryIconColor(cat.name)"
-              />
-            </div>
-            <div class="flex-1">
-              <div class="flex items-center justify-between mb-1">
-                <span class="font-medium">{{ cat.name }}</span>
-                <span class="text-sm">
-                  {{ $n(cat.amount) }}
-                  {{ finance.settings.value.default_currency }}
-                </span>
+            <div class="flex items-center gap-4">
+              <div
+                class="w-10 h-10 rounded-xl flex items-center justify-center bg-gray-100 dark:bg-gray-700"
+              >
+                <Icon
+                  :name="getCategoryIcon(cat.name)"
+                  class="w-5 h-5 text-gray-600 dark:text-gray-300"
+                />
               </div>
-              <div class="flex items-center gap-2">
-                <div
-                  class="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden"
-                >
-                  <div
-                    class="h-full rounded-full bg-primary-500"
-                    :style="{ width: `${cat.percentage}%` }"
-                  />
+              <div>
+                <div class="font-medium text-gray-900 dark:text-white">
+                  {{ cat.name }}
                 </div>
-                <span class="text-xs text-gray-400 w-10"
-                  >{{ cat.percentage.toFixed(0) }}%</span
-                >
+                <div class="text-xs text-gray-500">
+                  {{ cat.percentage.toFixed(0) }}%
+                </div>
               </div>
             </div>
+            <div class="text-right">
+              <div class="font-medium text-gray-900 dark:text-white">
+                {{ $n(cat.amount) }}
+              </div>
+              <span class="text-xs text-gray-400">{{
+                finance.settings.value.default_currency
+              }}</span>
+            </div>
+          </div>
+          <div
+            v-if="categoryBreakdown.length === 0"
+            class="p-8 text-center text-gray-400"
+          >
+            No expense data for this period
           </div>
         </div>
       </div>
@@ -304,17 +274,53 @@
 </template>
 
 <script setup lang="ts">
+import { useFinance } from "~/composables/useFinance"; // Ensure explicit import if needed
 const finance = useFinance();
 
 // Period selector
 const selectedPeriod = ref("month");
 const periods = [
-  { value: "week", label: "This Week" },
-  { value: "month", label: "This Month" },
+  { value: "week", label: "Week" },
+  { value: "month", label: "Month" },
   { value: "quarter", label: "Quarter" },
-  { value: "year", label: "This Year" },
-  { value: "all", label: "All Time" },
+  { value: "year", label: "Year" },
 ];
+
+/**
+ * CHART OPTIONS
+ * Custom ECharts options for a cleaner look
+ */
+const chartOptions = {
+  grid: {
+    top: "15%",
+    left: "2%",
+    right: "2%",
+    bottom: "5%",
+    containLabel: true,
+  },
+  xAxis: [
+    {
+      axisLine: { show: false },
+      axisTick: { show: false },
+      splitLine: { show: false },
+      axisLabel: { color: "#9CA3AF" }, // gray-400
+    },
+  ],
+  yAxis: [
+    {
+      splitLine: {
+        lineStyle: { type: "dashed", color: "#E5E7EB" }, // gray-200
+      },
+    },
+  ],
+  tooltip: {
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    borderColor: "#E5E7EB",
+    textStyle: { color: "#1F2937" },
+    padding: 12,
+    borderRadius: 8,
+  },
+};
 
 // Filter entries by period
 const filteredEntries = computed(() => {
@@ -340,7 +346,7 @@ const filteredEntries = computed(() => {
   }
 
   return finance.entries.value.filter(
-    (e) => new Date(e.created_at) >= startDate
+    (e) => new Date(e.created_at) >= startDate,
   );
 });
 
@@ -429,64 +435,156 @@ const dailyAverage = computed(() => {
     selectedPeriod.value === "week"
       ? 7
       : selectedPeriod.value === "month"
-      ? 30
-      : selectedPeriod.value === "quarter"
-      ? 90
-      : selectedPeriod.value === "year"
-      ? 365
-      : 365;
+        ? 30
+        : selectedPeriod.value === "quarter"
+          ? 90
+          : selectedPeriod.value === "year"
+            ? 365
+            : 365;
   return periodStats.value.expenses / days;
 });
 
-// Monthly chart data
-const monthLabels = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
-const currentYear = new Date().getFullYear();
+// Chart Label helper
+const getChartLabels = (period: string) => {
+  const now = new Date();
 
-const monthlyChart = computed(() => {
-  const months: Record<string, { income: number; expense: number }> = {};
-  monthLabels.forEach((_, i) => {
-    months[`${currentYear}-${i + 1}`] = { income: 0, expense: 0 };
+  if (period === "week") {
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const labels = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      labels.push(days[d.getDay()]);
+    }
+    return labels;
+  }
+
+  if (period === "month") {
+    const daysInMonth = new Date(
+      now.getFullYear(),
+      now.getMonth() + 1,
+      0,
+    ).getDate();
+    return Array.from({ length: daysInMonth }, (_, i) => (i + 1).toString());
+  }
+
+  if (period === "quarter") {
+    const quarter = Math.floor(now.getMonth() / 3);
+    const startMonth = quarter * 3;
+    const allMonths = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+    return allMonths.slice(startMonth, startMonth + 3);
+  }
+
+  return [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+};
+
+const trendChart = computed(() => {
+  const labels = getChartLabels(selectedPeriod.value);
+  const dataMap: Record<string, { income: number; expense: number }> = {};
+
+  // Initialize map
+  labels.forEach((label) => {
+    dataMap[label] = { income: 0, expense: 0 };
   });
 
-  finance.entries.value.forEach((e) => {
-    const date = new Date(e.created_at);
-    if (date.getFullYear() !== currentYear) return;
-    const key = `${date.getFullYear()}-${date.getMonth() + 1}`;
-    if (!months[key]) return;
+  const now = new Date();
 
-    if (e.type === "income") months[key].income += e.amount_fiat;
-    else months[key].expense += e.amount_fiat;
+  filteredEntries.value.forEach((e) => {
+    const date = new Date(e.created_at);
+    let label = "";
+
+    if (selectedPeriod.value === "week") {
+      const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+      // Only verify it matches one of our labels (simple approach for last 7 days)
+      label = days[date.getDay()];
+    } else if (selectedPeriod.value === "month") {
+      label = date.getDate().toString();
+    } else if (selectedPeriod.value === "quarter") {
+      const allMonths = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ];
+      label = allMonths[date.getMonth()];
+    } else {
+      const allMonths = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ];
+      label = allMonths[date.getMonth()];
+    }
+
+    if (dataMap[label]) {
+      if (e.type === "income") dataMap[label].income += e.amount_fiat;
+      else dataMap[label].expense += e.amount_fiat;
+    }
   });
 
   return [
     {
       name: "Income",
-      type: "bar",
-      data: monthLabels.map(
-        (_, i) => months[`${currentYear}-${i + 1}`]?.income || 0
-      ),
-      backgroundColor: "#22C55E",
+      type: "line",
+      smooth: true,
+      symbol: "none",
+      areaStyle: { opacity: 0.2 },
+      data: labels.map((l) => dataMap[l]?.income || 0),
+      color: "#22C55E",
+      lineStyle: { width: 3 },
     },
     {
       name: "Expense",
-      type: "bar",
-      data: monthLabels.map(
-        (_, i) => months[`${currentYear}-${i + 1}`]?.expense || 0
-      ),
-      backgroundColor: "#EF4444",
+      type: "line",
+      smooth: true,
+      symbol: "none",
+      areaStyle: { opacity: 0.2 },
+      data: labels.map((l) => dataMap[l]?.expense || 0),
+      color: "#EF4444",
+      lineStyle: { width: 3 },
     },
   ];
 });
@@ -541,6 +639,19 @@ const getCategoryIconColor = (category: string) => {
     Other: "text-gray-600 dark:text-gray-400",
   };
   return colors[category] || colors.Other;
+};
+
+const progressColors = [
+  "bg-primary-500",
+  "bg-blue-500",
+  "bg-green-500",
+  "bg-amber-500",
+  "bg-red-500",
+  "bg-purple-500",
+];
+
+const getCategoryProgressColor = (index: number) => {
+  return progressColors[index % progressColors.length];
 };
 
 // Export data

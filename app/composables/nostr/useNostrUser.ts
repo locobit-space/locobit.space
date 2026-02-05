@@ -117,7 +117,7 @@ export const useNostrUser = () => {
     _pubkey: string,
     timeout: number = DEFAULT_OPTIONS.timeout,
     maxRelays: number = DEFAULT_OPTIONS.maxRelays,
-    debug: boolean = false
+    debug: boolean = false,
   ): Promise<UserInfo | null> => {
     const pubkey = normalizeKey(_pubkey);
 
@@ -181,7 +181,7 @@ export const useNostrUser = () => {
    * Get multiple user profiles at once
    */
   const getUserInfoBatch = async (
-    pubkeys: string[]
+    pubkeys: string[],
   ): Promise<Record<string, UserInfo>> => {
     isLoading.value = true;
 
@@ -222,7 +222,7 @@ export const useNostrUser = () => {
         } catch (parseError) {
           console.error(
             `Failed to parse profile for ${event.pubkey}:`,
-            parseError
+            parseError,
           );
         }
       }
@@ -289,6 +289,22 @@ export const useNostrUser = () => {
     initializeUser();
   });
 
+  /**
+   * Logout the current user
+   */
+  const logout = () => {
+    // Clear local storage
+    clearUserData();
+
+    // Reset state
+    user.value = null;
+    currentUserInfo.value = {} as UserInfo;
+
+    // Optional: Navigate to home or welcome page
+    const router = useRouter();
+    router.push("/");
+  };
+
   return {
     user,
     currentUserInfo,
@@ -300,5 +316,6 @@ export const useNostrUser = () => {
     getUserInfoBatch,
     fetchFollowList,
     initializeUser,
+    logout,
   };
 };
