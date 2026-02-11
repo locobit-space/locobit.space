@@ -26,6 +26,11 @@ export default defineAppConfig({
       gray: "gray",
       stone: "stone",
       nero: "nero",
+      white: "white",
+      error: "error",
+      warning: "warning",
+      info: "info",
+      success: "success",
     },
   },
 });

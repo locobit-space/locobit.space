@@ -1,6 +1,6 @@
 <!-- pages/journals/index.vue -->
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-950">
+  <div class="h-full bg-gray-50 dark:bg-gray-950">
     <!-- Header Section -->
     <div class="border-b border-gray-200 dark:border-gray-800">
       <div class="max-w-4xl mx-auto px-4 py-5 sm:py-6">
@@ -70,7 +70,7 @@
     </div>
 
     <!-- Main Content -->
-    <div class="max-w-4xl mx-auto px-4 py-5">
+    <div class="max-w-4xl mx-auto px-4">
       <!-- Login Required -->
       <div
         v-if="!user"
@@ -97,7 +97,7 @@
 
       <template v-else>
         <!-- View Toggle & Search -->
-        <div class="flex items-center gap-4 mb-6">
+        <div class="flex items-center gap-4">
           <div class="flex-1">
             <UInput
               v-model="searchQuery"

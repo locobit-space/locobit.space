@@ -42,6 +42,7 @@ export default defineNuxtConfig({
         "info",
         "success",
         "nero",
+        "white"
       ],
     },
   },
