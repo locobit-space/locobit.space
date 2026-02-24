@@ -50,6 +50,7 @@
                   v-model="formState.category"
                   :items="categoryOptions"
                   :placeholder="$t('plants.select_category')"
+                  class="w-full"
                 />
               </UFormField>
 
@@ -60,6 +61,7 @@
                   :items="filteredTypeOptions"
                   :placeholder="$t('plants.select_type')"
                   :disabled="!formState.category"
+                  class="w-full"
                 />
               </UFormField>
 
@@ -68,6 +70,7 @@
                 <UInput
                   v-model="formState.name"
                   :placeholder="$t('plants.name_placeholder')"
+                  class="w-full"
                 />
               </UFormField>
 
@@ -76,30 +79,32 @@
                 <UInput
                   v-model="formState.variety"
                   :placeholder="$t('plants.variety_placeholder')"
+                  class="w-full"
                 />
               </UFormField>
 
-              <!-- Quantity -->
+              <!-- Quantity + Unit inline group -->
               <UFormField
                 :label="$t('plants.quantity')"
                 name="quantity"
                 required
+                class="md:col-span-2"
               >
-                <UInput
-                  v-model="formState.quantity"
-                  type="number"
-                  min="1"
-                  :placeholder="$t('plants.quantity_placeholder')"
-                />
-              </UFormField>
-
-              <!-- Unit -->
-              <UFormField :label="$t('plants.unit')" name="unit" required>
-                <USelect
-                  v-model="formState.unit"
-                  :items="unitOptions"
-                  :placeholder="$t('plants.select_unit')"
-                />
+                <div class="flex gap-2 items-start">
+                  <UInput
+                    v-model="formState.quantity"
+                    type="number"
+                    min="1"
+                    :placeholder="$t('plants.quantity_placeholder')"
+                    class="w-28 shrink-0"
+                  />
+                  <USelect
+                    v-model="formState.unit"
+                    :items="unitOptions"
+                    :placeholder="$t('plants.select_unit')"
+                    class="flex-1"
+                  />
+                </div>
               </UFormField>
             </div>
           </div>
@@ -115,6 +120,7 @@
                 <UInput
                   v-model="formState.plot"
                   :placeholder="$t('plants.plot_placeholder')"
+                  class="w-full"
                 />
               </UFormField>
 
@@ -123,6 +129,7 @@
                 <UInput
                   v-model="formState.row"
                   :placeholder="$t('plants.row_placeholder')"
+                  class="w-full"
                 />
               </UFormField>
 
@@ -131,7 +138,56 @@
                 <UInput
                   v-model="formState.position"
                   :placeholder="$t('plants.position_placeholder')"
+                  class="w-full"
                 />
+              </UFormField>
+
+              <!-- Plot Size: W x L unit -->
+              <UFormField
+                :label="$t('plants.plot_size')"
+                name="plotSize"
+                class="md:col-span-3"
+              >
+                <div class="flex items-center gap-2">
+                  <UInput
+                    v-model="formState.plotWidth"
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    placeholder="W"
+                    class="w-24 shrink-0"
+                  />
+                  <span
+                    class="text-gray-500 dark:text-gray-400 font-medium select-none"
+                    >×</span
+                  >
+                  <UInput
+                    v-model="formState.plotLength"
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    placeholder="L"
+                    class="w-24 shrink-0"
+                  />
+                  <USelect
+                    v-model="formState.plotUnit"
+                    :items="plotUnitOptions"
+                    class="w-24 shrink-0"
+                  />
+                  <span
+                    v-if="formState.plotWidth && formState.plotLength"
+                    class="text-sm text-gray-500 dark:text-gray-400"
+                  >
+                    =
+                    {{
+                      (
+                        Number(formState.plotWidth) *
+                        Number(formState.plotLength)
+                      ).toFixed(2)
+                    }}
+                    {{ formState.plotUnit }}²
+                  </span>
+                </div>
               </UFormField>
             </div>
           </div>
@@ -148,15 +204,24 @@
                 name="plantedDate"
                 required
               >
-                <UInput v-model="formState.plantedDate" type="date" />
+                <UInput
+                  v-model="formState.plantedDate"
+                  type="date"
+                  class="w-full"
+                />
               </UFormField>
 
               <!-- Expected Harvest Date -->
               <UFormField
                 :label="$t('plants.expected_harvest')"
                 name="expectedHarvestDate"
+                class="w-full"
               >
-                <UInput v-model="formState.expectedHarvestDate" type="date" />
+                <UInput
+                  v-model="formState.expectedHarvestDate"
+                  type="date"
+                  class="w-full"
+                />
               </UFormField>
 
               <!-- Seed Source -->
@@ -164,6 +229,7 @@
                 <UInput
                   v-model="formState.seedSource"
                   :placeholder="$t('plants.seed_source_placeholder')"
+                  class="w-full"
                 />
               </UFormField>
 
@@ -177,13 +243,8 @@
                   type="number"
                   step="0.01"
                   :placeholder="$t('plants.cost_placeholder')"
-                >
-                  <template #trailing>
-                    <span class="text-gray-400 dark:text-gray-500 text-xs"
-                      >LAK</span
-                    >
-                  </template>
-                </UInput>
+                  class="w-full"
+                />
               </UFormField>
             </div>
           </div>
@@ -200,6 +261,7 @@
                   v-model="formState.notes"
                   :placeholder="$t('plants.notes_placeholder')"
                   :rows="3"
+                  class="w-full"
                 />
               </UFormField>
 
@@ -270,10 +332,7 @@
                 <div
                   class="w-32 h-32 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center"
                 >
-                  <Icon
-                    name="lucide:qr-code"
-                    class="h-16 w-16 text-gray-400"
-                  />
+                  <Icon name="lucide:qr-code" class="h-16 w-16 text-gray-400" />
                 </div>
               </div>
               <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
@@ -304,6 +363,8 @@ import { ref, computed } from "vue";
 import { z } from "zod";
 
 const { t } = useI18n();
+const toast = useToast();
+const { createPlant, isOnline } = useNostrGms();
 
 // Form validation schema
 const schema = z.object({
@@ -335,6 +396,9 @@ const formState = ref({
   plot: "",
   row: "",
   position: "",
+  plotWidth: "",
+  plotLength: "",
+  plotUnit: "m",
   plantedDate: new Date().toISOString().split("T")[0],
   expectedHarvestDate: "",
   seedSource: "",
@@ -345,9 +409,15 @@ const formState = ref({
 
 const isSubmitting = ref(false);
 const showSuccessModal = ref(false);
-const registeredPlant = ref(null);
+const registeredPlant = ref<Record<string, any> | null>(null);
 
 // Options for selects
+const plotUnitOptions = [
+  { label: "m", value: "m" },
+  { label: "ft", value: "ft" },
+  { label: "rai", value: "rai" },
+];
+
 const categoryOptions = computed(() => [
   { label: t("plants.categories.vegetable"), value: "vegetable" },
   { label: t("plants.categories.fruit"), value: "fruit" },
@@ -404,28 +474,61 @@ const unitOptions = computed(() => [
 ]);
 
 // Form submission
-const onSubmit = async (event: any) => {
+const onSubmit = async () => {
   isSubmitting.value = true;
 
   try {
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const plantId = await createPlant({
+      name: formState.value.name,
+      category: formState.value.category,
+      type: formState.value.type,
+      variety: formState.value.variety || undefined,
+      quantity: Number(formState.value.quantity),
+      unit: formState.value.unit,
+      plot: formState.value.plot,
+      row: formState.value.row || undefined,
+      position: formState.value.position || undefined,
+      plantedDate: formState.value.plantedDate,
+      expectedHarvestDate: formState.value.expectedHarvestDate || undefined,
+      seedSource: formState.value.seedSource || undefined,
+      plantingCost: Number(formState.value.plantingCost) || undefined,
+      notes: formState.value.notes || undefined,
+      generateQrCode: formState.value.generateQrCode,
+    });
 
-    // Create registered plant object
-    registeredPlant.value = {
-      ...formState.value,
-      id: Date.now(),
-      qrCode: formState.value.generateQrCode,
-    };
+    if (plantId) {
+      registeredPlant.value = {
+        ...formState.value,
+        id: plantId,
+        qrCode: formState.value.generateQrCode,
+      };
 
-    // Show success modal
-    showSuccessModal.value = true;
+      if (!isOnline.value) {
+        toast.add({
+          title: t("common.saved_offline"),
+          description: t("common.will_sync_when_online"),
+          color: "yellow",
+          icon: "i-lucide-wifi-off",
+        });
+      } else {
+        toast.add({
+          title: t("plants.registration_success"),
+          color: "green",
+          icon: "i-lucide-check-circle",
+        });
+      }
 
-    // Reset form
-    resetForm();
+      showSuccessModal.value = true;
+      resetForm();
+    }
   } catch (error) {
     console.error("Registration failed:", error);
-    // Handle error - could show error notification here
+    toast.add({
+      title: t("common.error"),
+      description: t("plants.registration_failed"),
+      color: "red",
+      icon: "i-lucide-alert-circle",
+    });
   } finally {
     isSubmitting.value = false;
   }
@@ -442,6 +545,9 @@ const resetForm = () => {
     plot: "",
     row: "",
     position: "",
+    plotWidth: "",
+    plotLength: "",
+    plotUnit: "m",
     plantedDate: new Date().toISOString().split("T")[0],
     expectedHarvestDate: "",
     seedSource: "",

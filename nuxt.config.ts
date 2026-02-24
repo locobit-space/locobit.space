@@ -42,7 +42,7 @@ export default defineNuxtConfig({
         "info",
         "success",
         "nero",
-        "white"
+        "white",
       ],
     },
   },
@@ -195,7 +195,7 @@ export default defineNuxtConfig({
         // App routes - Cache First (enables offline)
         {
           urlPattern:
-            /^https?:\/\/[^/]+\/(locosats|journals|feed|profile|settings|apps)/,
+            /^https?:\/\/[^/]+\/(locosats|journals|feed|profile|settings|apps|gms)/,
           handler: "CacheFirst",
           options: {
             cacheName: "app-routes-cache",

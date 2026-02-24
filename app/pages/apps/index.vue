@@ -146,6 +146,12 @@ const apps = [
     description: "Saved items",
   },
   {
+    label: "Garden",
+    icon: "mynaui:sprout",
+    to: "/gms",
+    description: "Your garden",
+  },
+  {
     label: "Profile",
     icon: "solar:user-circle-bold",
     to: "/profile",

@@ -248,6 +248,11 @@ const sidebarNavItems = computed(() => [
     to: "/bookmarks",
   },
   {
+    label: "GMS",
+    icon: "mynaui:sprout",
+    to: "/gms",
+  },
+  {
     label: "Settings",
     icon: "solar:settings-linear",
     to: "/settings",

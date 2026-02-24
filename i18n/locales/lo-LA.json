@@ -22,7 +22,7 @@
     "time": "ເວລາ",
     "name": "ຊື່",
     "description": "ລາຍລະອຽດ",
-    "notes": "ບັນທຶກ",
+    "notes": "ໝາຍເຫດ",
     "loading": "ກຳລັງໂຫຼດ...",
     "success": "ສຳເລັດ",
     "error": "ຜິດພາດ",
@@ -35,7 +35,11 @@
       "high": "ສູງ",
       "medium": "ປານກາງ",
       "low": "ຕ່ຳ"
-    }
+    },
+    "kg": "ກິໂລ",
+    "g": "ກຼາມ",
+    "bunch": "ມັດ",
+    "pieces": "ອັນ"
   },
   "garden": {
     "title": "ລະບົບຄຸ້ມຄອງສວນ",
@@ -44,6 +48,7 @@
   "dashboard": {
     "title": "ໜ້າຫຼັກ",
     "total_plants": "ຈຳນວນພືດທັງໝົດ",
+    "total_harvests": "ຈຳນວນການເກັບກ່ຽວ",
     "active_plots": "ແປງທີ່ໃຊ້ງານ",
     "pending_care": "ການດູແລທີ່ຄ້າງຢູ່",
     "monthly_revenue": "ລາຍຮັບປະຈຳເດືອນ",
@@ -64,7 +69,9 @@
     "fruits": "ຫມາກໄມ້",
     "herbs": "ສະໝຸນໄພ",
     "title": "ຈັດການພືດ",
+    "tab_overview": "ພາບລວມ",
     "register_new": "ລົງທະບຽນພືດໃໝ່",
+    "no_plants_yet": "ຍັງບໍ່ມີພືດຖືກລົງທະບຽນ",
     "register": "ລົງທະບຽນ",
     "register_description": "ລົງທະບຽນພືດໃໝ່ເຂົ້າລະບົບຄຸ້ມຄອງສວນ",
     "name": "ຊື່ພືດ",
@@ -100,6 +107,7 @@
     "plot_placeholder": "ເຊັ່ນ: A-01",
     "row_placeholder": "ເຊັ່ນ: 1",
     "position_placeholder": "ເຊັ່ນ: ຊ້າຍ",
+    "plot_size": "ຂະໜາດແປງ (ກ × ຍ)",
     "seed_source_placeholder": "ເຊັ່ນ: ຮ້ານເມັດພັນທອງ",
     "cost_placeholder": "ຄ່າໃຊ້ຈ່າຍ",
     "notes_placeholder": "ບັນທຶກເພີ່ມເຕີມ...",
@@ -138,6 +146,13 @@
       "rows": "ແຖວ",
       "square_meters": "ຕາແມັດ"
     },
+    "status_short": {
+      "seedling": "ໄມ້ອ່ອນ",
+      "growing": "ເຕີບໂຕ",
+      "flowering": "ອອກດອກ",
+      "mature": "ໃຫຍ່ແລ້ວ",
+      "harvesting": "ເກັບກ່ຽວ"
+    },
     "status": {
       "seedling": "ໄມ້ອ່ອນ",
       "growing": "ກຳລັງເຕີບໂຕ",
@@ -146,6 +161,8 @@
       "harvesting": "ກຳລັງເກັບກ່ຽວ"
     },
     "select_plant": "ເລືອກພືດ",
+    "not_found": "ບໍ່ພົບພືດ",
+    "update_status": "ອັບເດດສະຖານທີ່ການເຕີບໂຕ",
     "examples": {
       "tomato": "ໝາກເລັ່ນ",
       "mango": "ໝາກມ່ວງ",
@@ -155,13 +172,41 @@
   },
   "care": {
     "title": "ການດູແລ",
-    "log_activity": "ບັນທຶກການດູແລ",
-    "watering": "ລົດນ້ຳ",
-    "fertilizing": "ໃສ່ປ๋ຸຍ",
+    "watering": "ຫົດນ້ຳ",
+    "fertilizing": "ໃສ່ປຸ໋ຍ",
     "pruning": "ຕັດແຕ່ງ",
     "pest_control": "ກຳຈັດແມງໄມ້",
+    "activities_recorded": "ອັນທີ່ຖືກບັນທຶກແລ້ວ",
+    "upcoming_schedules": "ຕາຕະລາງການດູແລທີ່ກຳລັງຈະມາເຖິງ",
+    "next": "ຕໍ່ໄປ",
+    "cost_optional": "ຄ່າໃຊ້ຈ່າຍ (ບໍ່ບັງຄັບ)",
+    "activity_type": "ປະເພດກິດຈະກຳ",
+    "start_date": "ວັນທີເລີ່ມຕົ້ນ",
+    "frequency": "ຄວາມຖີ່",
+    "add_schedule": "ເພີ່ມຕາຕະລາງ",
+    "schedule": "ຕາຕະລາງ",
+    "overview": "ພາບລວມ",
+    "activity_log": "ບັນທຶກການດູແລ",
+    "care_schedule": "ຕາຕະລາງການດູແລ",
+    "activities": {
+      "watering": "ຫົດນ້ຳ",
+      "fertilizing": "ໃສ່ປຸ໋ຍ",
+      "pruning": "ຕັດແຕ່ງ",
+      "pest_control": "ກຳຈັດແມງໄມ້",
+      "weeding": "ຖອນຫຍ້າ",
+      "mulching": "ຄຸມດິນ"
+    },
+    "frequencies": {
+      "daily": "ທຸກມື້",
+      "weekly": "ທຸກອາທິດ",
+      "biweekly": "ທຸກສອງອາທິດ",
+      "monthly": "ທຸກເດືອນ"
+    },
+    "log_activity": "ບັນທຶກການດູແລ",
+    "log_success": "ບັນທຶກການດູແລສຳເລັດ",
+    "schedule_success": "ບັນທຶກຕາຕາລາງສຳເລັດ",
     "tasks": {
-      "watering": "ລົດນ້ຳ",
+      "watering": "ຫົດນ້ຳ",
       "fertilizing": "ໃສ່ປ๋ຸຍ",
       "pruning": "ຕັດແຕ່ງກິ່ງ"
     }
@@ -182,6 +227,15 @@
     "invalid_number": "ຕົວເລກບໍ່ຖືກຕ້ອງ"
   },
   "harvest": {
+    "total_quantity": "ຍອດເກັບກ່ຽວຮວມ",
+    "batches": "ຈຳນວນຄັ້ງ",
+    "total_revenue": "ລາຍຮັບລວມ",
+    "no_harvests": "ຍັງບໍ່ມີການບັນທຶກການເກັບກ່ຽວ",
+    "start_recording": "ບັນທຶກການເກັບກ່ຽວຄັ້ງທຳອິດຂອງທ່ານ",
+    "revenue_optional": "ລາຍຮັບ (ບໍ່ບັງຄັບ)",
+    "vegetables": "ຜັກ",
+    "fruits": "ໝາກໄມ້",
+    "herbs": "ສະໝຸນໄພ",
     "record": "ບັນທຶກການເກັບກ່ຽວ",
     "quantity": "ຈຳນວນທີ່ເກັບ",
     "date": "ວັນທີ່ເກັບ",
@@ -313,7 +367,9 @@
     "active_streams": "ຖ່າຍທອດສົດຢູ່",
     "no_live_streams_description": "ກວດເບິ່ງໃນພາຍຫຼັງ ຫຼື ເລີ່ມຖ່າຍທອດສົດຂອງທ່ານເອງ",
     "visit_zap_stream": "ໄປທີ່ zap.stream",
-    "watch_on_zap_stream": "ເບິ່ງຢູ່ zap.stream",    "stream_on_zap_stream": "ມີສາຍໃນ zap.stream",    "send_message": "ສົ່ງຂໍ້ຄວາມ...",
+    "watch_on_zap_stream": "ເບິ່ງຢູ່ zap.stream",
+    "stream_on_zap_stream": "ມີສາຍໃນ zap.stream",
+    "send_message": "ສົ່ງຂໍ້ຄວາມ...",
     "no_posts_description": "ເລີ່ມຕິດຕາມຄົນ ຫຼື ສ້າງໂພສທຳອິດຂອງທ່ານ"
   },
   "home": {
