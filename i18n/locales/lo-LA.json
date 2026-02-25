@@ -39,7 +39,11 @@
     "kg": "ກິໂລ",
     "g": "ກຼາມ",
     "bunch": "ມັດ",
-    "pieces": "ອັນ"
+    "pieces": "ອັນ",
+    "show_less": "ສະແດງໜ້ອຍລົງ",
+    "show_all": "ສະແດງທັງໝົດ ({count})",
+    "search_plants": "ຄົ້ນຫາພືດ...",
+    "no_results": "ບໍ່ພົບຜົນລັບ"
   },
   "garden": {
     "title": "ລະບົບຄຸ້ມຄອງສວນ",
@@ -54,7 +58,8 @@
     "monthly_revenue": "ລາຍຮັບປະຈຳເດືອນ",
     "recent_plants": "ພືດທີ່ປູກຫຼ້າສຸດ",
     "quick_actions": "ການດຳເນີນງານດ່ວນ",
-    "pending_tasks": "ວຽກທີ່ຄ້າງຢູ່"
+    "pending_tasks": "ວຽກທີ່ຄ້າງຢູ່",
+    "total_revenue": "ລາຍຮັບທັງໝົດ"
   },
   "time": {
     "today": "ມື້ນີ້",
@@ -168,7 +173,9 @@
       "mango": "ໝາກມ່ວງ",
       "lettuce": "ຫຍ້າສະລັດ",
       "papaya": "ໝາກຫຸ່ງ"
-    }
+    },
+    "view_plant": "ເບິ່ງພືດ",
+    "unknown": "ພືດທີ່ບໍ່ຮູ້ຈັກ"
   },
   "care": {
     "title": "ການດູແລ",
@@ -209,7 +216,9 @@
       "watering": "ຫົດນ້ຳ",
       "fertilizing": "ໃສ່ປ๋ຸຍ",
       "pruning": "ຕັດແຕ່ງກິ່ງ"
-    }
+    },
+    "mark_done": "ສຳເລັດ",
+    "overdue": "ເກີນກຳນົດ"
   },
   "sales": {
     "title": "ການຂາຍ",
@@ -282,8 +291,13 @@
     "quality": {
       "A": "A - ດີເລີດ",
       "B": "B - ດີ",
-      "C": "C - ປານກາງ"
-    }
+      "C": "C - ປານກາງ",
+      "excellent": "ດີຫຼາຍ",
+      "good": "ດີ",
+      "fair": "ປານກາງ",
+      "poor": "ບໍ່ດີ"
+    },
+    "quality_grade": "ລະດັບຄຸນນະພາບ"
   },
   "social": {
     "feed": "ຟີດ",
@@ -433,5 +447,21 @@
     "note": "ບັນທຶກ",
     "note_placeholder": "ເພື່ອຫຍັງ?",
     "no_note": "ບໍ່ມີລາຍລະອຽດ"
+  },
+  "stats": {
+    "title": "ສະຖິຕິ",
+    "total_cost": "ຄ່າໃຊ້ຈ່າຍທັງໝົດ",
+    "total_revenue": "ລາຍຮັບ",
+    "net_profit": "ກຳໄລສຸດທິ",
+    "roi": "ອັດຕາຜົນຕອບແທນ",
+    "cost_by_activity": "ຄ່າໃຊ້ຈ່າຍຕາມກິດຈະກຳ",
+    "no_cost_data": "ຍັງບໍ່ມີຂໍ້ມູນຄ່າໃຊ້ຈ່າຍ",
+    "monthly_revenue": "ລາຍຮັບປະຈຳເດືອນ",
+    "no_harvest_data": "ຍັງບໍ່ມີຂໍ້ມູນເກັບກ່ຽວ",
+    "activity_summary": "ສະຫຼຸບກິດຈະກຳ",
+    "times": "ຄັ້ງ",
+    "no_data": "ຍັງບໍ່ມີຂໍ້ມູນສະຖິຕິ",
+    "start_logging_for_stats": "ເລີ່ມບັນທຶກການດູແລ & ການເກັບກ່ຽວ",
+    "revenue": "ລາຍຮັບ"
   }
 }

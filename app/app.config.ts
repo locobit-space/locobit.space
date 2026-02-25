@@ -27,10 +27,6 @@ export default defineAppConfig({
       stone: "stone",
       nero: "nero",
       white: "white",
-      error: "error",
-      warning: "warning",
-      info: "info",
-      success: "success",
     },
   },
 });

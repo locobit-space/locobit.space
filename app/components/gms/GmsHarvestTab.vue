@@ -3,8 +3,8 @@
     <!-- Summary stats -->
     <div class="grid grid-cols-3 gap-3">
       <div class="bg-green-50 dark:bg-green-900/20 rounded-2xl p-4 text-center">
-        <p class="text-2xl font-bold text-green-700 dark:text-green-400">
-          {{ totalQty }}
+        <p class="text-xl font-bold text-green-700 dark:text-green-400 leading-tight">
+          {{ totalQtyDisplay }}
         </p>
         <p
           class="text-xs font-medium text-green-600 dark:text-green-500 mt-0.5"
@@ -77,12 +77,22 @@
               >
                 {{ h.quantity }} {{ $t(`common.${h.unit}`) || h.unit }}
               </p>
-              <p class="text-xs font-medium text-gray-400 dark:text-gray-500">
-                {{ formatDateTime(h.date) }}
-              </p>
+              <div class="flex items-center gap-1.5">
+                <p class="text-xs font-medium text-gray-400 dark:text-gray-500">
+                  {{ formatDateTime(h.date) }}
+                </p>
+                <UBadge
+                  v-if="h.qualityGrade"
+                  size="xs"
+                  :color="qualityColor(h.qualityGrade) as any"
+                  variant="soft"
+                >
+                  {{ $t(`harvest.quality.${h.qualityGrade}`) }}
+                </UBadge>
+              </div>
             </div>
           </div>
-          <div class="text-right flex-shrink-0">
+          <div class="text-right shrink-0">
             <p
               v-if="h.revenue"
               class="text-sm font-medium text-green-600 dark:text-green-400"
@@ -150,6 +160,26 @@
                 />
               </UFormField>
             </div>
+
+            <!-- Quality Grade -->
+            <UFormField :label="$t('harvest.quality_grade')" name="quality">
+              <div class="flex gap-2 flex-wrap">
+                <button
+                  v-for="q in qualityOptions"
+                  :key="q.value"
+                  type="button"
+                  class="px-3 py-1.5 rounded-lg border text-xs font-medium transition-all"
+                  :class="
+                    form.qualityGrade === q.value
+                      ? `bg-${q.color}-100 dark:bg-${q.color}-900/30 border-${q.color}-400 text-${q.color}-700 dark:text-${q.color}-300`
+                      : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 hover:border-gray-400'
+                  "
+                  @click="form.qualityGrade = form.qualityGrade === q.value ? '' : q.value"
+                >
+                  {{ $t(`harvest.quality.${q.value}`) }}
+                </button>
+              </div>
+            </UFormField>
           </div>
           <UFormField class="mt-2" :label="$t('common.notes')" name="notes">
             <UTextarea v-model="form.notes" :rows="2" class="w-full" />
@@ -186,10 +216,17 @@ const plantHarvests = computed(() =>
     .filter((h) => h.plantId === props.plantId)
     .sort((a, b) => b.date.localeCompare(a.date)),
 );
-const totalQty = computed(() => {
-  const sum = plantHarvests.value.reduce((acc, h) => acc + h.quantity, 0);
-  return `${sum.toFixed(1)} kg`;
+const totalQtyDisplay = computed(() => {
+  const groups = new Map<string, number>();
+  for (const h of plantHarvests.value) {
+    groups.set(h.unit, (groups.get(h.unit) ?? 0) + h.quantity);
+  }
+  if (groups.size === 0) return '0';
+  return [...groups.entries()]
+    .map(([unit, qty]) => `${qty % 1 === 0 ? qty : qty.toFixed(1)} ${unit}`)
+    .join(' · ');
 });
+const totalQty = totalQtyDisplay; // alias for backward compat
 const batchCount = computed(() => plantHarvests.value.length);
 const totalRevenue = computed(() =>
   plantHarvests.value.reduce((acc, h) => acc + (h.revenue ?? 0), 0),
@@ -198,15 +235,26 @@ const totalRevenue = computed(() =>
 const showModal = ref(false);
 const isSaving = ref(false);
 
-const currentDate = new Date().toISOString().split("T");
-const today = currentDate[0] + " " + currentDate[1]?.substring(0, 5);
+const currentDate = new Date().toISOString().split('T');
+const today = currentDate[0] + 'T' + (currentDate[1]?.substring(0, 5) ?? '00:00');
 const form = reactive({
-  quantity: "",
-  unit: "kg",
+  quantity: '',
+  unit: 'kg',
   date: today,
-  revenue: "",
-  notes: "",
+  revenue: '',
+  qualityGrade: '',
+  notes: '',
 });
+
+const qualityOptions = [
+  { value: 'excellent', color: 'green' },
+  { value: 'good', color: 'blue' },
+  { value: 'fair', color: 'yellow' },
+  { value: 'poor', color: 'red' },
+];
+
+const qualityColor = (q: string) =>
+  ({ excellent: 'green', good: 'blue', fair: 'yellow', poor: 'red' })[q] ?? 'gray';
 
 const unitOptions = [
   { label: t("common.kg"), value: "kg" },
@@ -225,6 +273,7 @@ const submit = async () => {
       unit: form.unit,
       date: form.date,
       revenue: form.revenue ? parseFloat(form.revenue) : undefined,
+      qualityGrade: form.qualityGrade || undefined,
       notes: form.notes || undefined,
     });
     if (ok) {
@@ -238,6 +287,7 @@ const submit = async () => {
         unit: "kg",
         date: today,
         revenue: "",
+        qualityGrade: "",
         notes: "",
       });
       showModal.value = false;

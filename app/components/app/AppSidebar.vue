@@ -213,51 +213,10 @@
 <script setup lang="ts">
 // Sidebar Navigation Items
 const { user, currentUserInfo } = useNostrUser();
-const switchAccountModal = useState("switchAccountModal", () => false);
 const route = useRoute();
+const { visibleNavItems } = useAppSettings();
 
-const sidebarNavItems = computed(() => [
-  {
-    label: "Feed",
-    icon: "solar:home-2-linear",
-    to: "/feed",
-  },
-  {
-    label: "Discover",
-    icon: "solar:magnifer-linear",
-    to: "/discover",
-  },
-  {
-    label: "Shorts",
-    icon: "solar:clapperboard-play-linear",
-    to: "/shorts",
-  },
-  {
-    label: "Sats Wallet",
-    icon: "solar:wallet-linear",
-    to: "/locosats",
-  },
-  {
-    label: "Journals",
-    icon: "solar:notebook-linear",
-    to: "/journals",
-  },
-  {
-    label: "Bookmarks",
-    icon: "solar:bookmark-linear",
-    to: "/bookmarks",
-  },
-  {
-    label: "GMS",
-    icon: "mynaui:sprout",
-    to: "/gms",
-  },
-  {
-    label: "Settings",
-    icon: "solar:settings-linear",
-    to: "/settings",
-  },
-]);
+const sidebarNavItems = visibleNavItems;
 </script>
 
 <style scoped>

@@ -45,7 +45,11 @@
       "high": "High",
       "medium": "Medium",
       "low": "Low"
-    }
+    },
+    "show_less": "Show less",
+    "show_all": "Show all ({count})",
+    "search_plants": "Search plants...",
+    "no_results": "No results found"
   },
   "journal": {
     "title": "My Journal",
@@ -209,7 +213,8 @@
     "monthly_revenue": "Monthly Revenue",
     "recent_plants": "Recent Plants",
     "quick_actions": "Quick Actions",
-    "pending_tasks": "Pending Tasks"
+    "pending_tasks": "Pending Tasks",
+    "total_revenue": "Total Revenue"
   },
   "plants": {
     "title": "Plant Management",
@@ -312,7 +317,9 @@
       "mango": "Mango",
       "lettuce": "Lettuce",
       "papaya": "Papaya"
-    }
+    },
+    "view_plant": "View Plant",
+    "unknown": "Unknown Plant"
   },
   "care": {
     "title": "Care Management",
@@ -382,7 +389,6 @@
     "start_logging": "Start by logging your first care activity",
     "log_first": "Log first activity",
     "upcoming_schedules": "Upcoming Schedules",
-    "activities_recorded": "activities recorded",
     "next": "Next",
     "freq": {
       "daily": "Daily",
@@ -392,12 +398,13 @@
     },
     "cost_optional": "Cost (optional)",
     "activity_type": "Activity Type",
-    "start_date": "Start Date",
     "tasks": {
       "watering": "Watering",
       "fertilizing": "Fertilizing",
       "pruning": "Pruning"
-    }
+    },
+    "mark_done": "Mark Done",
+    "overdue": "Overdue"
   },
   "sales": {
     "title": "Sales Management",
@@ -477,7 +484,28 @@
     "quality": {
       "A": "A - Excellent",
       "B": "B - Good",
-      "C": "C - Average"
-    }
+      "C": "C - Average",
+      "excellent": "Excellent",
+      "good": "Good",
+      "fair": "Fair",
+      "poor": "Poor"
+    },
+    "quality_grade": "Quality Grade"
+  },
+  "stats": {
+    "title": "Stats",
+    "total_cost": "Total Cost",
+    "total_revenue": "Revenue",
+    "net_profit": "Net Profit",
+    "roi": "ROI",
+    "cost_by_activity": "Cost by Activity",
+    "no_cost_data": "No cost data yet",
+    "monthly_revenue": "Monthly Revenue",
+    "no_harvest_data": "No harvest data yet",
+    "activity_summary": "Activity Summary",
+    "times": "times",
+    "no_data": "No stats data yet",
+    "start_logging_for_stats": "Log care & harvests to see stats",
+    "revenue": "Revenue"
   }
 }

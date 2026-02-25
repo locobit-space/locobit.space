@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen">
     <!-- Hero Section -->
-    <section class="relative overflow-hidden bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
+    <section class="relative overflow-hidden bg-linear-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
       <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 lg:py-32">
         <div class="text-center">
           <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-gray-900 dark:text-white mb-6">
@@ -49,7 +49,7 @@
           <Card hoverable padding="lg" class="h-full">
             <div class="text-center">
               <div
-                class="w-14 h-14 mx-auto mb-4 sm:mb-5 rounded-2xl bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center shadow-lg shadow-pink-500/20"
+                class="w-14 h-14 mx-auto mb-4 sm:mb-5 rounded-2xl bg-linear-to-br from-pink-500 to-purple-500 flex items-center justify-center shadow-lg shadow-pink-500/20"
               >
                 <Icon name="heroicons:play-circle" class="w-7 h-7 text-white" />
               </div>
@@ -66,7 +66,7 @@
           <Card hoverable padding="lg" class="h-full">
             <div class="text-center">
               <div
-                class="w-14 h-14 mx-auto mb-4 sm:mb-5 rounded-2xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center shadow-lg shadow-purple-500/20"
+                class="w-14 h-14 mx-auto mb-4 sm:mb-5 rounded-2xl bg-linear-to-br from-purple-500 to-blue-500 flex items-center justify-center shadow-lg shadow-purple-500/20"
               >
                 <Icon name="heroicons:globe-alt" class="w-7 h-7 text-white" />
               </div>
@@ -83,7 +83,7 @@
           <Card hoverable padding="lg" class="h-full">
             <div class="text-center">
               <div
-                class="w-14 h-14 mx-auto mb-4 sm:mb-5 rounded-2xl bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center shadow-lg shadow-yellow-500/20"
+                class="w-14 h-14 mx-auto mb-4 sm:mb-5 rounded-2xl bg-linear-to-br from-yellow-500 to-orange-500 flex items-center justify-center shadow-lg shadow-yellow-500/20"
               >
                 <Icon name="lets-icons:lightning-light" class="w-7 h-7 text-white" />
               </div>
@@ -127,7 +127,7 @@
               class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               loading="lazy"
             />
-            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+            <div class="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
             <div class="absolute bottom-3 left-3 right-3">
               <div class="flex items-center gap-2 text-white">
                 <Icon name="heroicons:play-circle-solid" class="w-4 h-4" />
@@ -142,7 +142,7 @@
     <!-- CTA Section -->
     <section class="py-16 sm:py-20 lg:py-24">
       <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <div class="bg-gradient-to-br from-primary-50 to-purple-50 dark:from-primary-900/20 dark:to-purple-900/20 rounded-2xl sm:rounded-3xl p-8 sm:p-12 lg:p-16">
+        <div class="bg-linear-to-br from-primary-50 to-purple-50 dark:from-primary-900/20 dark:to-purple-900/20 rounded-2xl sm:rounded-3xl p-8 sm:p-12 lg:p-16">
           <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4">
             {{ $t("home.cta_title") }}
           </h2>

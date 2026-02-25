@@ -508,6 +508,7 @@ export const useNostrGms = () => {
           date: tag(ev, "date"),
           revenue: Number(tag(ev, "revenue")) || 0,
           notes: ev.content,
+          qualityGrade: tag(ev, "quality-grade") || undefined,
           createdAt: ev.created_at,
         };
       });
@@ -525,6 +526,7 @@ export const useNostrGms = () => {
     date: string;
     notes?: string;
     revenue?: number;
+    qualityGrade?: string;
   }) => {
     const id = crypto.randomUUID();
     const tags: string[][] = [
@@ -536,6 +538,7 @@ export const useNostrGms = () => {
       ["date", data.date],
     ];
     if (data.revenue) tags.push(["revenue", String(data.revenue)]);
+    if (data.qualityGrade) tags.push(["quality-grade", data.qualityGrade]);
 
     const success = await publishOrQueue(
       GMS_KINDS.HARVEST,

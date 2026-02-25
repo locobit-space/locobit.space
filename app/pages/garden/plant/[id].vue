@@ -13,7 +13,7 @@
       <p class="text-base font-medium text-gray-700 dark:text-gray-300 mb-1">
         {{ $t("plants.not_found") }}
       </p>
-      <UButton :to="'/gms'" variant="outline" size="sm" class="mt-4">{{
+      <UButton :to="'/garden'" variant="outline" size="sm" class="mt-4">{{
         $t("common.back_to_dashboard")
       }}</UButton>
     </div>
@@ -27,7 +27,7 @@
             <UButton
               variant="ghost"
               icon="i-lucide-arrow-left"
-              :to="'/gms'"
+              :to="'/garden'"
               size="sm"
               class="-ml-2"
             />
@@ -39,7 +39,7 @@
           <!-- Plant name & meta -->
           <div class="flex items-start gap-4 mb-4">
             <div
-              class="w-14 h-14 rounded-2xl flex-shrink-0 flex items-center justify-center text-2xl"
+              class="w-14 h-14 rounded-2xl shrink-0 flex items-center justify-center text-2xl"
               :class="getStatusBg(plant.status)"
             >
               <Icon
@@ -64,7 +64,7 @@
                   class="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden"
                 >
                   <div
-                    class="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-green-400 to-emerald-500"
+                    class="h-full rounded-full transition-all duration-500 bg-linear-to-r from-green-400 to-emerald-500"
                     :style="{ width: `${getStatusProgress(plant.status)}%` }"
                   />
                 </div>
@@ -97,7 +97,7 @@
               </button>
               <div
                 v-if="i < statusSteps.length - 1"
-                class="w-4 h-px flex-shrink-0"
+                class="w-4 h-px shrink-0"
                 :class="
                   statusPassed(statusSteps[i + 1].value, plant.status)
                     ? 'bg-green-400'
@@ -236,7 +236,7 @@
                   class="flex gap-4 relative items-center"
                 >
                   <div
-                    class="flex-shrink-0 z-10 w-12 h-12 rounded-full flex items-center justify-center"
+                    class="shrink-0 z-10 w-12 h-12 rounded-full flex items-center justify-center"
                     :class="getStatusBg(hist.status)"
                   >
                     <Icon
@@ -306,6 +306,14 @@
         <div v-show="activeTab == 2">
           <GmsHarvestTab :plant-id="plantId" />
         </div>
+
+        <!-- Stats tab -->
+        <div v-show="activeTab == 3">
+          <GmsStatsTab
+            :plant-id="plantId"
+            :planting-cost="plant?.plantingCost"
+          />
+        </div>
       </div>
     </template>
 
@@ -345,6 +353,7 @@ const tabs = computed(() => [
   { label: t("plants.tab_overview"), slot: "overview" },
   { label: t("care.title"), slot: "care" },
   { label: t("harvest.title"), slot: "harvest" },
+  { label: t("stats.title"), slot: "stats" },
 ]);
 
 /* ─── status helpers ────────────────────────────────── */

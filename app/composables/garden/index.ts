@@ -1,0 +1,10 @@
+// composables/garden/index.ts — barrel export
+export * from "./useGardenOS"
+export * from "./useGardenTelemetry"
+export * from "./useGardenZones"
+export * from "./useGardenIrrigation"
+export * from "./useGardenAlerts"
+export * from "./useGardenAutomation"
+export * from "./useGardenAudit"
+export * from "./useGardenNodes"
+export * from "./schemas"

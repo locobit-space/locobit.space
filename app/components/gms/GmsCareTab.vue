@@ -1,22 +1,44 @@
 <template>
   <div class="space-y-6">
     <!-- Action bar -->
-    <div class="flex items-center justify-between">
-      <p class="text-sm text-gray-500 dark:text-gray-400">
-        {{ plantCareLogs.length }} {{ $t("care.activities_recorded") }}
-      </p>
-      <UButton
-        icon="i-lucide-plus"
-        size="sm"
-        color="orange"
-        @click="showLogModal = true"
-      >
-        {{ $t("care.log_activity") }}
-      </UButton>
+    <div class="flex flex-col gap-3">
+      <div class="flex items-center justify-between">
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+          {{ filteredLogs.length }} {{ $t("care.activities_recorded") }}
+        </p>
+        <UButton
+          icon="i-lucide-plus"
+          size="sm"
+          color="orange"
+          @click="showLogModal = true"
+        >
+          {{ $t("care.log_activity") }}
+        </UButton>
+      </div>
+      <!-- Activity filter chips -->
+      <div class="flex gap-1.5 flex-wrap">
+        <button
+          class="px-3 py-1 rounded-full text-xs font-medium border transition-all"
+          :class="activityFilter === '' ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 border-transparent' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-gray-400'"
+          @click="activityFilter = ''"
+        >
+          {{ $t('common.all') }}
+        </button>
+        <button
+          v-for="act in activities"
+          :key="act.value"
+          class="flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium border transition-all"
+          :class="activityFilter === act.value ? 'bg-green-600 text-white border-green-600' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-green-400'"
+          @click="activityFilter = activityFilter === act.value ? '' : act.value"
+        >
+          <Icon :name="act.icon" class="h-3 w-3" />
+          {{ $t(`care.activities.${act.value}`) }}
+        </button>
+      </div>
     </div>
 
     <!-- Care timeline -->
-    <div v-if="plantCareLogs.length === 0" class="py-16 text-center">
+    <div v-if="filteredLogs.length === 0" class="py-16 text-center">
       <div
         class="mx-auto w-16 h-16 rounded-2xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center mb-4"
       >
@@ -45,13 +67,13 @@
       />
       <ul class="space-y-4">
         <li
-          v-for="log in plantCareLogs"
+          v-for="log in filteredLogs"
           :key="log.id"
           class="flex gap-4 relative"
         >
           <!-- Icon dot -->
           <div
-            class="flex-shrink-0 z-10 w-12 h-12 rounded-full flex items-center justify-center"
+            class="shrink-0 z-10 w-12 h-12 rounded-full flex items-center justify-center"
             :class="getCareColor(log.activity)"
           >
             <Icon :name="getCareIcon(log.activity)" class="h-5 w-5" />
@@ -76,7 +98,7 @@
                 {{ log.notes }}
               </p>
             </div>
-            <div class="text-right flex-shrink-0">
+            <div class="text-right shrink-0">
               <span
                 class="text-xs font-medium text-gray-400 dark:text-gray-500"
                 >{{ formatDateTime(log.date) }}</span
@@ -116,26 +138,41 @@
         <li
           v-for="s in plantSchedules"
           :key="s.id"
-          class="flex items-center justify-between px-5 py-3.5"
+          class="flex items-center justify-between px-5 py-3.5 transition-colors"
+          :class="isOverdue(s.nextDue) ? 'bg-red-50 dark:bg-red-900/10' : ''"
         >
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-3 min-w-0">
             <Icon
               :name="getCareIcon(s.activity)"
-              class="h-5 w-5 text-gray-400"
+              class="h-5 w-5 shrink-0"
+              :class="isOverdue(s.nextDue) ? 'text-red-500' : 'text-gray-400'"
             />
-            <span
-              class="text-[15px] font-medium text-gray-900 dark:text-white capitalize"
-              >{{
-                $t(`care.activities.${s.activity.toLowerCase()}`) || s.activity
-              }}</span
-            >
-            <UBadge size="xs" variant="soft" color="blue">{{
-              $t(`care.frequencies.${s.frequency.toLowerCase()}`) || s.frequency
-            }}</UBadge>
+            <div class="min-w-0">
+              <span
+                class="text-[15px] font-medium text-gray-900 dark:text-white capitalize block truncate"
+              >{{ $t(`care.activities.${s.activity.toLowerCase()}`) || s.activity }}</span>
+              <div class="flex items-center gap-1.5 mt-0.5">
+                <UBadge size="xs" variant="soft" :color="isOverdue(s.nextDue) ? 'red' : 'blue'">
+                  {{ isOverdue(s.nextDue) ? $t('care.overdue') : $t(`care.frequencies.${s.frequency.toLowerCase()}`) || s.frequency }}
+                </UBadge>
+                <span class="text-xs text-gray-400 dark:text-gray-500">
+                  {{ $t("care.next") }}: {{ formatDateTime(s.nextDue) }}
+                </span>
+              </div>
+            </div>
           </div>
-          <span class="text-xs font-medium text-gray-400 dark:text-gray-500">
-            {{ $t("care.next") }}: {{ formatDateTime(s.nextDue) }}
-          </span>
+          <UButton
+            v-if="isOverdue(s.nextDue)"
+            size="xs"
+            color="green"
+            variant="soft"
+            icon="i-lucide-check"
+            :loading="markingDoneId === s.id"
+            class="shrink-0 ml-2"
+            @click.stop="markDone(s)"
+          >
+            {{ $t('care.mark_done') }}
+          </UButton>
         </li>
       </ul>
     </div>
@@ -236,7 +273,7 @@
               {{ $t("care.add_schedule") }}
             </h3>
           </template>
-          <div class="space-y-4 grid grid-cols-2 gap-3">
+          <div class="grid grid-cols-2 gap-3">
             <UFormField :label="$t('care.activity_type')" name="activity">
               <USelect
                 v-model="scheduleForm.activity"
@@ -289,6 +326,9 @@ const toast = useToast();
 const { careLogs, schedules, createCareLog, createSchedule, isOnline } =
   useNostrGms();
 
+const activityFilter = ref('');
+const markingDoneId = ref<string | null>(null);
+
 const { formatDateTime } = useHelpers();
 
 const plantCareLogs = computed(() =>
@@ -296,6 +336,14 @@ const plantCareLogs = computed(() =>
     .filter((l) => l.plantId === props.plantId)
     .sort((a, b) => b.date.localeCompare(a.date)),
 );
+
+const filteredLogs = computed(() =>
+  activityFilter.value
+    ? plantCareLogs.value.filter((l) => l.activity === activityFilter.value)
+    : plantCareLogs.value,
+);
+
+const isOverdue = (nextDue: string) => new Date(nextDue) <= new Date();
 const plantSchedules = computed(() =>
   schedules.value.filter((s) => s.plantId === props.plantId && s.isActive),
 );
@@ -324,10 +372,12 @@ const activities = [
   { value: "weeding", icon: "lucide:shovel" },
   { value: "mulching", icon: "lucide:layers" },
 ];
-const activityOptions = activities.map((a) => ({
-  label: a.value,
-  value: a.value,
-}));
+const activityOptions = computed(() =>
+  activities.map((a) => ({
+    label: t(`care.activities.${a.value}`),
+    value: a.value,
+  }))
+);
 const frequencyOptions = [
   { label: t("care.freq.daily"), value: "daily" },
   { label: t("care.freq.weekly"), value: "weekly" },
@@ -365,6 +415,25 @@ const getCareColor = (a: string) =>
     mulching:
       "bg-purple-100 text-purple-600 dark:bg-purple-900/40 dark:text-purple-400",
   })[a] || "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400";
+
+const markDone = async (s: (typeof schedules.value)[0]) => {
+  markingDoneId.value = s.id;
+  try {
+    await createCareLog({
+      plantId: props.plantId,
+      activity: s.activity,
+      date: new Date().toISOString().replace('T', ' ').substring(0, 16),
+      notes: s.notes,
+    });
+    toast.add({
+      title: t('care.log_success'),
+      color: 'green',
+      icon: 'i-lucide-check-circle',
+    });
+  } finally {
+    markingDoneId.value = null;
+  }
+};
 
 const submitLog = async () => {
   if (!logForm.activity) return;

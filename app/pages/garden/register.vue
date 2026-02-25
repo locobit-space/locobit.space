@@ -6,7 +6,7 @@
         <div class="flex justify-between items-center py-6">
           <div class="flex items-center">
             <UButton
-              :to="'/gms'"
+              :to="'/garden'"
               icon="i-lucide-arrow-left"
               variant="ghost"
               color="primary"
@@ -284,7 +284,7 @@
           <div
             class="flex justify-end space-x-4 pt-6 border-t border-gray-200 dark:border-gray-700"
           >
-            <UButton :to="'/dashboard'" variant="ghost" color="gray">
+            <UButton :to="'/garden'" variant="ghost" color="gray">
               {{ $t("common.cancel") }}
             </UButton>
 
@@ -347,7 +347,15 @@
                 {{ $t("plants.register_another") }}
               </UButton>
 
-              <UButton :to="'/dashboard'" color="primary">
+              <UButton
+                :to="`/garden/plant/${registeredPlant?.id}`"
+                color="primary"
+                variant="outline"
+              >
+                {{ $t("plants.view_plant") }}
+              </UButton>
+
+              <UButton :to="'/garden'" color="primary">
                 {{ $t("common.back_to_dashboard") }}
               </UButton>
             </div>
