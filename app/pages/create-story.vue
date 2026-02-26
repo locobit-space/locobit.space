@@ -67,7 +67,8 @@
             <UTextarea
               v-model="storyText"
               :placeholder="$t('social.type_something')"
-              :rows="3"
+              :rows="2"
+              class="w-full"
             />
 
             <!-- Font Selection -->
@@ -207,6 +208,7 @@
             v-model="caption"
             :placeholder="$t('social.add_caption')"
             :rows="2"
+            class="w-full"
           />
           <UButton
             block
@@ -310,13 +312,15 @@
               </div>
 
               <!-- Remove Media Button -->
-              <button
-                v-if="selectedMedia"
-                class="absolute top-4 right-4 p-2 bg-black/60 rounded-full text-white hover:bg-black/80 transition-colors z-10"
-                @click="removeMedia"
-              >
-                <Icon name="heroicons:x-mark" class="w-4 h-4" />
-              </button>
+              <div>
+                <button
+                  v-if="selectedMedia"
+                  class="absolute top-4 right-4 w-8 h-8 bg-black/60 rounded-full text-gray-100 hover:bg-black/80 transition-colors z-10 flex items-center justify-center"
+                  @click="removeMedia"
+                >
+                  <Icon name="heroicons:x-mark" class="w-4 h-4" />
+                </button>
+              </div>
 
               <!-- Story Header Preview -->
               <div
