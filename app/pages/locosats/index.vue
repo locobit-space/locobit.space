@@ -1,31 +1,25 @@
 <template>
   <div class="min-h-screen">
     <!-- Sync Status Bar -->
+    <!-- Error state: full bar -->
     <div
-      v-if="
-        finance.syncStatus.value.isSyncing || finance.syncStatus.value.hasError
-      "
-      class="px-4 py-2 text-xs sm:text-sm text-center"
+      v-if="finance.syncStatus.value.hasError"
+      class="px-4 py-2 text-xs sm:text-sm text-center text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20"
     >
       <Icon
-        v-if="finance.syncStatus.value.isSyncing"
-        name="svg-spinners:ring-resize"
-        class="w-3.5 h-3.5 inline mr-1.5"
-      />
-      <Icon
-        v-else-if="finance.syncStatus.value.hasError"
         name="heroicons:exclamation-triangle"
         class="w-3.5 h-3.5 inline mr-1.5"
       />
-      <span v-if="finance.syncStatus.value.isSyncing"
-        >Syncing with Nostr...</span
-      >
-      <span v-else-if="finance.syncStatus.value.hasError">
-        Sync failed.
-        <button @click="finance.retrySync()" class="underline ml-1">
-          Retry
-        </button>
-      </span>
+      Sync failed.
+      <button @click="finance.retrySync()" class="underline ml-1">Retry</button>
+    </div>
+    <!-- Background sync: subtle floating pill (non-blocking) -->
+    <div
+      v-else-if="finance.isSyncingBackground.value"
+      class="fixed top-3 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-900/80 dark:bg-white/10 backdrop-blur text-white dark:text-gray-100 text-xs shadow-lg pointer-events-none"
+    >
+      <Icon name="svg-spinners:ring-resize" class="w-3 h-3" />
+      Refreshing…
     </div>
 
     <!-- Header with Balance -->
@@ -78,7 +72,7 @@
         <!-- Income / Expense Summary -->
         <div class="grid grid-cols-2 gap-3 sm:gap-4">
           <div
-            class="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-3.5"
+            class="bg-white/10 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-xl p-3.5"
           >
             <div class="flex items-center gap-2 mb-1.5">
               <div
@@ -102,7 +96,7 @@
             </div>
           </div>
           <div
-            class="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-3.5"
+            class="bg-white/10 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-xl p-3.5"
           >
             <div class="flex items-center gap-2 mb-1.5">
               <div
@@ -384,7 +378,7 @@
         </div>
 
         <!-- Loading State -->
-        <div v-if="isLoading" class="p-8 space-y-4">
+        <div v-if="finance.isLoading.value" class="p-8 space-y-4">
           <div
             v-for="i in 3"
             :key="i"
@@ -722,7 +716,6 @@ const router = useRouter();
 const toast = useToast();
 
 // State
-const isLoading = ref(false);
 const searchQuery = ref("");
 const showDetailModal = ref(false);
 const selectedTransaction = ref<FinanceEntry | null>(null);
@@ -919,16 +912,11 @@ const formatRelativeDate = (dateStr: string) => {
   return date.toLocaleDateString();
 };
 
-// Load on mount
-onMounted(async () => {
-  isLoading.value = true;
-  try {
-    await Promise.all([finance.loadEntries(), finance.fetchExchangeRate()]);
-  } catch (err) {
-    console.error("Failed to load data:", err);
-  } finally {
-    isLoading.value = false;
-  }
+// Load on mount – cache-first: localStorage data shown instantly,
+// Nostr sync happens silently in background only when data is stale (>5 min)
+onMounted(() => {
+  finance.loadEntries();
+  finance.fetchExchangeRate(); // resolves from cache if fresh
 });
 
 // Auto-sync every 5 minutes if enabled
@@ -937,10 +925,10 @@ onMounted(() => {
   if (finance.settings.value.auto_sync) {
     syncInterval = setInterval(
       () => {
-        finance.loadEntries();
+        finance.loadEntries(true); // force=true to always refresh on schedule
       },
       5 * 60 * 1000,
-    ); // 5 minutes
+    );
   }
 });
 

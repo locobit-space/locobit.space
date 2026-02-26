@@ -11,6 +11,10 @@ import type {
 } from "~/types";
 import { ExchangeRateService } from "../services/exchangeRateService";
 
+const EXCHANGE_RATE_CACHE_KEY = "finance_exchange_rate_cache";
+const EXCHANGE_RATE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const SYNC_STALE_MS = 5 * 60 * 1000; // consider Nostr data stale after 5 min
+
 export function useFinance() {
   const toast = useToast();
 
@@ -52,6 +56,7 @@ export function useFinance() {
 
   const currentExchangeRate = ref<number>(0.0413); // sats per LAK (default)
   const isLoading = ref<boolean>(false);
+  const isSyncingBackground = ref<boolean>(false);
   const error = ref<string | null>(null);
 
   // Helper function to handle errors
@@ -67,22 +72,45 @@ export function useFinance() {
       color: "red",
     });
   };
-  // Exchange rate
+  // Exchange rate with localStorage TTL cache
   const fetchExchangeRate = async (
     currency: string = settings.value.default_currency,
+    force = false,
   ): Promise<number> => {
-    isLoading.value = true;
-    error.value = null;
+    // Check cache first
+    if (!force) {
+      try {
+        const cached = localStorage.getItem(EXCHANGE_RATE_CACHE_KEY);
+        if (cached) {
+          const {
+            rate,
+            currency: cachedCurrency,
+            timestamp,
+          } = JSON.parse(cached);
+          const age = Date.now() - timestamp;
+          if (age < EXCHANGE_RATE_TTL_MS && cachedCurrency === currency) {
+            currentExchangeRate.value = rate;
+            return rate;
+          }
+        }
+      } catch {
+        /* ignore */
+      }
+    }
 
+    error.value = null;
     try {
       const rate = await ExchangeRateService.fetchRate(currency);
-      currentExchangeRate.value = rate; // Precision to 6 decimals
+      currentExchangeRate.value = rate;
+      // Persist cache
+      localStorage.setItem(
+        EXCHANGE_RATE_CACHE_KEY,
+        JSON.stringify({ rate, currency, timestamp: Date.now() }),
+      );
       return rate;
     } catch (err) {
       handleError(err, "Failed to fetch exchange rate");
       return currentExchangeRate.value;
-    } finally {
-      isLoading.value = false;
     }
   };
 
@@ -220,7 +248,7 @@ export function useFinance() {
     saveEntries();
   };
 
-  // Helper function to load data from localStorage
+  // Helper function to load data from localStorage (synchronous – zero latency)
   const loadFromLocalStorage = (): void => {
     try {
       const savedEntries = localStorage.getItem("finance_entries");
@@ -237,6 +265,19 @@ export function useFinance() {
         if (parsed.default_currency && parsed.display_unit) {
           settings.value = parsed as UserSettings;
         }
+      }
+
+      // Restore last-sync timestamp so stale check is accurate
+      const savedSyncStatus = localStorage.getItem("finance_last_sync");
+      if (savedSyncStatus) {
+        syncStatus.value.lastSync = savedSyncStatus;
+      }
+
+      // Restore cached exchange rate
+      const cachedRate = localStorage.getItem(EXCHANGE_RATE_CACHE_KEY);
+      if (cachedRate) {
+        const { rate } = JSON.parse(cachedRate);
+        if (typeof rate === "number") currentExchangeRate.value = rate;
       }
     } catch (err) {
       console.error("Failed to load from localStorage:", err);
@@ -276,37 +317,54 @@ export function useFinance() {
     }
   };
 
-  // Load entries from localStorage
+  // ── Load entries: cache-first, background-sync ──────────────────────────────
+  //
+  // Strategy:
+  //   1. Instantly surface whatever is in localStorage (zero network wait).
+  //   2. If data is fresh (<5 min since last Nostr sync), skip the relay query
+  //      unless `force` is true.
+  //   3. When a relay query IS needed, run it silently in the background so
+  //      the UI is never blocked by a loading spinner on repeat visits.
+  // ────────────────────────────────────────────────────────────────────────────
+  const loadEntries = async (force = false): Promise<void> => {
+    // Validate user
+    if (!user.value?.publicKey || !user.value?.privateKey) {
+      console.warn("[finance] User not authenticated – skipping load");
+      return;
+    }
 
-  const loadEntries = async (): Promise<void> => {
+    // Step 1 – paint from cache immediately (synchronous, no spinner needed)
+    const cacheWasEmpty = entries.value.length === 0;
+    loadFromLocalStorage();
+    const hasCacheData = entries.value.length > 0;
+
+    // Step 2 – decide whether a Nostr sync is needed
+    const lastSync = syncStatus.value.lastSync
+      ? new Date(syncStatus.value.lastSync).getTime()
+      : 0;
+    const isStale = Date.now() - lastSync > SYNC_STALE_MS;
+
+    if (!force && !isStale && hasCacheData) {
+      // Data is fresh – nothing more to do
+      return;
+    }
+
+    // Step 3 – background sync (show subtle non-blocking indicator)
+    isSyncingBackground.value = true;
+    syncStatus.value.isSyncing = true;
+    syncStatus.value.hasError = false;
+
+    // Only show the full loading skeleton on the very first ever load
+    if (cacheWasEmpty) isLoading.value = true;
+
     try {
-      // Validate user authentication
-      if (!user.value?.publicKey || !user.value?.privateKey) {
-        throw new Error(
-          "User not authenticated. Please log in to view entries.",
-        );
-      }
-
-      // Load local storage data
-      loadFromLocalStorage();
-
-      if (!user.value) {
-        return;
-      }
-
-      // Start syncing
-      syncStatus.value.isSyncing = true;
-      syncStatus.value.hasError = false;
-
-      // Fetch and process remote events
       const _events = await queryEvents({
         kinds: [PRIVATE_NOTE_KIND],
         authors: [user.value.publicKey],
         "#t": ["finance"],
-        // limit: 0,
       });
-      const _items = [];
 
+      const _items: FinanceEntry[] = [];
       for (const event of _events) {
         if (!event.content) continue;
         try {
@@ -318,10 +376,11 @@ export function useFinance() {
           const parsedContent = JSON.parse(decryptedContent);
           _items.push(createFinanceEntry(event, parsedContent));
         } catch (err) {
-          console.error(`Failed to process event ${event.id}:`, err);
+          console.error(`[finance] Failed to process event ${event.id}:`, err);
         }
       }
-      // remove duplicate entries
+
+      // Merge remote + local, deduplicate, sort newest-first
       _items.push(...entries.value);
       entries.value = _items
         .filter(
@@ -333,17 +392,21 @@ export function useFinance() {
             new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
         );
 
-      // Mark all as synced
       entries.value.forEach((entry) => (entry.synced = true));
 
-      syncStatus.value.lastSync = new Date().toISOString();
+      const now = new Date().toISOString();
+      syncStatus.value.lastSync = now;
       syncStatus.value.pendingCount = 0;
 
+      // Persist last-sync timestamp separately so loadFromLocalStorage can restore it
+      localStorage.setItem("finance_last_sync", now);
       saveEntries();
     } catch (err) {
-      handleError(err, "Failed to load entries");
+      handleError(err, "Failed to sync entries from Nostr");
     } finally {
       syncStatus.value.isSyncing = false;
+      isSyncingBackground.value = false;
+      isLoading.value = false;
     }
   };
 
@@ -443,7 +506,7 @@ export function useFinance() {
     settings.value.budgets[index] = {
       ...settings.value.budgets[index],
       ...updates,
-    };
+    } as Budget;
 
     saveSettings();
 
@@ -583,6 +646,7 @@ export function useFinance() {
     settings,
     currentExchangeRate,
     isLoading,
+    isSyncingBackground,
     error,
     totals,
     syncStatus,
