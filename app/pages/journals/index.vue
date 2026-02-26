@@ -70,7 +70,7 @@
     </div>
 
     <!-- Main Content -->
-    <div class="max-w-4xl mx-auto px-4">
+    <div class="max-w-4xl mx-auto px-4 pt-4">
       <!-- Login Required -->
       <div
         v-if="!user"

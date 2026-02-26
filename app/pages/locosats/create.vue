@@ -135,7 +135,7 @@
               :class="[
                 form.category === cat.name
                   ? 'bg-primary-50 dark:bg-primary-900/30 ring-2 ring-primary-500 dark:ring-primary-400'
-                  : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-750',
+                  : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700',
               ]"
             >
               <!-- Selected Indicator -->
