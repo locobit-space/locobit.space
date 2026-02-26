@@ -41,7 +41,7 @@
       >
         <div class="p-4 border-b border-gray-100 dark:border-gray-800">
           <div class="flex items-center justify-between mb-3">
-            <h1 class="text-lg font-bold text-white  dark:text-white">
+            <h1 class="text-lg font-bold text-white dark:text-white">
               Settings
             </h1>
             <NuxtLink
@@ -160,6 +160,7 @@
                 v-model="searchQuery"
                 placeholder="Search..."
                 icon="mynaui:search"
+                class="w-full"
               />
             </div>
           </div>

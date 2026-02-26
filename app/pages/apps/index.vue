@@ -14,7 +14,7 @@
       <!-- Theme Toggle -->
       <button
         @click="toggleTheme"
-        class="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-xl border-gray-100 dark:border-gray-700 shadow-xs active:scale-95 transition-transform w-full"
+        class="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-xl border-gray-100 dark:border-gray-700 border active:scale-95 transition-transform w-full"
       >
         <div
           class="w-10 h-10 rounded-lg flex items-center justify-center transition-colors duration-300 shrink-0"
@@ -32,8 +32,9 @@
         <div class="text-left">
           <span
             class="block text-xs font-medium text-gray-500 dark:text-gray-400"
-            >Theme</span
           >
+            Theme
+          </span>
           <span
             class="block text-sm font-bold text-gray-900 dark:text-white leading-tight"
           >
@@ -45,7 +46,7 @@
       <!-- Language Toggle -->
       <button
         @click="toggleLanguage"
-        class="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-xl border-gray-100 dark:border-gray-700 shadow-xs active:scale-95 transition-transform w-full"
+        class="flex items-center gap-3 p-3 border bg-white dark:bg-gray-800 rounded-xl border-gray-100 dark:border-gray-700 active:scale-95 transition-transform w-full"
       >
         <div
           class="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0"
@@ -55,12 +56,13 @@
         <div class="text-left">
           <span
             class="block text-xs font-medium text-gray-500 dark:text-gray-400"
-            >Lang</span
           >
+            Language
+          </span>
           <span
-            class="block text-sm font-bold text-gray-900 dark:text-white leading-tight uppercase"
+            class="block text-sm font-bold text-gray-900 dark:text-white leading-tight en"
           >
-            {{ locale }}
+            {{ getLangLabel(locale) }}
           </span>
         </div>
       </button>
@@ -68,7 +70,9 @@
 
     <!-- Apps Grid -->
     <div class="mb-2 flex items-center justify-between">
-      <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+      <h2
+        class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+      >
         Apps
       </h2>
       <NuxtLink
@@ -80,11 +84,11 @@
       </NuxtLink>
     </div>
 
-    <div class="grid grid-cols-2 gap-3">
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
       <div v-for="app in allApps" :key="app.key" class="relative">
         <NuxtLinkLocale
           :to="app.to"
-          class="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-xl border-gray-100 dark:border-gray-700 shadow-xs active:scale-95 transition-transform w-full"
+          class="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-xl border-gray-100 border dark:border-gray-700 active:scale-95 transition-transform w-full"
         >
           <!-- App Icon -->
           <div
@@ -100,25 +104,45 @@
 
           <!-- App Label -->
           <div class="flex-1 min-w-0">
-            <span class="block text-sm font-bold text-gray-900 dark:text-white truncate">{{ app.label }}</span>
-            <span v-if="app.description" class="block text-xs text-gray-400 dark:text-gray-500 truncate">{{ app.description }}</span>
+            <span
+              class="block text-sm font-bold text-gray-900 dark:text-white truncate"
+              >{{ app.label }}</span
+            >
+            <span
+              v-if="app.description"
+              class="block text-xs text-gray-400 dark:text-gray-500 truncate"
+              >{{ app.description }}</span
+            >
           </div>
         </NuxtLinkLocale>
 
         <!-- Sidebar pin toggle -->
         <button
           v-if="app.navKey"
-          :title="isNavItemVisible(app.navKey) ? 'Remove from sidebar' : 'Add to sidebar'"
+          :title="
+            isNavItemVisible(app.navKey)
+              ? 'Remove from sidebar'
+              : 'Add to sidebar'
+          "
           class="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full flex items-center justify-center transition-all shadow-sm border"
           :class="
             isNavItemVisible(app.navKey)
-              ? 'bg-primary-600 dark:bg-primary-500 border-primary-700 dark:border-primary-600 text-white'
+              ? 'bg-primary-600 dark:bg-primary-500 border-primary-700 dark:border-primary-600 text-gray-200'
               : 'bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-400'
           "
           :disabled="isNavRequired(app.navKey)"
-          @click.prevent="!isNavRequired(app.navKey) && toggleNavItem(app.navKey)"
+          @click.prevent="
+            !isNavRequired(app.navKey) && toggleNavItem(app.navKey)
+          "
         >
-          <Icon :name="isNavItemVisible(app.navKey) ? 'heroicons:check' : 'heroicons:plus'" class="w-3 h-3" />
+          <Icon
+            :name="
+              isNavItemVisible(app.navKey)
+                ? 'heroicons:check'
+                : 'heroicons:plus'
+            "
+            class="w-3 h-3"
+          />
         </button>
       </div>
     </div>
@@ -136,16 +160,26 @@
 import { ALL_NAV_ITEMS } from "~/composables/useAppSettings";
 
 const colorMode = useColorMode();
-const { locale, setLocale } = useI18n();
+const { locale, setLocale, locales } = useI18n();
 const { isNavItemVisible, toggleNavItem } = useAppSettings();
 
 useHead({ title: "BitOS Apps" });
 
 const isDark = computed(() => colorMode.value === "dark");
-const toggleTheme = () => { colorMode.preference = colorMode.value === "dark" ? "light" : "dark"; };
-const toggleLanguage = () => { setLocale(locale.value === "en" ? "lo" : "en"); };
+const toggleTheme = () => {
+  colorMode.preference = colorMode.value === "dark" ? "light" : "dark";
+};
+const toggleLanguage = () => {
+  setLocale(locale.value === "en" ? "lo" : "en");
+};
 
-const isNavRequired = (key: string) => ALL_NAV_ITEMS.find((i) => i.key === key)?.required ?? false;
+const getLangLabel = (lang: string) => {
+  const current = locales.value.find((l) => l.code === lang);
+  return current?.name ?? "Unknown";
+};
+
+const isNavRequired = (key: string) =>
+  ALL_NAV_ITEMS.find((i) => i.key === key)?.required ?? false;
 
 const BOLD_ICONS: Record<string, string> = {
   feed: "solar:home-2-bold",
@@ -158,6 +192,8 @@ const BOLD_ICONS: Record<string, string> = {
   gardenos: "lucide:cpu",
   settings: "solar:settings-bold",
 };
+
+const { currentUserInfo } = useNostrUser();
 
 const allApps = [
   ...ALL_NAV_ITEMS.map((item) => ({
@@ -173,9 +209,8 @@ const allApps = [
     navKey: null as string | null,
     label: "Profile",
     icon: "solar:user-circle-bold",
-    to: "/profile",
+    to: `/profile/${currentUserInfo.value?.pubkey}`,
     description: "Your identity",
   },
 ];
-
 </script>
