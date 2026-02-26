@@ -32,7 +32,7 @@ export const useNostrFeed = () => {
     const hashtagRegex = /#(\w+)/g;
     return [
       ...new Set(
-        Array.from(content.matchAll(hashtagRegex), (match) => match[1]!)
+        Array.from(content.matchAll(hashtagRegex), (match) => match[1]!),
       ),
     ];
   };
@@ -54,7 +54,7 @@ export const useNostrFeed = () => {
 
       const signedEvent = finalizeEvent(
         eventTemplate,
-        hexToBytes(user.value.privateKey)
+        hexToBytes(user.value.privateKey),
       );
       const result = await publishEvent(signedEvent);
 
@@ -63,7 +63,7 @@ export const useNostrFeed = () => {
         notes.value.sort((a, b) => b.created_at - a.created_at);
         latestTimestamp.value = Math.max(
           latestTimestamp.value,
-          signedEvent.created_at
+          signedEvent.created_at,
         );
       }
 
@@ -92,13 +92,13 @@ export const useNostrFeed = () => {
           notes.value.sort((a, b) => b.created_at - a.created_at);
           latestTimestamp.value = Math.max(
             latestTimestamp.value,
-            event.created_at
+            event.created_at,
           );
         },
         oneose() {
           isLoading.value = false;
         },
-      }
+      },
     );
 
     return subscription;
@@ -106,13 +106,13 @@ export const useNostrFeed = () => {
 
   const mergeUniqueEvents = (
     newEvents: Event[],
-    existingEvents: Event[]
+    existingEvents: Event[],
   ): Event[] => {
     return [
       ...newEvents,
       ...existingEvents.filter(
         (existingEvent) =>
-          !newEvents.some((newEvent) => newEvent.id === existingEvent.id)
+          !newEvents.some((newEvent) => newEvent.id === existingEvent.id),
       ),
     ];
   };
@@ -122,8 +122,8 @@ export const useNostrFeed = () => {
     return newEvents.filter(
       (newEvent) =>
         !existingEvents.some(
-          (existingEvent) => existingEvent.id === newEvent.id
-        )
+          (existingEvent) => existingEvent.id === newEvent.id,
+        ),
     );
   };
 
@@ -146,7 +146,7 @@ export const useNostrFeed = () => {
       since?: number;
       until?: number;
       authors?: string[];
-    } = {}
+    } = {},
   ) => {
     isLoading.value = true;
     const {
@@ -177,7 +177,7 @@ export const useNostrFeed = () => {
       const events = await queryEvents(filterQuery);
       const uniqueEvents = mergeUniqueEvents(events, notes.value);
       const sortedEvents = uniqueEvents.sort(
-        (a, b) => b.created_at - a.created_at
+        (a, b) => b.created_at - a.created_at,
       );
       notes.value = sortedEvents;
 
@@ -187,7 +187,7 @@ export const useNostrFeed = () => {
       ) {
         latestTimestamp.value = Math.max(
           latestTimestamp.value,
-          sortedEvents[0].created_at
+          sortedEvents[0].created_at,
         );
       }
 
@@ -222,7 +222,7 @@ export const useNostrFeed = () => {
       filter?: "for-you" | "following" | "hashtag";
       hashtag?: string;
       limit?: number;
-    } = {}
+    } = {},
   ) => {
     if (notes.value.length === 0) return false;
 
@@ -259,7 +259,7 @@ export const useNostrFeed = () => {
       authors?: string[];
       since?: number;
       until?: number;
-    } = {}
+    } = {},
   ) => {
     if (!query.trim()) return [];
 
@@ -275,7 +275,7 @@ export const useNostrFeed = () => {
 
       const queryLower = query.toLowerCase();
       return searchResults.filter((note) =>
-        note.content.toLowerCase().includes(queryLower)
+        note.content.toLowerCase().includes(queryLower),
       );
     } catch (e) {
       error.value = e;
