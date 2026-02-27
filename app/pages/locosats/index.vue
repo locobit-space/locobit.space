@@ -16,7 +16,7 @@
     <!-- Background sync: subtle floating pill (non-blocking) -->
     <div
       v-else-if="finance.isSyncingBackground.value"
-      class="fixed top-3 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-900/80 dark:bg-white/10 backdrop-blur text-white dark:text-gray-100 text-xs shadow-lg pointer-events-none"
+      class="fixed top-3 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-900/80 dark:bg-white/10 backdrop-blur text-gray-100 dark:text-gray-100 text-xs shadow-lg pointer-events-none"
     >
       <Icon name="svg-spinners:ring-resize" class="w-3 h-3" />
       Refreshing…
