@@ -83,7 +83,7 @@
 </template>
 
 <script setup lang="ts">
-import type { UserInfo } from "~~/types";
+import type { UserInfo } from "~/types";
 
 const toast = useToast();
 const { saveUser } = useNostrStorage();

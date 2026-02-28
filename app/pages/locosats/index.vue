@@ -34,8 +34,21 @@
             <Icon
               v-if="finance.syncStatus.value.pendingCount > 0"
               name="heroicons:cloud-arrow-up"
-              class="w-4 h-4 animate-pulse"
+              class="w-4 h-4 animate-pulse text-primary-400"
             />
+            <!-- Manual sync button -->
+            <button
+              @click="handleManualSync"
+              :disabled="isManualSyncing || finance.isSyncingBackground.value"
+              class="p-1 rounded-full hover:bg-white/20 transition-colors disabled:opacity-40"
+              :title="finance.syncStatus.value.lastSync ? 'Last sync: ' + new Date(finance.syncStatus.value.lastSync).toLocaleTimeString() : 'Sync from Nostr'"
+            >
+              <Icon
+                name="heroicons:arrow-path"
+                class="w-3.5 h-3.5"
+                :class="(isManualSyncing || finance.isSyncingBackground.value) ? 'animate-spin' : ''"
+              />
+            </button>
           </div>
           <div class="text-4xl sm:text-5xl font-bold mb-2">
             <template v-if="finance.settings.value.display_unit === 'sats'">
@@ -256,7 +269,7 @@
             {{ $t("finance.budget_goals") }}
           </h3>
           <NuxtLink
-            to="/locosats/budgets"
+            to="/settings/budgets"
             class="text-xs text-primary-500 hover:text-primary-600 flex items-center gap-1"
           >
             Manage
@@ -370,7 +383,7 @@
           </h3>
           <NuxtLink
             to="/locosats/transactions"
-            class="text-primary-500 text-xs hover:underline flex items-center gap-1"
+            class="text-primary-500 text-xs hover:underline dark:text-gray-200 flex items-center gap-1"
           >
             {{ $t("common.view_all") }}
             <Icon name="heroicons:chevron-right" class="w-3 h-3" />
@@ -711,6 +724,7 @@
 import type { FinanceEntry } from "~/types";
 
 const finance = useFinance();
+const { user } = useNostrUser();
 const { t } = useI18n();
 const router = useRouter();
 const toast = useToast();
@@ -719,6 +733,21 @@ const toast = useToast();
 const searchQuery = ref("");
 const showDetailModal = ref(false);
 const selectedTransaction = ref<FinanceEntry | null>(null);
+const isManualSyncing = ref(false);
+
+// Manual sync handler – forces a full Nostr relay fetch
+const handleManualSync = async () => {
+  if (isManualSyncing.value || finance.isSyncingBackground.value) return;
+  isManualSyncing.value = true;
+  try {
+    await finance.forceSync();
+    toast.add({ title: "Synced", description: "Transactions updated from Nostr", color: "green" });
+  } catch {
+    // error already shown by finance composable
+  } finally {
+    isManualSyncing.value = false;
+  }
+};
 
 // Search and Filter
 const displayedTransactions = computed(() => {
@@ -779,7 +808,7 @@ const budgetGoals = computed(() => {
         percentage: progress.percentage,
       };
     })
-    .filter(Boolean);
+    .filter((g): g is NonNullable<typeof g> => g !== null);
 });
 
 // Category Breakdown
@@ -808,7 +837,7 @@ const viewTransaction = (entry: FinanceEntry) => {
 };
 
 const editTransactionHandler = (id: string) => {
-  router.push(`/locosats/edit/${id}`);
+  router.push(`/locosats/${id}/edit`);
   showDetailModal.value = false;
 };
 
@@ -912,24 +941,32 @@ const formatRelativeDate = (dateStr: string) => {
   return date.toLocaleDateString();
 };
 
-// Load on mount – cache-first: localStorage data shown instantly,
-// Nostr sync happens silently in background only when data is stale (>5 min)
-onMounted(() => {
-  finance.loadEntries();
-  finance.fetchExchangeRate(); // resolves from cache if fresh
-});
-
-// Auto-sync every 5 minutes if enabled
+// Load on mount – watch user so we always load once keys are available
+// (fixes race condition where onMounted fires before user is authenticated)
 let syncInterval: NodeJS.Timeout | null = null;
+
+watch(
+  () => user.value?.publicKey,
+  (pubkey) => {
+    if (!pubkey) return;
+    // Load immediately when user becomes available (cache-first, bg-sync if stale)
+    finance.loadEntries();
+    finance.fetchExchangeRate();
+
+    // Auto-sync every 5 minutes if enabled and not already set up
+    if (finance.settings.value.auto_sync && !syncInterval) {
+      syncInterval = setInterval(() => {
+        finance.loadEntries(true);
+      }, 5 * 60 * 1000);
+    }
+  },
+  { immediate: true },
+);
+
+// Fallback: also load from localStorage immediately even if user isn't ready
+// so cached data shows up instantly on mount
 onMounted(() => {
-  if (finance.settings.value.auto_sync) {
-    syncInterval = setInterval(
-      () => {
-        finance.loadEntries(true); // force=true to always refresh on schedule
-      },
-      5 * 60 * 1000,
-    );
-  }
+  finance.fetchExchangeRate();
 });
 
 onUnmounted(() => {

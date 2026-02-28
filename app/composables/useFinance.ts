@@ -10,10 +10,47 @@ import type {
   SyncStatus,
 } from "~/types";
 import { ExchangeRateService } from "../services/exchangeRateService";
+import { UNIQUE_CURRENCIES, getCurrencyQuickAmounts, getCurrencySymbol } from "../lib/currencies";
+
+/** Re-export helpers so pages can auto-import them without a direct lib import */
+export { getCurrencyQuickAmounts, getCurrencySymbol };
 
 const EXCHANGE_RATE_CACHE_KEY = "finance_exchange_rate_cache";
 const EXCHANGE_RATE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 const SYNC_STALE_MS = 5 * 60 * 1000; // consider Nostr data stale after 5 min
+
+// ── Shared category metadata ──────────────────────────────────────────────────
+// Single source of truth for icons/colors used across create, edit, settings
+export const DEFAULT_CATEGORIES = [
+  "Food", "Groceries", "Transport", "Entertainment", "Shopping",
+  "Bills", "Health", "Salary", "Freelance", "Investments",
+  "Education", "Travel", "Family", "Other",
+];
+
+export const CATEGORY_META: Record<string, { icon: string; bg: string; color: string }> = {
+  Food:          { icon: "heroicons:cake",                    bg: "bg-orange-50 dark:bg-orange-900/30",  color: "text-orange-600 dark:text-orange-400" },
+  Groceries:     { icon: "heroicons:shopping-cart",           bg: "bg-green-50 dark:bg-green-900/30",   color: "text-green-600 dark:text-green-400" },
+  Transport:     { icon: "heroicons:truck",                   bg: "bg-blue-50 dark:bg-blue-900/30",     color: "text-blue-600 dark:text-blue-400" },
+  Entertainment: { icon: "heroicons:tv",                      bg: "bg-purple-50 dark:bg-purple-900/30", color: "text-purple-600 dark:text-purple-400" },
+  Shopping:      { icon: "heroicons:shopping-bag",            bg: "bg-pink-50 dark:bg-pink-900/30",     color: "text-pink-600 dark:text-pink-400" },
+  Bills:         { icon: "heroicons:document-text",           bg: "bg-gray-50 dark:bg-gray-800",        color: "text-gray-600 dark:text-gray-400" },
+  Health:        { icon: "heroicons:heart",                   bg: "bg-red-50 dark:bg-red-900/30",       color: "text-red-600 dark:text-red-400" },
+  Salary:        { icon: "heroicons:banknotes",               bg: "bg-emerald-50 dark:bg-emerald-900/30", color: "text-emerald-600 dark:text-emerald-400" },
+  Freelance:     { icon: "heroicons:computer-desktop",        bg: "bg-cyan-50 dark:bg-cyan-900/30",     color: "text-cyan-600 dark:text-cyan-400" },
+  Investments:   { icon: "heroicons:arrow-trending-up",       bg: "bg-teal-50 dark:bg-teal-900/30",     color: "text-teal-600 dark:text-teal-400" },
+  Education:     { icon: "heroicons:academic-cap",            bg: "bg-indigo-50 dark:bg-indigo-900/30", color: "text-indigo-600 dark:text-indigo-400" },
+  Travel:        { icon: "heroicons:globe-alt",               bg: "bg-sky-50 dark:bg-sky-900/30",       color: "text-sky-600 dark:text-sky-400" },
+  Family:        { icon: "heroicons:users",                   bg: "bg-rose-50 dark:bg-rose-900/30",     color: "text-rose-600 dark:text-rose-400" },
+  Other:         { icon: "heroicons:ellipsis-horizontal-circle", bg: "bg-gray-50 dark:bg-gray-800",    color: "text-gray-600 dark:text-gray-400" },
+};
+
+/** Returns CATEGORY_META entry, falling back to a generic style for custom categories */
+export const getCategoryMeta = (category: string) =>
+  CATEGORY_META[category] ?? {
+    icon: "heroicons:tag",
+    bg: "bg-violet-50 dark:bg-violet-900/30",
+    color: "text-violet-600 dark:text-violet-400",
+  };
 
 export function useFinance() {
   const toast = useToast();
@@ -29,19 +66,7 @@ export function useFinance() {
     default_currency: "LAK",
     display_unit: "fiat",
     budgets: [],
-    categories: [
-      "Food",
-      "Groceries",
-      "Transport",
-      "Entertainment",
-      "Shopping",
-      "Bills",
-      "Health",
-      "Salary",
-      "Freelance",
-      "Investments",
-      "Other",
-    ],
+    categories: [...DEFAULT_CATEGORIES],
     theme: "auto",
     auto_sync: true,
     show_balance_on_tab: true,
@@ -206,8 +231,8 @@ export function useFinance() {
     return newEntry;
   };
 
-  // Edit an entry
-  const editEntry = (id: string, updatedEntry: FinanceEntry) => {
+  // Edit an entry and publish updated event to Nostr
+  const editEntry = async (id: string, updatedEntry: FinanceEntry) => {
     const index = entries.value.findIndex((e) => e.id === id);
     if (index === -1) throw new Error("Entry not found");
 
@@ -233,6 +258,48 @@ export function useFinance() {
       newEntry.amount_fiat = Number(
         (updatedEntry.amount_sats / newEntry.sats_per_fiat).toFixed(2),
       );
+    }
+
+    // Publish updated event to Nostr (kind 30001 is replaceable via 'd' tag)
+    try {
+      if (user.value?.privateKey && user.value?.publicKey) {
+        const sensitiveData = {
+          amount_fiat: newEntry.amount_fiat,
+          amount_sats: newEntry.amount_sats,
+          note: newEntry.note,
+          tags: newEntry.tags,
+          category: newEntry.category,
+        };
+        const encryptedContent = nip04.encrypt(
+          user.value.privateKey,
+          user.value.publicKey,
+          JSON.stringify(sensitiveData),
+        );
+        const event = {
+          kind: PRIVATE_NOTE_KIND,
+          pubkey: user.value.publicKey,
+          created_at: Math.floor(Date.now() / 1000),
+          tags: [
+            ["d", newEntry.id],
+            ["t", "finance"],
+            ["type", newEntry.type],
+            ["fiat_currency", newEntry.fiat_currency],
+            ["sats_per_fiat", newEntry.sats_per_fiat.toString()],
+            ["unit_input", newEntry.unit_input],
+            ["visibility", newEntry.visibility],
+          ],
+          content: encryptedContent,
+        };
+        const signedEvent = finalizeEvent(
+          event,
+          hexToBytes(user.value.privateKey),
+        );
+        publishEvent(signedEvent);
+        newEntry.synced = true;
+      }
+    } catch (err) {
+      console.error("[finance] Failed to publish edit to Nostr:", err);
+      newEntry.synced = false;
     }
 
     entries.value[index] = newEntry;
@@ -263,7 +330,13 @@ export function useFinance() {
       if (savedSettings) {
         const parsed = JSON.parse(savedSettings);
         if (parsed.default_currency && parsed.display_unit) {
-          settings.value = parsed as UserSettings;
+          // Merge: always ensure all DEFAULT_CATEGORIES are present (adds newly introduced defaults)
+          const existingCats: string[] = parsed.categories || [];
+          const merged = [
+            ...existingCats,
+            ...DEFAULT_CATEGORIES.filter((c) => !existingCats.includes(c)),
+          ];
+          settings.value = { ...parsed, categories: merged } as UserSettings;
         }
       }
 
@@ -471,8 +544,8 @@ export function useFinance() {
     };
   });
 
-  // Available currencies
-  const currencies = ["LAK", "USD", "EUR", "THB", "JPY", "GBP", "BTC"];
+  // All supported currencies (full world list)
+  const currencies = UNIQUE_CURRENCIES;
 
   // Budget Management
   const addBudget = (budget: Omit<Budget, "id" | "created_at">) => {
@@ -609,6 +682,11 @@ export function useFinance() {
     );
   };
 
+  // Force a full Nostr sync regardless of cache staleness
+  const forceSync = async (): Promise<void> => {
+    await loadEntries(true);
+  };
+
   // Retry failed syncs
   const retrySync = async () => {
     const unsyncedEntries = entries.value.filter((e) => !e.synced);
@@ -655,6 +733,7 @@ export function useFinance() {
     deleteEntry,
     filterEntries,
     loadEntries,
+    forceSync,
     saveEntries,
     saveSettings,
     toggleDisplayUnit,
