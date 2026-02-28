@@ -2,7 +2,7 @@ export default defineAppConfig({
   ui: {
     colors: {
       primary: "nero",
-      neutral: "nero",
+      neutral: "neutral",
       amber: "amber",
       red: "red",
       green: "green",
@@ -26,6 +26,11 @@ export default defineAppConfig({
       gray: "gray",
       stone: "stone",
       nero: "nero",
+      white: "white",
+      error: "error",
+      warning: "warning",
+      info: "info",
+      success: "success",
     },
   },
 });

@@ -32,7 +32,7 @@
         content: 'w-full md:max-w-xs',
       }"
       title="Switch Account"
-      description=" "
+      description="Switch between your accounts"
     >
       <template #content>
         <div class="flex flex-col p-4">

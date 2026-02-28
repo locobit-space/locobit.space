@@ -1,7 +1,7 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
 
-@theme static {
+@theme inline {
   /* --font-sans: 'Public Sans', sans-serif;
   
     --breakpoint-3xl: 1920px; */
@@ -41,4 +41,16 @@
   --color-nero-800: #404040;
   --color-nero-900: #525252;
   --color-nero-950: #737373;
+}
+
+.lo {
+  font-family: "Chanthavong", "Noto Sans Lao", sans-serif;
+}
+
+.number {
+  font-family: "Outfit", "Satoshi", "Menlo", "Monaco", monospace;
+}
+
+.code {
+  font-family: "Menlo", "Monaco", monospace;
 }

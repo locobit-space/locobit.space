@@ -167,7 +167,16 @@
     "add_text": "Add Text",
     "type_something": "Type something...",
     "font": "Font",
-    "color": "Color"
+    "color": "Color",
+    "live": "Live",
+    "live_streams": "Live Streams",
+    "active_streams": "active streams",
+    "no_live_streams_description": "Check back later or start your own stream",
+    "visit_zap_stream": "Visit zap.stream",
+    "watch_on_zap_stream": "Watch on zap.stream",
+    "stream_on_zap_stream": "Stream available on zap.stream",
+    "send_message": "Send a message...",
+    "no_posts_description": "Start following people or create your first post"
   },
   "home": {
     "welcome_title": "Welcome to BitOS Space",

@@ -2,8 +2,55 @@ import { ref, computed, onMounted } from "vue";
 import { nip04 } from "nostr-tools";
 import { finalizeEvent } from "nostr-tools/pure";
 import { hexToBytes } from "@noble/ciphers/utils";
-import type { FinanceEntry, Totals, UserSettings, Budget, SyncStatus } from "~/types";
+import type {
+  FinanceEntry,
+  Totals,
+  UserSettings,
+  Budget,
+  SyncStatus,
+} from "~/types";
 import { ExchangeRateService } from "../services/exchangeRateService";
+import { UNIQUE_CURRENCIES, getCurrencyQuickAmounts, getCurrencySymbol } from "../lib/currencies";
+
+/** Re-export helpers so pages can auto-import them without a direct lib import */
+export { getCurrencyQuickAmounts, getCurrencySymbol };
+
+const EXCHANGE_RATE_CACHE_KEY = "finance_exchange_rate_cache";
+const EXCHANGE_RATE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const SYNC_STALE_MS = 5 * 60 * 1000; // consider Nostr data stale after 5 min
+
+// ── Shared category metadata ──────────────────────────────────────────────────
+// Single source of truth for icons/colors used across create, edit, settings
+export const DEFAULT_CATEGORIES = [
+  "Food", "Groceries", "Transport", "Entertainment", "Shopping",
+  "Bills", "Health", "Salary", "Freelance", "Investments",
+  "Education", "Travel", "Family", "Other",
+];
+
+export const CATEGORY_META: Record<string, { icon: string; bg: string; color: string }> = {
+  Food:          { icon: "heroicons:cake",                    bg: "bg-orange-50 dark:bg-orange-900/30",  color: "text-orange-600 dark:text-orange-400" },
+  Groceries:     { icon: "heroicons:shopping-cart",           bg: "bg-green-50 dark:bg-green-900/30",   color: "text-green-600 dark:text-green-400" },
+  Transport:     { icon: "heroicons:truck",                   bg: "bg-blue-50 dark:bg-blue-900/30",     color: "text-blue-600 dark:text-blue-400" },
+  Entertainment: { icon: "heroicons:tv",                      bg: "bg-purple-50 dark:bg-purple-900/30", color: "text-purple-600 dark:text-purple-400" },
+  Shopping:      { icon: "heroicons:shopping-bag",            bg: "bg-pink-50 dark:bg-pink-900/30",     color: "text-pink-600 dark:text-pink-400" },
+  Bills:         { icon: "heroicons:document-text",           bg: "bg-gray-50 dark:bg-gray-800",        color: "text-gray-600 dark:text-gray-400" },
+  Health:        { icon: "heroicons:heart",                   bg: "bg-red-50 dark:bg-red-900/30",       color: "text-red-600 dark:text-red-400" },
+  Salary:        { icon: "heroicons:banknotes",               bg: "bg-emerald-50 dark:bg-emerald-900/30", color: "text-emerald-600 dark:text-emerald-400" },
+  Freelance:     { icon: "heroicons:computer-desktop",        bg: "bg-cyan-50 dark:bg-cyan-900/30",     color: "text-cyan-600 dark:text-cyan-400" },
+  Investments:   { icon: "heroicons:arrow-trending-up",       bg: "bg-teal-50 dark:bg-teal-900/30",     color: "text-teal-600 dark:text-teal-400" },
+  Education:     { icon: "heroicons:academic-cap",            bg: "bg-indigo-50 dark:bg-indigo-900/30", color: "text-indigo-600 dark:text-indigo-400" },
+  Travel:        { icon: "heroicons:globe-alt",               bg: "bg-sky-50 dark:bg-sky-900/30",       color: "text-sky-600 dark:text-sky-400" },
+  Family:        { icon: "heroicons:users",                   bg: "bg-rose-50 dark:bg-rose-900/30",     color: "text-rose-600 dark:text-rose-400" },
+  Other:         { icon: "heroicons:ellipsis-horizontal-circle", bg: "bg-gray-50 dark:bg-gray-800",    color: "text-gray-600 dark:text-gray-400" },
+};
+
+/** Returns CATEGORY_META entry, falling back to a generic style for custom categories */
+export const getCategoryMeta = (category: string) =>
+  CATEGORY_META[category] ?? {
+    icon: "heroicons:tag",
+    bg: "bg-violet-50 dark:bg-violet-900/30",
+    color: "text-violet-600 dark:text-violet-400",
+  };
 
 export function useFinance() {
   const toast = useToast();
@@ -19,21 +66,22 @@ export function useFinance() {
     default_currency: "LAK",
     display_unit: "fiat",
     budgets: [],
-    categories: ['Food', 'Groceries', 'Transport', 'Entertainment', 'Shopping', 'Bills', 'Health', 'Salary', 'Freelance', 'Investments', 'Other'],
-    theme: 'auto',
+    categories: [...DEFAULT_CATEGORIES],
+    theme: "auto",
     auto_sync: true,
-    show_balance_on_tab: true
+    show_balance_on_tab: true,
   }));
 
   const syncStatus = useState<SyncStatus>("sync_status", () => ({
     isSyncing: false,
     lastSync: null,
     pendingCount: 0,
-    hasError: false
+    hasError: false,
   }));
 
   const currentExchangeRate = ref<number>(0.0413); // sats per LAK (default)
   const isLoading = ref<boolean>(false);
+  const isSyncingBackground = ref<boolean>(false);
   const error = ref<string | null>(null);
 
   // Helper function to handle errors
@@ -49,22 +97,45 @@ export function useFinance() {
       color: "red",
     });
   };
-  // Exchange rate
+  // Exchange rate with localStorage TTL cache
   const fetchExchangeRate = async (
-    currency: string = settings.value.default_currency
+    currency: string = settings.value.default_currency,
+    force = false,
   ): Promise<number> => {
-    isLoading.value = true;
-    error.value = null;
+    // Check cache first
+    if (!force) {
+      try {
+        const cached = localStorage.getItem(EXCHANGE_RATE_CACHE_KEY);
+        if (cached) {
+          const {
+            rate,
+            currency: cachedCurrency,
+            timestamp,
+          } = JSON.parse(cached);
+          const age = Date.now() - timestamp;
+          if (age < EXCHANGE_RATE_TTL_MS && cachedCurrency === currency) {
+            currentExchangeRate.value = rate;
+            return rate;
+          }
+        }
+      } catch {
+        /* ignore */
+      }
+    }
 
+    error.value = null;
     try {
       const rate = await ExchangeRateService.fetchRate(currency);
-      currentExchangeRate.value = rate; // Precision to 6 decimals
+      currentExchangeRate.value = rate;
+      // Persist cache
+      localStorage.setItem(
+        EXCHANGE_RATE_CACHE_KEY,
+        JSON.stringify({ rate, currency, timestamp: Date.now() }),
+      );
       return rate;
     } catch (err) {
       handleError(err, "Failed to fetch exchange rate");
       return currentExchangeRate.value;
-    } finally {
-      isLoading.value = false;
     }
   };
 
@@ -74,7 +145,7 @@ export function useFinance() {
       FinanceEntry,
       "id" | "created_at" | "amount_sats" | "amount_fiat"
     > &
-      Partial<Pick<FinanceEntry, "amount_sats" | "amount_fiat">>
+      Partial<Pick<FinanceEntry, "amount_sats" | "amount_fiat">>,
   ) => {
     const id = Math.floor(Date.now() / 1000);
     const newEntry: FinanceEntry = {
@@ -92,12 +163,12 @@ export function useFinance() {
     if (entry.unit_input === "fiat" && entry.amount_fiat !== undefined) {
       newEntry.amount_fiat = entry.amount_fiat;
       newEntry.amount_sats = Math.round(
-        entry.amount_fiat * newEntry.sats_per_fiat
+        entry.amount_fiat * newEntry.sats_per_fiat,
       );
     } else if (entry.unit_input === "sats" && entry.amount_sats !== undefined) {
       newEntry.amount_sats = entry.amount_sats;
       newEntry.amount_fiat = Number(
-        (entry.amount_sats / newEntry.sats_per_fiat).toFixed(2)
+        (entry.amount_sats / newEntry.sats_per_fiat).toFixed(2),
       );
     } else {
       toast.add({
@@ -106,7 +177,7 @@ export function useFinance() {
           "Must provide amount_fiat for fiat input or amount_sats for sats input",
       });
       throw new Error(
-        "Must provide amount_fiat for fiat input or amount_sats for sats input"
+        "Must provide amount_fiat for fiat input or amount_sats for sats input",
       );
     }
 
@@ -130,7 +201,7 @@ export function useFinance() {
     const encryptedContent = nip04.encrypt(
       user.value?.privateKey || "",
       user.value?.publicKey || "",
-      JSON.stringify(sensitiveData)
+      JSON.stringify(sensitiveData),
     );
     // get the current date timestamp
     const event = {
@@ -151,22 +222,17 @@ export function useFinance() {
 
     const signedEvent = finalizeEvent(
       event,
-      hexToBytes(user.value?.privateKey || "")
+      hexToBytes(user.value?.privateKey || ""),
     );
 
     publishEvent(signedEvent);
-
-    toast.add({
-      title: "Created new entry",
-      description: newEntry.note || "Untitled",
-    });
     entries.value.unshift(newEntry);
     saveEntries();
     return newEntry;
   };
 
-  // Edit an entry
-  const editEntry = (id: string, updatedEntry: FinanceEntry) => {
+  // Edit an entry and publish updated event to Nostr
+  const editEntry = async (id: string, updatedEntry: FinanceEntry) => {
     const index = entries.value.findIndex((e) => e.id === id);
     if (index === -1) throw new Error("Entry not found");
 
@@ -183,15 +249,57 @@ export function useFinance() {
       updatedEntry.amount_fiat !== undefined
     ) {
       newEntry.amount_sats = Math.round(
-        updatedEntry.amount_fiat * newEntry.sats_per_fiat
+        updatedEntry.amount_fiat * newEntry.sats_per_fiat,
       );
     } else if (
       updatedEntry.unit_input === "sats" &&
       updatedEntry.amount_sats !== undefined
     ) {
       newEntry.amount_fiat = Number(
-        (updatedEntry.amount_sats / newEntry.sats_per_fiat).toFixed(2)
+        (updatedEntry.amount_sats / newEntry.sats_per_fiat).toFixed(2),
       );
+    }
+
+    // Publish updated event to Nostr (kind 30001 is replaceable via 'd' tag)
+    try {
+      if (user.value?.privateKey && user.value?.publicKey) {
+        const sensitiveData = {
+          amount_fiat: newEntry.amount_fiat,
+          amount_sats: newEntry.amount_sats,
+          note: newEntry.note,
+          tags: newEntry.tags,
+          category: newEntry.category,
+        };
+        const encryptedContent = nip04.encrypt(
+          user.value.privateKey,
+          user.value.publicKey,
+          JSON.stringify(sensitiveData),
+        );
+        const event = {
+          kind: PRIVATE_NOTE_KIND,
+          pubkey: user.value.publicKey,
+          created_at: Math.floor(Date.now() / 1000),
+          tags: [
+            ["d", newEntry.id],
+            ["t", "finance"],
+            ["type", newEntry.type],
+            ["fiat_currency", newEntry.fiat_currency],
+            ["sats_per_fiat", newEntry.sats_per_fiat.toString()],
+            ["unit_input", newEntry.unit_input],
+            ["visibility", newEntry.visibility],
+          ],
+          content: encryptedContent,
+        };
+        const signedEvent = finalizeEvent(
+          event,
+          hexToBytes(user.value.privateKey),
+        );
+        publishEvent(signedEvent);
+        newEntry.synced = true;
+      }
+    } catch (err) {
+      console.error("[finance] Failed to publish edit to Nostr:", err);
+      newEntry.synced = false;
     }
 
     entries.value[index] = newEntry;
@@ -207,7 +315,7 @@ export function useFinance() {
     saveEntries();
   };
 
-  // Helper function to load data from localStorage
+  // Helper function to load data from localStorage (synchronous – zero latency)
   const loadFromLocalStorage = (): void => {
     try {
       const savedEntries = localStorage.getItem("finance_entries");
@@ -222,8 +330,27 @@ export function useFinance() {
       if (savedSettings) {
         const parsed = JSON.parse(savedSettings);
         if (parsed.default_currency && parsed.display_unit) {
-          settings.value = parsed as UserSettings;
+          // Merge: always ensure all DEFAULT_CATEGORIES are present (adds newly introduced defaults)
+          const existingCats: string[] = parsed.categories || [];
+          const merged = [
+            ...existingCats,
+            ...DEFAULT_CATEGORIES.filter((c) => !existingCats.includes(c)),
+          ];
+          settings.value = { ...parsed, categories: merged } as UserSettings;
         }
+      }
+
+      // Restore last-sync timestamp so stale check is accurate
+      const savedSyncStatus = localStorage.getItem("finance_last_sync");
+      if (savedSyncStatus) {
+        syncStatus.value.lastSync = savedSyncStatus;
+      }
+
+      // Restore cached exchange rate
+      const cachedRate = localStorage.getItem(EXCHANGE_RATE_CACHE_KEY);
+      if (cachedRate) {
+        const { rate } = JSON.parse(cachedRate);
+        if (typeof rate === "number") currentExchangeRate.value = rate;
       }
     } catch (err) {
       console.error("Failed to load from localStorage:", err);
@@ -263,74 +390,96 @@ export function useFinance() {
     }
   };
 
-  // Load entries from localStorage
+  // ── Load entries: cache-first, background-sync ──────────────────────────────
+  //
+  // Strategy:
+  //   1. Instantly surface whatever is in localStorage (zero network wait).
+  //   2. If data is fresh (<5 min since last Nostr sync), skip the relay query
+  //      unless `force` is true.
+  //   3. When a relay query IS needed, run it silently in the background so
+  //      the UI is never blocked by a loading spinner on repeat visits.
+  // ────────────────────────────────────────────────────────────────────────────
+  const loadEntries = async (force = false): Promise<void> => {
+    // Validate user
+    if (!user.value?.publicKey || !user.value?.privateKey) {
+      console.warn("[finance] User not authenticated – skipping load");
+      return;
+    }
 
-  const loadEntries = async (): Promise<void> => {
+    // Step 1 – paint from cache immediately (synchronous, no spinner needed)
+    const cacheWasEmpty = entries.value.length === 0;
+    loadFromLocalStorage();
+    const hasCacheData = entries.value.length > 0;
+
+    // Step 2 – decide whether a Nostr sync is needed
+    const lastSync = syncStatus.value.lastSync
+      ? new Date(syncStatus.value.lastSync).getTime()
+      : 0;
+    const isStale = Date.now() - lastSync > SYNC_STALE_MS;
+
+    if (!force && !isStale && hasCacheData) {
+      // Data is fresh – nothing more to do
+      return;
+    }
+
+    // Step 3 – background sync (show subtle non-blocking indicator)
+    isSyncingBackground.value = true;
+    syncStatus.value.isSyncing = true;
+    syncStatus.value.hasError = false;
+
+    // Only show the full loading skeleton on the very first ever load
+    if (cacheWasEmpty) isLoading.value = true;
+
     try {
-      // Validate user authentication
-      if (!user.value?.publicKey || !user.value?.privateKey) {
-        throw new Error(
-          "User not authenticated. Please log in to view entries."
-        );
-      }
-
-      // Load local storage data
-      loadFromLocalStorage();
-
-      if (!user.value) {
-        return;
-      }
-
-      // Start syncing
-      syncStatus.value.isSyncing = true;
-      syncStatus.value.hasError = false;
-
-      // Fetch and process remote events
       const _events = await queryEvents({
         kinds: [PRIVATE_NOTE_KIND],
         authors: [user.value.publicKey],
         "#t": ["finance"],
-        // limit: 0,
       });
-      const _items = [];
 
+      const _items: FinanceEntry[] = [];
       for (const event of _events) {
         if (!event.content) continue;
         try {
           const decryptedContent = nip04.decrypt(
             user.value.privateKey,
             user.value.publicKey,
-            event.content
+            event.content,
           );
           const parsedContent = JSON.parse(decryptedContent);
           _items.push(createFinanceEntry(event, parsedContent));
         } catch (err) {
-          console.error(`Failed to process event ${event.id}:`, err);
+          console.error(`[finance] Failed to process event ${event.id}:`, err);
         }
       }
-      // remove duplicate entries
+
+      // Merge remote + local, deduplicate, sort newest-first
       _items.push(...entries.value);
       entries.value = _items
         .filter(
           (entry, index, self) =>
-            self.findIndex((e) => e.id === entry.id) === index
+            self.findIndex((e) => e.id === entry.id) === index,
         )
         .sort(
           (a, b) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
         );
-      
-      // Mark all as synced
-      entries.value.forEach(entry => entry.synced = true);
-      
-      syncStatus.value.lastSync = new Date().toISOString();
+
+      entries.value.forEach((entry) => (entry.synced = true));
+
+      const now = new Date().toISOString();
+      syncStatus.value.lastSync = now;
       syncStatus.value.pendingCount = 0;
-      
+
+      // Persist last-sync timestamp separately so loadFromLocalStorage can restore it
+      localStorage.setItem("finance_last_sync", now);
       saveEntries();
     } catch (err) {
-      handleError(err, "Failed to load entries");
+      handleError(err, "Failed to sync entries from Nostr");
     } finally {
       syncStatus.value.isSyncing = false;
+      isSyncingBackground.value = false;
+      isLoading.value = false;
     }
   };
 
@@ -361,7 +510,7 @@ export function useFinance() {
 
   const sumAmount = <K extends keyof FinanceEntry>(
     entries: FinanceEntry[],
-    field: K
+    field: K,
   ): number => {
     return entries.reduce((acc, entry) => {
       const value = entry[field] as unknown as number | string | undefined;
@@ -377,7 +526,7 @@ export function useFinance() {
         acc[entry.type === "income" ? 0 : 1].push(entry);
         return acc;
       },
-      [[], []] as [FinanceEntry[], FinanceEntry[]]
+      [[], []] as [FinanceEntry[], FinanceEntry[]],
     );
 
     const income = sumAmount(incomeEntries, "amount_fiat");
@@ -395,45 +544,45 @@ export function useFinance() {
     };
   });
 
-  // Available currencies
-  const currencies = ["LAK", "USD", "EUR", "THB", "JPY", "GBP", "BTC"];
+  // All supported currencies (full world list)
+  const currencies = UNIQUE_CURRENCIES;
 
   // Budget Management
-  const addBudget = (budget: Omit<Budget, 'id' | 'created_at'>) => {
+  const addBudget = (budget: Omit<Budget, "id" | "created_at">) => {
     const newBudget: Budget = {
       ...budget,
       id: `budget_${Date.now()}`,
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
     };
-    
+
     if (!settings.value.budgets) {
       settings.value.budgets = [];
     }
-    
+
     settings.value.budgets.push(newBudget);
     saveSettings();
-    
+
     toast.add({
       title: "Budget created",
       description: `Budget for ${budget.category} set to ${budget.amount}`,
     });
-    
+
     return newBudget;
   };
 
   const updateBudget = (id: string, updates: Partial<Budget>) => {
     if (!settings.value.budgets) return;
-    
-    const index = settings.value.budgets.findIndex(b => b.id === id);
+
+    const index = settings.value.budgets.findIndex((b) => b.id === id);
     if (index === -1) throw new Error("Budget not found");
-    
+
     settings.value.budgets[index] = {
       ...settings.value.budgets[index],
-      ...updates
-    };
-    
+      ...updates,
+    } as Budget;
+
     saveSettings();
-    
+
     toast.add({
       title: "Budget updated",
       description: "Your budget has been updated successfully",
@@ -442,10 +591,10 @@ export function useFinance() {
 
   const deleteBudget = (id: string) => {
     if (!settings.value.budgets) return;
-    
-    settings.value.budgets = settings.value.budgets.filter(b => b.id !== id);
+
+    settings.value.budgets = settings.value.budgets.filter((b) => b.id !== id);
     saveSettings();
-    
+
     toast.add({
       title: "Budget deleted",
       description: "Budget has been removed",
@@ -453,35 +602,41 @@ export function useFinance() {
   };
 
   // Get budget progress for a category
-  const getBudgetProgress = (category: string, period: 'daily' | 'weekly' | 'monthly' | 'yearly' = 'monthly') => {
-    const budget = settings.value.budgets?.find(b => b.category === category && b.period === period);
+  const getBudgetProgress = (
+    category: string,
+    period: "daily" | "weekly" | "monthly" | "yearly" = "monthly",
+  ) => {
+    const budget = settings.value.budgets?.find(
+      (b) => b.category === category && b.period === period,
+    );
     if (!budget) return null;
 
     // Calculate date range based on period
     const now = new Date();
     let startDate = new Date();
-    
+
     switch (period) {
-      case 'daily':
+      case "daily":
         startDate.setHours(0, 0, 0, 0);
         break;
-      case 'weekly':
+      case "weekly":
         startDate.setDate(now.getDate() - now.getDay());
         startDate.setHours(0, 0, 0, 0);
         break;
-      case 'monthly':
+      case "monthly":
         startDate = new Date(now.getFullYear(), now.getMonth(), 1);
         break;
-      case 'yearly':
+      case "yearly":
         startDate = new Date(now.getFullYear(), 0, 1);
         break;
     }
 
     const spent = entries.value
-      .filter(e => 
-        e.type === 'expense' && 
-        e.category === category &&
-        new Date(e.created_at) >= startDate
+      .filter(
+        (e) =>
+          e.type === "expense" &&
+          e.category === category &&
+          new Date(e.created_at) >= startDate,
       )
       .reduce((sum, e) => sum + e.amount_fiat, 0);
 
@@ -495,41 +650,47 @@ export function useFinance() {
       remaining: budget.amount - spent,
       percentage,
       isOverBudget,
-      shouldAlert
+      shouldAlert,
     };
   };
 
   // Search and filter entries
   const searchEntries = (query: string) => {
     const lowerQuery = query.toLowerCase();
-    return entries.value.filter(entry =>
-      entry.note.toLowerCase().includes(lowerQuery) ||
-      entry.category.toLowerCase().includes(lowerQuery) ||
-      entry.tags.some(tag => tag.toLowerCase().includes(lowerQuery))
+    return entries.value.filter(
+      (entry) =>
+        entry.note.toLowerCase().includes(lowerQuery) ||
+        entry.category.toLowerCase().includes(lowerQuery) ||
+        entry.tags.some((tag) => tag.toLowerCase().includes(lowerQuery)),
     );
   };
 
   const filterEntriesByDateRange = (startDate: Date, endDate: Date) => {
-    return entries.value.filter(entry => {
+    return entries.value.filter((entry) => {
       const entryDate = new Date(entry.created_at);
       return entryDate >= startDate && entryDate <= endDate;
     });
   };
 
   const filterEntriesByCategory = (categories: string[]) => {
-    return entries.value.filter(entry => categories.includes(entry.category));
+    return entries.value.filter((entry) => categories.includes(entry.category));
   };
 
   const filterEntriesByAmountRange = (min: number, max: number) => {
-    return entries.value.filter(entry => 
-      entry.amount_fiat >= min && entry.amount_fiat <= max
+    return entries.value.filter(
+      (entry) => entry.amount_fiat >= min && entry.amount_fiat <= max,
     );
+  };
+
+  // Force a full Nostr sync regardless of cache staleness
+  const forceSync = async (): Promise<void> => {
+    await loadEntries(true);
   };
 
   // Retry failed syncs
   const retrySync = async () => {
-    const unsyncedEntries = entries.value.filter(e => !e.synced);
-    
+    const unsyncedEntries = entries.value.filter((e) => !e.synced);
+
     if (unsyncedEntries.length === 0) {
       toast.add({
         title: "All synced",
@@ -539,7 +700,7 @@ export function useFinance() {
     }
 
     syncStatus.value.isSyncing = true;
-    
+
     for (const entry of unsyncedEntries) {
       try {
         // Attempt to publish to Nostr
@@ -549,9 +710,11 @@ export function useFinance() {
         console.error("Failed to sync entry:", entry.id, err);
       }
     }
-    
+
     syncStatus.value.isSyncing = false;
-    syncStatus.value.pendingCount = entries.value.filter(e => !e.synced).length;
+    syncStatus.value.pendingCount = entries.value.filter(
+      (e) => !e.synced,
+    ).length;
     saveEntries();
   };
 
@@ -561,6 +724,7 @@ export function useFinance() {
     settings,
     currentExchangeRate,
     isLoading,
+    isSyncingBackground,
     error,
     totals,
     syncStatus,
@@ -569,6 +733,7 @@ export function useFinance() {
     deleteEntry,
     filterEntries,
     loadEntries,
+    forceSync,
     saveEntries,
     saveSettings,
     toggleDisplayUnit,
@@ -581,6 +746,6 @@ export function useFinance() {
     filterEntriesByDateRange,
     filterEntriesByCategory,
     filterEntriesByAmountRange,
-    retrySync
+    retrySync,
   };
 }

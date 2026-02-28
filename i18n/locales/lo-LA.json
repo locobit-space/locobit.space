@@ -1,5 +1,6 @@
 {
   "common": {
+    "load_more": "ໂຫຼດເພີ່ມ",
     "add": "ເພີ່ມ",
     "edit": "ແກ້ໄຂ",
     "delete": "ລົບ",
@@ -29,6 +30,7 @@
     "info": "ຂໍ້ມູນ",
     "back_to_dashboard": "ກັບໄປໜ້າຫຼັກ",
     "export": "ສົ່ງອອກ",
+    "settings": "ຕັ້ງຄ່າ",
     "priority": {
       "high": "ສູງ",
       "medium": "ປານກາງ",
@@ -305,7 +307,14 @@
     "add_text": "ເພີ່ມຂໍ້ຄວາມ",
     "type_something": "ພິມບາງສິ່ງ...",
     "font": "ຟ້ອນ",
-    "color": "ສີ"
+    "color": "ສີ",
+    "live": "ຖ່າຍທອດສົດ",
+    "live_streams": "ການຖ່າຍທອດສົດ",
+    "active_streams": "ຖ່າຍທອດສົດຢູ່",
+    "no_live_streams_description": "ກວດເບິ່ງໃນພາຍຫຼັງ ຫຼື ເລີ່ມຖ່າຍທອດສົດຂອງທ່ານເອງ",
+    "visit_zap_stream": "ໄປທີ່ zap.stream",
+    "watch_on_zap_stream": "ເບິ່ງຢູ່ zap.stream",    "stream_on_zap_stream": "ມີສາຍໃນ zap.stream",    "send_message": "ສົ່ງຂໍ້ຄວາມ...",
+    "no_posts_description": "ເລີ່ມຕິດຕາມຄົນ ຫຼື ສ້າງໂພສທຳອິດຂອງທ່ານ"
   },
   "home": {
     "welcome_title": "ຍິນດີຕ້ອນຮັບສູ່ BitOS Space",

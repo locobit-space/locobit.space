@@ -1,7 +1,7 @@
 <template>
   <main class="">
     <nav
-      class="sticky top-0 dark:border-gray-800 dark:bg-transparent backdrop-blur bg-white/30 border-b border-white/20 z-50"
+      class="sticky top-0 dark:border-gray-800 dark:bg-transparent backdrop-blur bg-white/30 border-b border-gray-100 z-50"
     >
       <AppHeader class="" @filter="handleFilter" />
     </nav>
@@ -92,19 +92,15 @@
         </div>
 
         <!-- Empty state -->
-        <div
+        <CommonEmptyState
           v-else-if="notes.length === 0 && !isLoading"
-          class="text-center py-16"
-        >
-          <Icon
-            name="heroicons:document-text"
-            class="w-16 h-16 text-gray-300 mx-auto mb-4"
-          />
-          <p class="text-gray-500 mb-4">{{ $t("social.no_posts_yet") }}</p>
-          <UButton to="/create-note" color="primary">
-            {{ $t("social.create_first_post") }}
-          </UButton>
-        </div>
+          :title="$t('social.no_posts_yet')"
+          :description="$t('social.no_posts_description')"
+          icon="heroicons:document-text"
+          :action-text="$t('social.create_first_post')"
+          action-to="/create-note"
+          action-icon="heroicons:plus"
+        />
 
         <!-- Notes feed with enhanced interactions -->
         <div class="space-y-4 divide-y divide-slate-100 dark:divide-slate-800">
@@ -131,14 +127,27 @@
           </div>
         </div>
 
-        <!-- Load more indicator -->
-        <div v-if="isLoading && notes.length > 0" class="py-8">
-          <div class="flex justify-center">
+        <!-- Load more indicator (Sentinel) -->
+        <div
+          ref="loadMoreSentinel"
+          class="py-8 flex flex-col items-center justify-center w-full"
+        >
+          <div v-if="isLoadingMore || isLoading" class="flex justify-center">
             <Icon
               name="svg-spinners:180-ring-with-bg"
               class="w-8 h-8 text-primary-500"
             />
           </div>
+
+          <!-- Manual Load More UI -->
+          <UButton
+            v-if="
+              !settings.easyScroll && hasMore && !isLoading && !isLoadingMore
+            "
+            label="Load More"
+            variant="soft"
+            @click="loadMore"
+          />
         </div>
 
         <!-- End of feed -->
@@ -158,7 +167,7 @@
 
 <script setup lang="ts">
 import type { Event } from "nostr-tools";
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onUnmounted, watch } from "vue";
 
 useHead({
   title: "BitOS Space",
@@ -175,9 +184,9 @@ const {
 
 const { viewEvent, loadAlgorithmicFeed } = useNostrFeedAlgorithm();
 const { trackInteraction } = useNostrFeedAlgorithm();
-const toast = useToast();
 
 // States
+const { settings } = useAppSettings();
 const hasNewContent = ref(false);
 const isLoadingMore = ref(false);
 const currentPage = ref(1);
@@ -186,6 +195,8 @@ const showScrollButton = ref(false);
 const hasNewNotes = ref(false);
 const hasMore = ref(true);
 const feedContainer = ref<HTMLElement | null>(null);
+const loadMoreSentinel = ref<HTMLElement | null>(null);
+let observer: IntersectionObserver | null = null;
 
 // Pull to refresh
 const isPulling = ref(false);
@@ -198,6 +209,7 @@ const lastTapTime = ref(0);
 
 async function handleFilter(filter: any) {
   currentPage.value = 1;
+  hasMore.value = true; // Reset hasMore when filter changes
 
   scrollToTop();
   notes.value = [];
@@ -249,8 +261,16 @@ const getReplyCount = (note: Event): number => {
   return (note.tags || []).filter((t) => t[0] === "reply").length;
 };
 
-const refreshFeed = async () => {
+const refreshFeed = async (force = false) => {
   currentPage.value = 1;
+  hasMore.value = true;
+
+  // If we already have notes and it's not a forced refresh, just return
+  // This preserves state when navigating back
+  if (!force && notes.value.length > 0) {
+    return;
+  }
+
   notes.value = [];
 
   if (filterTab.value.key === "for-you") {
@@ -263,40 +283,47 @@ const refreshFeed = async () => {
   }
 };
 
-const loadMore = async () => {
-  currentPage.value++;
-  try {
-    if (filterTab.value.key === "for-you") {
-      await loadAlgorithmicFeed({
-        limit: itemsPerPage.value,
-        offset: (currentPage.value - 1) * itemsPerPage.value,
-      });
-    } else {
-      await loadOlderNotes({
-        filter: filterTab.value.key,
-        limit: itemsPerPage.value,
-        hashtag:
-          filterTab.value.key === "hashtag" ? filterTab.value.value : null,
-      });
-    }
-  } catch (e) {
-    console.error(`Error loading more notes: ${e}`);
-  }
-};
-
 const refreshNotes = () => {
-  loadNotesOnce();
+  // Force a refresh when explicitly requested (e.g. pull to refresh or new posts button)
+  refreshFeed(true);
 };
 
-// Scroll to top function
 const scrollToTop = () => {
-  window.scrollTo({
-    top: 0,
-    behavior: "smooth",
-  });
+  window.scrollTo({ top: 0, behavior: "smooth" });
 };
 
-// Pull to refresh handlers
+const handleScroll = () => {
+  showScrollButton.value = window.scrollY > 300;
+};
+
+const loadMore = async () => {
+  if (isLoading.value || isLoadingMore.value || !hasMore.value) return;
+  isLoadingMore.value = true;
+  await loadOlderNotes({ limit: itemsPerPage.value });
+  isLoadingMore.value = false;
+};
+
+const setupIntersectionObserver = () => {
+  if (observer) observer.disconnect();
+  observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting && !isLoading.value) {
+          loadMore();
+        }
+      });
+    },
+    { rootMargin: "300px" },
+  );
+
+  if (loadMoreSentinel.value) observer.observe(loadMoreSentinel.value);
+};
+
+const checkForNewNotes = async () => {
+  const result = await checkNewNotes();
+  hasNewNotes.value = result;
+};
+
 const handlePullStart = (e: TouchEvent) => {
   if (window.scrollY === 0) {
     pullStartY.value = e.touches[0].clientY;
@@ -305,76 +332,93 @@ const handlePullStart = (e: TouchEvent) => {
 };
 
 const handlePullMove = (e: TouchEvent) => {
-  if (!isPulling.value) return;
-
-  const pullDistance = e.touches[0].clientY - pullStartY.value;
-  if (pullDistance > 80 && !isRefreshing.value) {
-    isRefreshing.value = true;
+  if (isPulling.value) {
+    const y = e.touches[0].clientY;
+    const diff = y - pullStartY.value;
+    if (diff > 0) {
+      // Visual feedback could be added here
+    }
+    if (diff > 100) isRefreshing.value = true;
   }
 };
 
 const handlePullEnd = async () => {
   if (isRefreshing.value) {
-    await refreshFeed();
-    toast.add({ title: "Feed refreshed!" });
+    await refreshNotes();
   }
   isPulling.value = false;
   isRefreshing.value = false;
 };
 
-// Double tap to like
-const handleDoubleTap = (note: Event) => {
+const handleDoubleTap = (note: any) => {
   const now = Date.now();
   if (now - lastTapTime.value < 300) {
-    // Double tap detected
     doubleTapNoteId.value = note.id;
-    trackInteraction(note, "like");
-
+    // Assuming we have a like function or trackInteraction handles it
+    // For now just show animation
     setTimeout(() => {
       doubleTapNoteId.value = null;
-    }, 1000);
+    }, 800);
   }
   lastTapTime.value = now;
 };
 
-const setupInfiniteScroll = () => {
-  window.addEventListener("scroll", handleScroll);
-
-  onUnmounted(() => {
-    window.removeEventListener("scroll", handleScroll);
-  });
-};
-
-const handleScroll = async () => {
-  // Show button after scrolling down 200px
-  if (window.scrollY > 200) {
-    showScrollButton.value = true;
-  } else {
-    showScrollButton.value = false;
-  }
-
-  // Load more notes when near bottom
-  const bottomOfWindow =
-    window.innerHeight + window.scrollY >= document.body.offsetHeight - 300;
-  if (bottomOfWindow && !isLoading.value) {
-    loadMore();
-  }
-};
-
-// Check for new notes periodically
-const checkForNewNotes = async () => {
-  const hasNew = await checkNewNotes();
-  if (hasNew) {
-    hasNewNotes.value = true;
-  }
-};
-
 onMounted(() => {
-  refreshFeed();
-  setupInfiniteScroll();
+  // Only load if empty, otherwise we keep existing state
+  if (notes.value.length === 0) {
+    refreshFeed();
+  } else {
+    // If we have content, we might want to check for *newer* stuff in background
+    checkForNewNotes();
+  }
+
+  // Setup intersection observer for infinite scroll
+  setupIntersectionObserver();
+
+  // ... existing code ...
+
+  // Keep scroll listener only for "scroll to top" button visibility
+  window.addEventListener("scroll", handleScroll);
 
   // Check for new notes every 30 seconds
   setInterval(checkForNewNotes, 30000);
+});
+
+// Watch for loading state changes to retry loading more if we're at the bottom
+// This handles cases where infinite scroll was blocked by a background update
+watch(isLoading, (newIsLoading) => {
+  if (
+    settings.value.easyScroll &&
+    !newIsLoading &&
+    observer &&
+    loadMoreSentinel.value
+  ) {
+    // Re-observing forces a new entry check immediately
+    observer.unobserve(loadMoreSentinel.value);
+    observer.observe(loadMoreSentinel.value);
+  }
+});
+
+// Watch setting change to enable/disable observer dynamically
+watch(
+  () => settings.value.easyScroll,
+  (enabled) => {
+    if (enabled) {
+      setupIntersectionObserver();
+    } else {
+      if (observer) {
+        observer.disconnect();
+        observer = null;
+      }
+    }
+  },
+);
+
+onUnmounted(() => {
+  window.removeEventListener("scroll", handleScroll);
+  if (observer) {
+    observer.disconnect();
+  }
 });
 </script>
 

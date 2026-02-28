@@ -1,8 +1,8 @@
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-950">
+  <div class="min-h-screen">
     <!-- Mobile Header -->
     <div
-      class="lg:hidden sticky top-0 z-40 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800"
+      class="lg:hidden sticky top-0 z-40 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800"
     >
       <div class="flex items-center justify-between px-4 py-3">
         <div class="flex items-center gap-3">
@@ -37,9 +37,9 @@
     <div class="flex max-w-7xl mx-auto">
       <!-- Desktop Sidebar -->
       <aside
-        class="hidden lg:block w-56 xl:w-64 sticky top-0 h-screen border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900"
+        class="hidden lg:block w-56 xl:w-64 sticky top-0 h-screen border-r border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900"
       >
-        <div class="p-4 border-b border-gray-200 dark:border-gray-800">
+        <div class="p-4 border-b border-gray-100 dark:border-gray-800">
           <div class="flex items-center justify-between mb-3">
             <h1 class="text-lg font-bold text-gray-900 dark:text-white">
               Settings
@@ -53,17 +53,13 @@
           </div>
 
           <!-- Search Settings -->
-          <div class="relative">
-            <Icon
-              name="heroicons:magnifying-glass"
-              class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400"
-            />
-            <input
-              v-model="searchQuery"
-              placeholder="Search..."
-              class="w-full pl-8 pr-3 py-1.5 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-            />
-          </div>
+           <UInput
+            v-model="searchQuery"
+            placeholder="Search settings..."
+            icon="heroicons:magnifying-glass"
+            size="sm"
+            class="w-full"
+          />
         </div>
 
         <nav class="p-3 space-y-0.5 overflow-y-auto max-h-[calc(100vh-140px)]">
@@ -107,7 +103,7 @@
           </template>
 
           <!-- Logout/Dangerous Actions -->
-          <div class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-800">
+          <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800">
             <button
               @click="handleLogout"
               class="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all group"
@@ -123,7 +119,7 @@
       </aside>
 
       <!-- Main Content -->
-      <main class="flex-1 min-h-screen bg-gray-50 dark:bg-gray-950">
+      <main class="flex-1 min-h-screen">
         <div class="max-w-4xl mx-auto px-4 lg:px-6 py-4 lg:py-6">
           <NuxtPage />
         </div>
@@ -136,7 +132,7 @@
         <div class="flex flex-col h-full bg-white dark:bg-gray-900">
           <!-- Header -->
           <div
-            class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800"
+            class="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-800"
           >
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
               Settings
@@ -150,7 +146,7 @@
           </div>
 
           <!-- Search -->
-          <div class="p-3 border-b border-gray-200 dark:border-gray-800">
+          <div class="p-3 border-b border-gray-100 dark:border-gray-800">
             <div class="relative">
               <Icon
                 name="heroicons:magnifying-glass"
@@ -205,7 +201,7 @@
 
             <!-- Logout -->
             <div
-              class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-800"
+              class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800"
             >
               <button
                 @click="handleLogout"
@@ -332,9 +328,10 @@ const shouldShowItem = (item: any) => {
 };
 
 // Handle logout
+// Handle logout
+const { logout } = useNostrUser();
 const handleLogout = () => {
-  // Add logout logic here
-  console.log("Logout clicked");
+  logout();
   mobileMenuOpen.value = false;
 };
 

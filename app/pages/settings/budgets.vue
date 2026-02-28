@@ -166,7 +166,7 @@
         class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-12 text-center"
       >
         <div
-          class="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900 dark:to-primary-800 flex items-center justify-center"
+          class="w-16 h-16 mx-auto mb-4 rounded-full bg-linear-to-br from-primary-100 to-primary-200 dark:from-primary-900 dark:to-primary-800 flex items-center justify-center"
         >
           <Icon
             name="heroicons:chart-pie"
@@ -325,54 +325,15 @@ const getProgressColor = (budget: Budget) => {
 const getProgressBarColor = (budget: Budget) => {
   const progress = getBudgetProgress(budget);
   if (!progress) return "bg-gray-300";
-  if (progress.isOverBudget) return "bg-gradient-to-r from-red-500 to-red-600";
-  if (progress.shouldAlert)
-    return "bg-gradient-to-r from-amber-500 to-amber-600";
-  return "bg-gradient-to-r from-green-500 to-green-600";
+  if (progress.isOverBudget) return "bg-linear-to-r from-red-500 to-red-600";
+  if (progress.shouldAlert) return "bg-linear-to-r from-amber-500 to-amber-600";
+  return "bg-linear-to-r from-green-500 to-green-600";
 };
 
-// Category Styling
-const getCategoryIcon = (category: string) => {
-  const icons: Record<string, string> = {
-    Food: "heroicons:cake",
-    Groceries: "heroicons:shopping-cart",
-    Transport: "heroicons:truck",
-    Entertainment: "heroicons:tv",
-    Shopping: "heroicons:shopping-bag",
-    Bills: "heroicons:document-text",
-    Health: "heroicons:heart",
-    Other: "heroicons:ellipsis-horizontal-circle",
-  };
-  return icons[category] || icons.Other;
-};
-
-const getCategoryBg = (category: string) => {
-  const bgs: Record<string, string> = {
-    Food: "bg-orange-50 dark:bg-orange-900/20",
-    Groceries: "bg-green-50 dark:bg-green-900/20",
-    Transport: "bg-blue-50 dark:bg-blue-900/20",
-    Entertainment: "bg-purple-50 dark:bg-purple-900/20",
-    Shopping: "bg-pink-50 dark:bg-pink-900/20",
-    Bills: "bg-gray-100 dark:bg-gray-800",
-    Health: "bg-red-50 dark:bg-red-900/20",
-    Other: "bg-gray-100 dark:bg-gray-800",
-  };
-  return bgs[category] || bgs.Other;
-};
-
-const getCategoryIconColor = (category: string) => {
-  const colors: Record<string, string> = {
-    Food: "text-orange-600 dark:text-orange-400",
-    Groceries: "text-green-600 dark:text-green-400",
-    Transport: "text-blue-600 dark:text-blue-400",
-    Entertainment: "text-purple-600 dark:text-purple-400",
-    Shopping: "text-pink-600 dark:text-pink-400",
-    Bills: "text-gray-600 dark:text-gray-400",
-    Health: "text-red-600 dark:text-red-400",
-    Other: "text-gray-600 dark:text-gray-400",
-  };
-  return colors[category] || colors.Other;
-};
+// Category Styling — use shared getCategoryMeta from useFinance composable
+const getCategoryIcon = (category: string) => getCategoryMeta(category).icon;
+const getCategoryBg = (category: string) => getCategoryMeta(category).bg;
+const getCategoryIconColor = (category: string) => getCategoryMeta(category).color;
 
 // Actions
 const editBudget = (budget: Budget) => {

@@ -11,6 +11,16 @@ const _prodRelays = [
   "wss://yabu.me",
   "wss://nos.lol",
   "wss://relay.nostr.band",
+  "wss://nostr.mutinywallet.com", // Good for live streams
+  "wss://relay.snort.social", // Popular relay with good coverage
+];
+
+// Specialized relays for live streaming (NIP-53)
+const LIVE_STREAM_RELAYS = [
+  "wss://nostr.mutinywallet.com",
+  "wss://relay.snort.social",
+  "wss://nos.lol",
+  "wss://relay.damus.io",
 ];
 
 export const useNostrRelay = () => {
@@ -132,5 +142,6 @@ export const useNostrRelay = () => {
     subscribeToEvents,
     publishEvent,
     DEFAULT_RELAYS,
+    LIVE_STREAM_RELAYS,
   };
 };

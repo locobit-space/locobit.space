@@ -83,13 +83,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-import type { UserInfo } from "~~/types";
+import type { UserInfo } from "~/types";
 
 const toast = useToast();
 const { saveUser } = useNostrStorage();
 const { user, currentUserInfo } = useNostrUser();
 const { updateProfile } = useProfile();
+
+// State
+const loading = ref(false);
 const profileSettings = ref<UserInfo>({
   username: "",
   bio: "",
@@ -98,61 +100,85 @@ const profileSettings = ref<UserInfo>({
   lud16: "",
   pubkey: "",
   display_name: "",
+  name: "",
+  about: "",
+  picture: "",
 });
 
-const loading = ref(false);
-
 function openImageUpload() {
-  // Implement image upload logic
-  console.log("Open image upload");
+  toast.add({
+    title: "Image upload coming soon",
+    color: "primary",
+    icon: "i-heroicons-information-circle",
+  });
 }
 
 async function saveSettings() {
+  const { name, display_name, bio, avatarUrl, nip05, lud16 } =
+    profileSettings.value;
+
+  if (!user.value) {
+    toast.add({ title: "No user found", color: "error" });
+    return;
+  }
+
+  if (!display_name?.trim()) {
+    toast.add({
+      title: "Display name is required",
+      color: "error",
+    });
+    return;
+  }
+
+  loading.value = true;
+
   try {
-    const { name, display_name, bio, avatarUrl } = profileSettings.value;
-
-    if (!user.value) {
-      throw new Error("No user found");
-    }
-
-    if (!display_name.trim()) {
-      toast.add({
-        title: "Name and display name are required",
-        color: "error",
-      });
-      return;
-    }
-
-    loading.value = true;
     const input: UserInfo = {
       display_name: display_name,
-      name: name,
-      about: bio,
-      picture: avatarUrl,
-      pubkey: `${user.value?.publicKey}`,
-      lud16: "",
-      nip05: "",
+      name: name || "",
+      about: bio || "",
+      picture: avatarUrl || "",
+      pubkey: user.value.publicKey,
+      lud16: lud16 || "",
+      nip05: nip05 || "",
       website: "",
       banner: "",
     };
-    await updateProfile(input); // async to nostr
-    saveUser({ ...input, userKeys: user.value }); // local storage
+
+    // Update on relay
+    await updateProfile(input);
+
+    // Update local storage
+    saveUser({ ...input, userKeys: user.value });
+
+    // Update current session info
+    currentUserInfo.value = {
+      ...currentUserInfo.value,
+      ...input,
+    };
 
     toast.add({
       title: "Profile updated successfully",
       color: "success",
     });
   } catch (error) {
+    console.error(error);
     toast.add({ title: "Error updating profile", color: "error" });
-    throw new Error(`[useProfile] Error updating profile: ${error}`);
   } finally {
     loading.value = false;
   }
 }
 
+// Initialize form with current data
 onMounted(() => {
-  profileSettings.value = {
-    ...currentUserInfo.value,
-  };
+  if (currentUserInfo.value) {
+    profileSettings.value = {
+      ...profileSettings.value,
+      ...currentUserInfo.value,
+      // Map legacy fields if necessary
+      bio: currentUserInfo.value.about || "",
+      avatarUrl: currentUserInfo.value.picture || "",
+    };
+  }
 });
 </script>

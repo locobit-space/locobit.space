@@ -1,31 +1,25 @@
 <template>
   <div class="min-h-screen">
     <!-- Sync Status Bar -->
+    <!-- Error state: full bar -->
     <div
-      v-if="
-        finance.syncStatus.value.isSyncing || finance.syncStatus.value.hasError
-      "
-      class="px-4 py-2 text-xs sm:text-sm text-center"
+      v-if="finance.syncStatus.value.hasError"
+      class="px-4 py-2 text-xs sm:text-sm text-center text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20"
     >
       <Icon
-        v-if="finance.syncStatus.value.isSyncing"
-        name="svg-spinners:ring-resize"
-        class="w-3.5 h-3.5 inline mr-1.5"
-      />
-      <Icon
-        v-else-if="finance.syncStatus.value.hasError"
         name="heroicons:exclamation-triangle"
         class="w-3.5 h-3.5 inline mr-1.5"
       />
-      <span v-if="finance.syncStatus.value.isSyncing"
-        >Syncing with Nostr...</span
-      >
-      <span v-else-if="finance.syncStatus.value.hasError">
-        Sync failed.
-        <button @click="finance.retrySync()" class="underline ml-1">
-          Retry
-        </button>
-      </span>
+      Sync failed.
+      <button @click="finance.retrySync()" class="underline ml-1">Retry</button>
+    </div>
+    <!-- Background sync: subtle floating pill (non-blocking) -->
+    <div
+      v-else-if="finance.isSyncingBackground.value"
+      class="fixed top-3 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-900/80 dark:bg-white/10 backdrop-blur text-gray-100 dark:text-gray-100 text-xs shadow-lg pointer-events-none"
+    >
+      <Icon name="svg-spinners:ring-resize" class="w-3 h-3" />
+      Refreshing…
     </div>
 
     <!-- Header with Balance -->
@@ -40,8 +34,21 @@
             <Icon
               v-if="finance.syncStatus.value.pendingCount > 0"
               name="heroicons:cloud-arrow-up"
-              class="w-4 h-4 animate-pulse"
+              class="w-4 h-4 animate-pulse text-primary-400"
             />
+            <!-- Manual sync button -->
+            <button
+              @click="handleManualSync"
+              :disabled="isManualSyncing || finance.isSyncingBackground.value"
+              class="p-1 rounded-full hover:bg-white/20 transition-colors disabled:opacity-40"
+              :title="finance.syncStatus.value.lastSync ? 'Last sync: ' + new Date(finance.syncStatus.value.lastSync).toLocaleTimeString() : 'Sync from Nostr'"
+            >
+              <Icon
+                name="heroicons:arrow-path"
+                class="w-3.5 h-3.5"
+                :class="(isManualSyncing || finance.isSyncingBackground.value) ? 'animate-spin' : ''"
+              />
+            </button>
           </div>
           <div class="text-4xl sm:text-5xl font-bold mb-2">
             <template v-if="finance.settings.value.display_unit === 'sats'">
@@ -78,7 +85,7 @@
         <!-- Income / Expense Summary -->
         <div class="grid grid-cols-2 gap-3 sm:gap-4">
           <div
-            class="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-3.5"
+            class="bg-white/10 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-xl p-3.5"
           >
             <div class="flex items-center gap-2 mb-1.5">
               <div
@@ -102,7 +109,7 @@
             </div>
           </div>
           <div
-            class="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-3.5"
+            class="bg-white/10 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-xl p-3.5"
           >
             <div class="flex items-center gap-2 mb-1.5">
               <div
@@ -262,7 +269,7 @@
             {{ $t("finance.budget_goals") }}
           </h3>
           <NuxtLink
-            to="/locosats/budgets"
+            to="/settings/budgets"
             class="text-xs text-primary-500 hover:text-primary-600 flex items-center gap-1"
           >
             Manage
@@ -376,7 +383,7 @@
           </h3>
           <NuxtLink
             to="/locosats/transactions"
-            class="text-primary-500 text-xs hover:underline flex items-center gap-1"
+            class="text-primary-500 text-xs hover:underline dark:text-gray-200 flex items-center gap-1"
           >
             {{ $t("common.view_all") }}
             <Icon name="heroicons:chevron-right" class="w-3 h-3" />
@@ -384,7 +391,7 @@
         </div>
 
         <!-- Loading State -->
-        <div v-if="isLoading" class="p-8 space-y-4">
+        <div v-if="finance.isLoading.value" class="p-8 space-y-4">
           <div
             v-for="i in 3"
             :key="i"
@@ -413,7 +420,7 @@
             @click="viewTransaction(entry)"
           >
             <div
-              class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 shadow-sm group-hover:shadow-md transition-shadow"
+              class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 group-hover:shadow-md transition-shadow"
               :class="getCategoryBg(entry.category)"
             >
               <Icon
@@ -514,7 +521,7 @@
       <!-- Spending by Category (mini chart) -->
       <div
         v-if="categoryBreakdown.length"
-        class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 sm:p-5 mt-5 shadow-sm"
+        class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 sm:p-5 mt-5"
       >
         <h3
           class="text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2"
@@ -529,7 +536,7 @@
             class="flex items-center gap-3"
           >
             <div
-              class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 shadow-sm"
+              class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
               :class="getCategoryBg(cat.name)"
             >
               <Icon
@@ -580,19 +587,23 @@
     <!-- Floating Action Button -->
     <NuxtLink
       to="/locosats/create"
-      class="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-linear-to-br from-primary-500 to-primary-600 text-white shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-200 flex items-center justify-center z-50 active:scale-95"
+      class="fixed bottom-16 right-6 w-14 h-14 rounded-full bg-linear-to-br from-primary-500 to-primary-600 text-white shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-200 flex items-center justify-center z-50 active:scale-95"
     >
       <Icon name="heroicons:plus" class="w-7 h-7" />
     </NuxtLink>
 
     <!-- Transaction Detail Modal -->
-    <UModal v-model:open="showDetailModal" :ui="{ width: 'sm:max-w-md' }">
-      <template #default>
+    <UModal
+      v-model:open="showDetailModal"
+      title="Transaction"
+      description="Transaction Detail"
+    >
+      <template #content>
         <div v-if="selectedTransaction" class="p-6">
           <div class="flex items-start justify-between mb-5">
             <div class="flex items-center gap-3">
               <div
-                class="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm"
+                class="w-12 h-12 rounded-xl flex items-center justify-center"
                 :class="getCategoryBg(selectedTransaction.category)"
               >
                 <Icon
@@ -683,11 +694,11 @@
           </div>
 
           <!-- Actions -->
-          <div class="flex gap-2">
+          <div class="flex w-full gap-2">
             <UButton
               color="gray"
               variant="soft"
-              class="flex-1"
+              block
               @click="editTransactionHandler(selectedTransaction.id)"
             >
               <Icon name="heroicons:pencil" class="w-4 h-4 mr-2" />
@@ -696,7 +707,7 @@
             <UButton
               color="red"
               variant="soft"
-              class="flex-1"
+              block
               @click="deleteTransactionHandler(selectedTransaction.id)"
             >
               <Icon name="heroicons:trash" class="w-4 h-4 mr-2" />
@@ -713,15 +724,30 @@
 import type { FinanceEntry } from "~/types";
 
 const finance = useFinance();
+const { user } = useNostrUser();
 const { t } = useI18n();
 const router = useRouter();
 const toast = useToast();
 
 // State
-const isLoading = ref(false);
 const searchQuery = ref("");
 const showDetailModal = ref(false);
 const selectedTransaction = ref<FinanceEntry | null>(null);
+const isManualSyncing = ref(false);
+
+// Manual sync handler – forces a full Nostr relay fetch
+const handleManualSync = async () => {
+  if (isManualSyncing.value || finance.isSyncingBackground.value) return;
+  isManualSyncing.value = true;
+  try {
+    await finance.forceSync();
+    toast.add({ title: "Synced", description: "Transactions updated from Nostr", color: "green" });
+  } catch {
+    // error already shown by finance composable
+  } finally {
+    isManualSyncing.value = false;
+  }
+};
 
 // Search and Filter
 const displayedTransactions = computed(() => {
@@ -782,7 +808,7 @@ const budgetGoals = computed(() => {
         percentage: progress.percentage,
       };
     })
-    .filter(Boolean);
+    .filter((g): g is NonNullable<typeof g> => g !== null);
 });
 
 // Category Breakdown
@@ -811,7 +837,7 @@ const viewTransaction = (entry: FinanceEntry) => {
 };
 
 const editTransactionHandler = (id: string) => {
-  router.push(`/locosats/edit/${id}`);
+  router.push(`/locosats/${id}/edit`);
   showDetailModal.value = false;
 };
 
@@ -846,7 +872,10 @@ const getCategoryIcon = (category: string) => {
     Health: "heroicons:heart",
     Salary: "heroicons:banknotes",
     Freelance: "heroicons:computer-desktop",
-    Investments: "heroicons:chart-bar-square",
+    Investments: "heroicons:arrow-trending-up",
+    Education: "heroicons:academic-cap",
+    Travel: "heroicons:globe-alt",
+    Family: "heroicons:users",
     Other: "heroicons:ellipsis-horizontal-circle",
   };
   return icons[category] || icons.Other;
@@ -863,7 +892,10 @@ const getCategoryBg = (category: string) => {
     Health: "bg-red-50 dark:bg-red-900/20",
     Salary: "bg-emerald-50 dark:bg-emerald-900/20",
     Freelance: "bg-cyan-50 dark:bg-cyan-900/20",
-    Investments: "bg-indigo-50 dark:bg-indigo-900/20",
+    Investments: "bg-teal-50 dark:bg-teal-900/20",
+    Education: "bg-indigo-50 dark:bg-indigo-900/20",
+    Travel: "bg-sky-50 dark:bg-sky-900/20",
+    Family: "bg-rose-50 dark:bg-rose-900/20",
     Other: "bg-gray-100 dark:bg-gray-800",
   };
   return bgs[category] || bgs.Other;
@@ -880,7 +912,10 @@ const getCategoryIconColor = (category: string) => {
     Health: "text-red-600 dark:text-red-400",
     Salary: "text-emerald-600 dark:text-emerald-400",
     Freelance: "text-cyan-600 dark:text-cyan-400",
-    Investments: "text-indigo-600 dark:text-indigo-400",
+    Investments: "text-teal-600 dark:text-teal-400",
+    Education: "text-indigo-600 dark:text-indigo-400",
+    Travel: "text-sky-600 dark:text-sky-400",
+    Family: "text-rose-600 dark:text-rose-400",
     Other: "text-gray-600 dark:text-gray-400",
   };
   return colors[category] || colors.Other;
@@ -906,29 +941,32 @@ const formatRelativeDate = (dateStr: string) => {
   return date.toLocaleDateString();
 };
 
-// Load on mount
-onMounted(async () => {
-  isLoading.value = true;
-  try {
-    await Promise.all([finance.loadEntries(), finance.fetchExchangeRate()]);
-  } catch (err) {
-    console.error("Failed to load data:", err);
-  } finally {
-    isLoading.value = false;
-  }
-});
-
-// Auto-sync every 5 minutes if enabled
+// Load on mount – watch user so we always load once keys are available
+// (fixes race condition where onMounted fires before user is authenticated)
 let syncInterval: NodeJS.Timeout | null = null;
+
+watch(
+  () => user.value?.publicKey,
+  (pubkey) => {
+    if (!pubkey) return;
+    // Load immediately when user becomes available (cache-first, bg-sync if stale)
+    finance.loadEntries();
+    finance.fetchExchangeRate();
+
+    // Auto-sync every 5 minutes if enabled and not already set up
+    if (finance.settings.value.auto_sync && !syncInterval) {
+      syncInterval = setInterval(() => {
+        finance.loadEntries(true);
+      }, 5 * 60 * 1000);
+    }
+  },
+  { immediate: true },
+);
+
+// Fallback: also load from localStorage immediately even if user isn't ready
+// so cached data shows up instantly on mount
 onMounted(() => {
-  if (finance.settings.value.auto_sync) {
-    syncInterval = setInterval(
-      () => {
-        finance.loadEntries();
-      },
-      5 * 60 * 1000,
-    ); // 5 minutes
-  }
+  finance.fetchExchangeRate();
 });
 
 onUnmounted(() => {
