@@ -43,6 +43,11 @@ export default defineNuxtConfig({
         "success",
         "nero",
         "white",
+        "primary",
+        "mauve",
+        "olive",
+        "mist",
+        "taupe"
       ],
     },
   },

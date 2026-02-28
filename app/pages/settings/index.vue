@@ -1,13 +1,11 @@
 <template>
   <div class="space-y-6">
     <!-- Welcome Section -->
-    <div
-      class="bg-linear-to-br from-primary-500 to-primary-600 dark:from-primary-600 dark:to-primary-700 rounded-xl text-white"
-    >
+    <div class="">
       <div class="flex items-start justify-between">
         <div class="flex-1">
-          <h1 class="text-2xl text-white font-bold mb-2">Settings</h1>
-          <p class="text-primary-100 dark:text-primary-200 text-sm">
+          <h1 class="text-2xl font-bold mb-2">Settings</h1>
+          <p class="text-sm">
             Manage your account, preferences, and app configuration
           </p>
         </div>
@@ -47,7 +45,9 @@
               />
             </div>
             <div class="flex-1 min-w-0">
-              <h3 class="font-medium text-gray-900 dark:text-white text-sm mb-0.5">
+              <h3
+                class="font-medium text-gray-900 dark:text-white text-sm mb-0.5"
+              >
                 {{ card.label }}
               </h3>
               <p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
@@ -69,7 +69,9 @@
       <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
         All Settings
       </h2>
-      <div class="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 divide-y divide-gray-200 dark:divide-gray-800">
+      <div
+        class="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 divide-y divide-gray-200 dark:divide-gray-800"
+      >
         <NuxtLink
           v-for="item in listItems"
           :key="item.to"
@@ -80,7 +82,9 @@
             :name="item.icon"
             class="w-5 h-5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300"
           />
-          <span class="flex-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+          <span
+            class="flex-1 text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
             {{ item.label }}
           </span>
           <Icon name="heroicons:chevron-right" class="w-4 h-4 text-gray-400" />

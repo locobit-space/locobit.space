@@ -27,6 +27,10 @@ export default defineAppConfig({
       stone: "stone",
       nero: "nero",
       white: "white",
+      mauve: "mauve",
+      olive: "olive",
+      mist: "mist",
+      taupe: "taupe",
     },
   },
 });
