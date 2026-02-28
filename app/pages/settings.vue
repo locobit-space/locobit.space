@@ -53,17 +53,13 @@
           </div>
 
           <!-- Search Settings -->
-          <div class="relative">
-            <Icon
-              name="heroicons:magnifying-glass"
-              class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400"
-            />
-            <input
-              v-model="searchQuery"
-              placeholder="Search..."
-              class="w-full pl-8 pr-3 py-1.5 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-            />
-          </div>
+           <UInput
+            v-model="searchQuery"
+            placeholder="Search settings..."
+            icon="heroicons:magnifying-glass"
+            size="sm"
+            class="w-full"
+          />
         </div>
 
         <nav class="p-3 space-y-0.5 overflow-y-auto max-h-[calc(100vh-140px)]">

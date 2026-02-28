@@ -2,7 +2,7 @@
   <div class="space-y-6">
     <!-- Header -->
     <div
-      class="bg-gradient-to-br from-primary-500 to-primary-600 dark:from-primary-600 dark:to-primary-700 rounded-xl p-6 text-white"
+      class="bg-linear-to-br from-primary-500 to-primary-600 dark:from-primary-600 dark:to-primary-700 rounded-xl p-6 text-white"
     >
       <div class="flex items-center gap-3 mb-2">
         <div
@@ -39,31 +39,101 @@
           >
             Default Currency
           </label>
-          <USelect
-            v-model="settings.default_currency"
-            :items="currencyOptions"
-            size="lg"
-            @update:model-value="saveSettings"
-          />
+
+          <!-- Searchable currency picker -->
+          <div ref="currencyPickerRef">
+            <!-- Trigger -->
+            <button
+              ref="currencyTriggerRef"
+              type="button"
+              @click="toggleCurrencyPicker"
+              class="w-full flex items-center justify-between px-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm hover:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
+              :class="showCurrencyPicker ? 'border-primary-400 ring-2 ring-primary-500' : ''"
+            >
+              <span class="flex items-center gap-2">
+                <span class="font-mono font-semibold text-primary-600 dark:text-primary-400 text-sm">
+                  {{ settings.default_currency }}
+                </span>
+                <span class="text-gray-600 dark:text-gray-300">
+                  {{ getCurrencyDisplayName(settings.default_currency) }}
+                </span>
+              </span>
+              <Icon
+                name="heroicons:chevron-up-down"
+                class="w-4 h-4 text-gray-400 shrink-0"
+                :class="showCurrencyPicker ? 'rotate-180' : ''"
+              />
+            </button>
+
+            <!-- Dropdown rendered at body level to escape stacking contexts -->
+            <Teleport to="body">
+              <div
+                v-if="showCurrencyPicker"
+                ref="currencyDropdownRef"
+                :style="dropdownStyle"
+                class="fixed border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl overflow-hidden"
+              >
+                <!-- Search -->
+                <div class="p-2 border-b border-gray-100 dark:border-gray-700">
+                  <UInput
+                    v-model="currencySearch"
+                    placeholder="Search currency or country…"
+                    size="sm"
+                    class="w-full"
+                    autofocus
+                  >
+                    <template #leading>
+                      <Icon name="heroicons:magnifying-glass" class="w-4 h-4 text-gray-400" />
+                    </template>
+                  </UInput>
+                </div>
+                <!-- List -->
+                <ul class="max-h-60 overflow-y-auto py-1">
+                  <li v-if="filteredCurrencies.length === 0" class="px-3 py-2 text-xs text-gray-400 text-center">
+                    No currencies found
+                  </li>
+                  <li
+                    v-for="c in filteredCurrencies"
+                    :key="c.code"
+                    @mousedown.prevent="selectCurrency(c.code)"
+                    class="flex items-center gap-2.5 px-3 py-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    :class="settings.default_currency === c.code ? 'bg-primary-50 dark:bg-primary-900/30' : ''"
+                  >
+                    <span class="font-mono text-xs font-semibold w-10 shrink-0"
+                      :class="settings.default_currency === c.code ? 'text-primary-600 dark:text-primary-400' : 'text-gray-500'"
+                    >{{ c.code }}</span>
+                    <span class="text-sm text-gray-700 dark:text-gray-200">{{ c.name }}</span>
+                    <span class="ml-auto text-xs text-gray-400">{{ c.symbol }}</span>
+                    <Icon
+                      v-if="settings.default_currency === c.code"
+                      name="heroicons:check"
+                      class="w-4 h-4 text-primary-500 shrink-0"
+                    />
+                  </li>
+                </ul>
+              </div>
+            </Teleport>
+          </div>
+
           <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
-            This will be used for all transactions and reports
+            {{ filteredCurrencies.length || finance.currencies.length }} currencies supported · rate fetched live from blockchain.info
           </p>
         </div>
 
         <!-- Default Display Unit -->
         <div>
           <label
-            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            class="block text-sm font-medium z-0 text-gray-700 dark:text-gray-300 mb-2"
           >
             Default Display Unit
           </label>
-          <div class="grid grid-cols-2 gap-3">
+          <div class="grid grid-cols-2 z-0 gap-3">
             <button
               @click="
                 settings.display_unit = 'fiat';
                 saveSettings();
               "
-              class="p-4 rounded-lg border-2 transition-all"
+              class="p-4 rounded-lg z-0 border-2 transition-all"
               :class="
                 settings.display_unit === 'fiat'
                   ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30'
@@ -95,7 +165,7 @@
                 settings.display_unit = 'sats';
                 saveSettings();
               "
-              class="p-4 rounded-lg border-2 transition-all"
+              class="p-4 rounded-lg z-0 border-2 transition-all"
               :class="
                 settings.display_unit === 'sats'
                   ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30'
@@ -180,25 +250,61 @@
           <Icon name="heroicons:tag" class="w-5 h-5 text-primary-500" />
           Categories
         </h3>
-        <UButton color="primary" size="sm" @click="showAddCategoryModal = true">
-          <Icon name="heroicons:plus" class="w-4 h-4 mr-1" />
-          Add
-        </UButton>
+        <div class="flex gap-2">
+          <UButton size="sm" color="primary" variant="soft" @click="showInlineAdd = true">
+            <Icon name="heroicons:plus" class="w-4 h-4 mr-1" />
+            Add
+          </UButton>
+          <UButton size="sm" color="gray" variant="soft" @click="restoreDefaults">
+            <Icon name="heroicons:arrow-path" class="w-4 h-4 mr-1" />
+            Restore
+          </UButton>
+        </div>
       </div>
 
-      <div class="flex flex-wrap gap-2">
+      <div class="flex flex-wrap gap-2 mt-4">
         <div
           v-for="category in settings.categories"
           :key="category"
-          class="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-lg group hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+          class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg group hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+          :class="isDefaultCategory(category) ? 'bg-gray-100 dark:bg-gray-800' : 'bg-violet-50 dark:bg-violet-900/30'"
         >
-          <span class="text-sm text-gray-700 dark:text-gray-300">{{
-            category
-          }}</span>
+          <div
+            class="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
+            :class="getCategoryMetaLocal(category).bg"
+          >
+            <Icon
+              :name="getCategoryMetaLocal(category).icon"
+              class="w-3 h-3"
+              :class="getCategoryMetaLocal(category).color"
+            />
+          </div>
+          <span class="text-sm text-gray-700 dark:text-gray-300">{{ category }}</span>
+          <span
+            v-if="!isDefaultCategory(category)"
+            class="text-xs px-1 py-0.5 rounded bg-violet-100 dark:bg-violet-900/50 text-violet-600 dark:text-violet-400 font-medium leading-none"
+          >custom</span>
           <button
             @click="removeCategory(category)"
-            class="text-gray-400 hover:text-red-500 transition-colors"
+            class="text-gray-300 hover:text-red-500 transition-colors ml-0.5"
           >
+            <Icon name="heroicons:x-mark" class="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        <!-- Quick-add inline -->
+        <div v-if="showInlineAdd" class="flex items-center gap-1.5">
+          <UInput
+            v-model="newCategory"
+            placeholder="Category name"
+            size="xs"
+            class="w-36"
+            autofocus
+            @keyup.enter="addCategory"
+            @keyup.escape="showInlineAdd = false; newCategory = ''"
+          />
+          <UButton size="xs" color="primary" :disabled="!newCategory.trim()" @click="addCategory">Add</UButton>
+          <button @click="showInlineAdd = false; newCategory = ''" class="text-gray-400 hover:text-gray-600">
             <Icon name="heroicons:x-mark" class="w-4 h-4" />
           </button>
         </div>
@@ -264,9 +370,9 @@
           </div>
         </button>
 
-        <UButton
+        <button
           @click="showImportModal = true"
-          class="flex items-center flex-col gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group"
+          class="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group"
         >
           <div
             class="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center group-hover:bg-purple-200 dark:group-hover:bg-purple-900/50 transition-colors"
@@ -284,7 +390,7 @@
               Restore from backup
             </p>
           </div>
-        </UButton>
+        </button>
 
         <button
           @click="confirmClearData"
@@ -345,46 +451,6 @@
         </div>
       </div>
     </div>
-
-    <!-- Add Category Modal -->
-    <UModal
-      v-model:open="showAddCategoryModal"
-      title="Add Category"
-      description="Category"
-    >
-      <template #content>
-        <div class="p-6">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Add Category
-          </h3>
-          <UInput
-            v-model="newCategory"
-            placeholder="Enter category name"
-            size="lg"
-            class="w-full"
-            @keyup.enter="addCategory"
-          />
-          <div class="flex gap-3 mt-5">
-            <UButton
-              color="gray"
-              variant="soft"
-              block
-              @click="showAddCategoryModal = false"
-            >
-              Cancel
-            </UButton>
-            <UButton
-              color="primary"
-              block
-              @click="addCategory"
-              :disabled="!newCategory.trim()"
-            >
-              Add Category
-            </UButton>
-          </div>
-        </div>
-      </template>
-    </UModal>
 
     <!-- Import Data Modal -->
     <UModal
@@ -503,31 +569,118 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from "vue";
 import type { UserSettings } from "~/types";
 
 const finance = useFinance();
 const toast = useToast();
-const settings = ref<UserSettings>({ ...finance.settings.value });
 
-// Modal visibility states
+// Keep local ref in sync with finance.settings (e.g. after a Nostr sync merges new defaults)
+const settings = ref<UserSettings>({ ...finance.settings.value });
+watch(
+  () => finance.settings.value,
+  (v) => { settings.value = { ...v }; },
+  { deep: true },
+);
+
+// Modal / inline-add visibility
 const showImportModal = ref(false);
 const showDeleteModal = ref(false);
 const showAddCategoryModal = ref(false);
+const showInlineAdd = ref(false);
 const newCategory = ref("");
 
 // Available currencies
-const currencyOptions = finance.currencies.map((c) => ({ label: c, value: c }));
+const currencyOptions = finance.currencies.map((c) => ({ label: `${c.code} – ${c.name}`, value: c.code }));
+
+// Searchable currency picker
+const showCurrencyPicker = ref(false);
+const currencySearch = ref("");
+const currencyPickerRef = ref<HTMLElement | null>(null);
+const currencyTriggerRef = ref<HTMLElement | null>(null);
+const currencyDropdownRef = ref<HTMLElement | null>(null);
+const dropdownStyle = ref<Record<string, string>>({});
+
+const colorMode = useColorMode();
+
+const updateDropdownPosition = () => {
+  if (!currencyTriggerRef.value) return;
+  const rect = currencyTriggerRef.value.getBoundingClientRect();
+  const spaceBelow = window.innerHeight - rect.bottom;
+  const dropdownHeight = 320; // approx max-h
+  const openUpward = spaceBelow < dropdownHeight && rect.top > dropdownHeight;
+  const isDark = colorMode.value === "dark";
+  dropdownStyle.value = {
+    left: `${rect.left}px`,
+    width: `${rect.width}px`,
+    zIndex: "9999",
+    backgroundColor: isDark ? "#111827" : "#ffffff",
+    ...(openUpward
+      ? { bottom: `${window.innerHeight - rect.top + 4}px` }
+      : { top: `${rect.bottom + 4}px` }),
+  };
+};
+
+const toggleCurrencyPicker = () => {
+  showCurrencyPicker.value = !showCurrencyPicker.value;
+  if (showCurrencyPicker.value) {
+    nextTick(updateDropdownPosition);
+  }
+};
+
+const filteredCurrencies = computed(() => {
+  const q = currencySearch.value.trim().toLowerCase();
+  if (!q) return finance.currencies;
+  return finance.currencies.filter(
+    (c) =>
+      c.code.toLowerCase().includes(q) ||
+      c.name.toLowerCase().includes(q) ||
+      c.symbol.toLowerCase().includes(q),
+  );
+});
+
+const getCurrencyDisplayName = (code: string) =>
+  finance.currencies.find((c) => c.code === code)?.name ?? code;
+
+const selectCurrency = (code: string) => {
+  settings.value.default_currency = code;
+  showCurrencyPicker.value = false;
+  currencySearch.value = "";
+  saveSettings();
+};
+
+// Close picker when clicking outside (trigger or teleported dropdown)
+const handleOutsideClick = (e: MouseEvent) => {
+  const target = e.target as Node;
+  const insideTrigger = currencyPickerRef.value?.contains(target);
+  const insideDropdown = currencyDropdownRef.value?.contains(target);
+  if (!insideTrigger && !insideDropdown) {
+    showCurrencyPicker.value = false;
+  }
+};
+onMounted(() => {
+  document.addEventListener("mousedown", handleOutsideClick);
+  window.addEventListener("scroll", updateDropdownPosition, true);
+  window.addEventListener("resize", updateDropdownPosition);
+});
+onUnmounted(() => {
+  document.removeEventListener("mousedown", handleOutsideClick);
+  window.removeEventListener("scroll", updateDropdownPosition, true);
+  window.removeEventListener("resize", updateDropdownPosition);
+});
 
 // File upload reference
 const importFile = ref<File | null>(null);
 
+// Category helpers
+const getCategoryMetaLocal = (category: string) => getCategoryMeta(category);
+const isDefaultCategory = (category: string) => DEFAULT_CATEGORIES.includes(category);
+
 // Days since first transaction
 const daysSinceFirstTransaction = computed(() => {
-  if (finance.entries.value.length === 0) return 0;
-  const firstDate = new Date(
-    finance.entries.value[finance.entries.value.length - 1].created_at,
-  );
+  const last = finance.entries.value.at(-1);
+  if (!last) return 0;
+  const firstDate = new Date(last.created_at);
   const now = new Date();
   return Math.floor(
     (now.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24),
@@ -538,17 +691,19 @@ const daysSinceFirstTransaction = computed(() => {
 const addCategory = () => {
   if (!newCategory.value.trim()) return;
   if (!settings.value.categories) settings.value.categories = [];
-  if (!settings.value.categories.includes(newCategory.value.trim())) {
-    settings.value.categories.push(newCategory.value.trim());
+  const name = newCategory.value.trim();
+  if (!settings.value.categories.includes(name)) {
+    settings.value.categories.push(name);
     saveSettings();
     toast.add({
       title: "Category Added",
-      description: `${newCategory.value} has been added to your categories.`,
+      description: `${name} has been added to your categories.`,
       color: "green",
     });
   }
   newCategory.value = "";
   showAddCategoryModal.value = false;
+  showInlineAdd.value = false;
 };
 
 const removeCategory = (category: string) => {
@@ -563,7 +718,25 @@ const removeCategory = (category: string) => {
   });
 };
 
-// Save settings
+const restoreDefaults = () => {
+  if (!settings.value.categories) settings.value.categories = [];
+  const missing = DEFAULT_CATEGORIES.filter(
+    (c) => !settings.value.categories!.includes(c),
+  );
+  if (missing.length === 0) {
+    toast.add({ title: "Already complete", description: "All default categories are present." });
+    return;
+  }
+  settings.value.categories.push(...missing);
+  saveSettings();
+  toast.add({
+    title: "Defaults Restored",
+    description: `Added ${missing.length} missing default categor${missing.length === 1 ? "y" : "ies"}.`,
+    color: "green",
+  });
+};
+
+// Save settings — syncs local ref back to composable state + localStorage
 const saveSettings = () => {
   finance.settings.value = { ...settings.value };
   finance.saveSettings();

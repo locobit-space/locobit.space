@@ -2,7 +2,11 @@
   <div class="space-y-6">
     <!-- Welcome Section -->
     <div
+<<<<<<< HEAD
       class="bg-linear-to-br from-primary-500 to-primary-600 dark:from-primary-600 dark:to-primary-700 rounded-xl p-6 text-white shadow-lg"
+=======
+      class="bg-linear-to-br from-primary-500 to-primary-600 dark:from-primary-600 dark:to-primary-700 rounded-xl text-white"
+>>>>>>> develop
     >
       <div class="flex items-start justify-between">
         <div class="flex-1">

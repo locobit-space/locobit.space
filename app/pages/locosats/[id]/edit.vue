@@ -7,22 +7,37 @@
       <div class="max-w-2xl mx-auto px-4 py-3">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <NuxtLink
-              to="/locosats"
+            <button
+              @click="$router.back()"
               class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
             >
               <Icon name="heroicons:arrow-left" class="w-5 h-5" />
-            </NuxtLink>
+            </button>
             <h1 class="text-lg font-semibold text-gray-900 dark:text-white">
-              {{ $t("finance.add_expense") }}
+              Edit Transaction
             </h1>
           </div>
+          <button
+            @click="confirmDelete"
+            class="text-red-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+          >
+            <Icon name="heroicons:trash" class="w-5 h-5" />
+          </button>
         </div>
       </div>
     </div>
 
+    <!-- Not Found -->
+    <div v-if="!entry" class="flex-1 flex items-center justify-center p-8">
+      <div class="text-center">
+        <Icon name="heroicons:exclamation-circle" class="w-12 h-12 text-gray-300 mb-3 mx-auto" />
+        <p class="text-gray-500">Transaction not found.</p>
+        <NuxtLink to="/locosats" class="text-primary-500 text-sm mt-2 inline-block">← Back to Wallet</NuxtLink>
+      </div>
+    </div>
+
     <!-- Scrollable Content -->
-    <div class="flex-1 overflow-y-auto">
+    <div v-else class="flex-1 overflow-y-auto">
       <div class="max-w-2xl mx-auto px-4 py-5">
         <!-- Type Toggle -->
         <div
@@ -82,7 +97,6 @@
                     : 'text-red-600 dark:text-red-400'
                 "
                 placeholder="0"
-                autofocus
               />
             </div>
             <button
@@ -103,18 +117,6 @@
             class="mt-1.5 text-xs text-gray-400"
           >
             ≈ {{ conversionDisplay }}
-          </div>
-
-          <!-- Quick Amounts -->
-          <div class="mt-3 flex flex-wrap gap-1.5">
-            <button
-              v-for="quickAmount in quickAmounts"
-              :key="quickAmount"
-              @click="amount = quickAmount"
-              class="px-2.5 py-1 bg-gray-100 dark:bg-gray-800 rounded-md text-xs hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-300"
-            >
-              {{ $n(quickAmount) }}
-            </button>
           </div>
         </div>
 
@@ -138,12 +140,10 @@
                   : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700',
               ]"
             >
-              <!-- Selected Indicator -->
               <div
                 v-if="form.category === cat.name"
                 class="absolute top-1 right-1 w-2 h-2 rounded-full bg-primary-500"
               ></div>
-
               <div
                 class="w-10 h-10 rounded-full flex items-center justify-center transition-transform"
                 :class="[
@@ -167,13 +167,13 @@
             </button>
           </div>
 
-          <!-- Quick-add custom category (shows when "Other" is selected) -->
-          <div v-if="form.category === 'Other'" class="mt-3 flex gap-2">
+          <!-- Quick-add custom category -->
+          <div class="mt-3 flex gap-2">
             <UInput
               v-model="customCategory"
-              placeholder="New category name (saved to settings)"
+              placeholder="Add new category to settings…"
               size="sm"
-              class="flex-1 w-full"
+              class="flex-1"
               @keyup.enter="addCustomCategory"
             />
             <UButton size="sm" color="primary" variant="soft" :disabled="!customCategory.trim()" @click="addCustomCategory">
@@ -221,14 +221,22 @@
             >
               {{ $t("common.date") }}
             </label>
-            <UInput v-model="form.date" type="datetime-local" :max="today" size="md" />
+            <UInput v-model="form.date" type="date" :max="today" size="md" />
+          </div>
+
+          <!-- Original entry info -->
+          <div class="pt-2 border-t border-gray-100 dark:border-gray-800">
+            <p class="text-xs text-gray-400">
+              ID: {{ entry.id }} ·
+              Created: {{ new Date(entry.created_at).toLocaleString() }}
+            </p>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Bottom Action Bar -->
-    <div class="md:mb-0 mb-2">
+    <div v-if="entry" class="md:mb-0 mb-2">
       <div class="max-w-2xl px-4 py-2 mx-auto">
         <UButton
           color="primary"
@@ -239,11 +247,7 @@
           @click="handleSubmit"
         >
           <Icon name="heroicons:check" class="w-5 h-5 mr-2" />
-          {{
-            form.type === "income"
-              ? $t("finance.add_income")
-              : $t("finance.add_expense")
-          }}
+          Save Changes
         </UButton>
       </div>
     </div>
@@ -251,34 +255,64 @@
 </template>
 
 <script setup lang="ts">
+import type { FinanceEntry } from "~/types";
+
 const router = useRouter();
 const route = useRoute();
 const finance = useFinance();
 const toast = useToast();
 
-// date time local
-const dateTimeLocal = new Date().toISOString().slice(0, 16);
 const today = new Date().toISOString().split("T")[0];
+const id = route.params.id as string;
 
-// Get type from query parameter
-const initialType = (route.query.type === "income" ? "income" : "expense") as
-  | "income"
-  | "expense";
+// Find the entry
+const entry = computed(() =>
+  finance.entries.value.find((e) => e.id === id) ?? null,
+);
 
+// Form state – seeded from the existing entry
 const form = ref({
-  type: initialType,
-  category: initialType === "income" ? "Salary" : "Food",
+  type: "expense" as "income" | "expense",
+  category: "Other",
   note: "",
   tags: [] as string[],
   unit_input: "fiat" as "fiat" | "sats",
-  date: dateTimeLocal,
+  date: today,
 });
 
 const amount = ref<number | string>("");
-const customCategory = ref("");
 const isSubmitting = ref(false);
 
-// Add a new category to settings and auto-select it
+// Populate form when entry is available (handles async loading)
+watch(
+  entry,
+  (e) => {
+    if (!e) return;
+    form.value = {
+      type: e.type,
+      category: e.category,
+      note: e.note || "",
+      tags: [...(e.tags || [])],
+      unit_input: e.unit_input || "fiat",
+      date: e.created_at.split("T")[0],
+    };
+    amount.value =
+      e.unit_input === "sats" ? e.amount_sats : e.amount_fiat;
+  },
+  { immediate: true },
+);
+
+// Categories — built from settings (includes user-added custom ones) + metadata fallback
+const categories = computed(() =>
+  (finance.settings.value.categories ?? []).map((name) => ({
+    name,
+    ...getCategoryMeta(name),
+  }))
+);
+
+const customCategory = ref("");
+
+// Quick-add a custom category to settings and select it
 const addCustomCategory = () => {
   const name = customCategory.value.trim();
   if (!name) return;
@@ -291,32 +325,13 @@ const addCustomCategory = () => {
   customCategory.value = "";
 };
 
-// Quick amounts — driven by the currency's denomination tier (micro/large/medium/small)
-const quickAmounts = computed(() => {
-  if (form.value.unit_input === "sats") {
-    return [1_000, 5_000, 10_000, 21_000, 50_000, 100_000];
-  }
-  return getCurrencyQuickAmounts(finance.settings.value.default_currency);
-});
-
-// Categories — built from settings (includes user-added custom ones) + metadata fallback
-const categories = computed(() =>
-  (finance.settings.value.categories ?? []).map((name) => ({
-    name,
-    ...getCategoryMeta(name),
-  }))
-);
-
-// Toggle unit
 const toggleUnit = () => {
   form.value.unit_input = form.value.unit_input === "fiat" ? "sats" : "fiat";
 };
 
-// Conversion display
 const conversionDisplay = computed(() => {
   if (!amount.value || Number(amount.value) <= 0) return "";
   const val = Number(amount.value);
-
   if (form.value.unit_input === "fiat") {
     const sats = Math.round(val * finance.currentExchangeRate.value);
     return `${sats.toLocaleString()} sats`;
@@ -326,48 +341,53 @@ const conversionDisplay = computed(() => {
   }
 });
 
-// Submit handler
 const handleSubmit = async () => {
-  if (!amount.value || Number(amount.value) <= 0) return;
+  if (!amount.value || Number(amount.value) <= 0 || !entry.value) return;
 
   isSubmitting.value = true;
   try {
-    await finance.addEntry({
+    const updated: FinanceEntry = {
+      ...entry.value,
       type: form.value.type,
       category: form.value.category,
-      amount_fiat: form.value.unit_input === "fiat" ? Number(amount.value) : 0,
-      amount_sats: form.value.unit_input === "sats" ? Number(amount.value) : 0,
-      unit_input: form.value.unit_input,
-      fiat_currency: finance.settings.value.default_currency,
-      sats_per_fiat: finance.currentExchangeRate.value,
       note: form.value.note || form.value.category,
-      tags: form.value.tags.length
-        ? form.value.tags
-        : [form.value.category.toLowerCase()],
-      visibility: "private",
-      user_id: "",
-    });
+      tags: form.value.tags.length ? form.value.tags : [form.value.category.toLowerCase()],
+      unit_input: form.value.unit_input,
+      amount_fiat: form.value.unit_input === "fiat" ? Number(amount.value) : entry.value.amount_fiat,
+      amount_sats: form.value.unit_input === "sats" ? Number(amount.value) : entry.value.amount_sats,
+    };
+
+    await finance.editEntry(id, updated);
 
     toast.add({
-      title: "Success",
-      description: `${form.value.type === "income" ? "Income" : "Expense"} added successfully`,
+      title: "Saved",
+      description: "Transaction updated successfully",
       color: "green",
     });
 
     router.push("/locosats");
   } catch (error) {
     console.error(error);
+    toast.add({ title: "Error", description: "Failed to save changes", color: "red" });
   } finally {
     isSubmitting.value = false;
   }
 };
 
-// Load exchange rate on mount
+const confirmDelete = async () => {
+  if (!confirm("Delete this transaction? This cannot be undone.")) return;
+  try {
+    finance.deleteEntry(id);
+    toast.add({ title: "Deleted", description: "Transaction removed", color: "green" });
+    router.push("/locosats");
+  } catch {
+    toast.add({ title: "Error", description: "Failed to delete transaction", color: "red" });
+  }
+};
+
 onMounted(() => {
   finance.fetchExchangeRate();
 });
 
-useHead({
-  title: "Add Transaction - Sats Wallet",
-});
+useHead({ title: "Edit Transaction - Sats Wallet" });
 </script>
