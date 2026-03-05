@@ -426,7 +426,10 @@
     "write_placeholder": "ຂຽນຄວາມຄິດຂອງທ່ານຢູ່ນີ້...",
     "characters": "ຕົວອັກສອນ",
     "delete_confirm_title": "ລົບບັນທຶກ?",
-    "delete_confirm_message": "ການກະທຳນີ້ບໍ່ສາມາດກັບຄືນໄດ້. ບັນທຶກຂອງທ່ານຈະຖືກລົບຖາວອນ."
+    "delete_confirm_message": "ການກະທຳນີ້ບໍ່ສາມາດກັບຄືນໄດ້. ບັນທຶກຂອງທ່ານຈະຖືກລົບຖາວອນ.",
+    "no_results": "ບໍ່ພົບຜົນໄດ້ຮັບ",
+    "try_different_filter": "ລອງໃຊ້ຄຳຄົ້ນຫາ ຫຼື ຕົວກອງທີ່ແຕກຕ່າງ",
+    "all_loaded": "ໂຫລດບັນທຶກທັງໝົດແລ້ວ"
   },
   "finance": {
     "total_balance": "ຍອດລວມ",

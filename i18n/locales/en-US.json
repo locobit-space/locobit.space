@@ -74,7 +74,10 @@
     "write_placeholder": "Write your thoughts here...",
     "characters": "characters",
     "delete_confirm_title": "Delete Entry?",
-    "delete_confirm_message": "This action cannot be undone. Your entry will be permanently deleted."
+    "delete_confirm_message": "This action cannot be undone. Your entry will be permanently deleted.",
+    "no_results": "No Results Found",
+    "try_different_filter": "Try a different search term or filter",
+    "all_loaded": "All entries loaded"
   },
   "finance": {
     "total_balance": "Total Balance",

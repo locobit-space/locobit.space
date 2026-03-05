@@ -1,303 +1,401 @@
+/**
+ * useNostrPrivateJournal
+ *
+ * Offline-first private journal built on NIP-04 encryption + kind-30001
+ * replaceable events.  IndexedDB is the source of truth for reads; relays
+ * are synced in the background.
+ *
+ * Sync lifecycle
+ * ──────────────
+ *  pending  → written locally, awaiting relay publish
+ *  synced   → confirmed on ≥ 1 relay
+ *  failed   → relay rejected / offline (auto-retried on next load)
+ *  deleted  → soft-delete locally, tombstone queued for relay
+ */
+
 import { finalizeEvent } from "nostr-tools/pure";
 import { hexToBytes } from "@noble/hashes/utils";
 import { nip04 } from "nostr-tools";
 import { xchacha20poly1305 } from "@noble/ciphers/chacha";
 import { randomBytes } from "@noble/hashes/utils";
+import { useJournalDB, type JournalEventRecord } from "./useJournalDB";
 
-// Extend your existing useNostr.ts with these new functions
+// ── Constants ───────────────────────────────────────────────────────────────
+
+const PRIVATE_NOTE_KIND = 30001;
+const DEFAULT_LIMIT = 20;
+
+// ── Composable ───────────────────────────────────────────────────────────────
+
 export const useNostrPrivateJournal = () => {
+  // ── Dependencies ──────────────────────────────────────────────────────────
+
   const { $nostr } = useNuxtApp();
   const { pool } = $nostr;
-
   const { user } = useNostrUser();
   const { error, isLoading } = useNostrFeed();
-  const { DEFAULT_RELAYS: RELAYS, queryEvents } = useNostrRelay();
-  const journalNotes = ref<any[]>([]);
+  const { DEFAULT_RELAYS: RELAYS } = useNostrRelay();
+  const db = useJournalDB();
 
-  const oldItems = useState<any[]>("oldItems", () => []);
+  // ── Reactive state ────────────────────────────────────────────────────────
 
-  // Kind 30001 is a standard for private notes/bookmarks
-  const PRIVATE_NOTE_KIND = 30001;
-  const hasMore = useState<boolean>("hasMore", () => false);
-  const DEFAULT_LIMIT = 10;
+  /** Working set shown in the UI (newest-first, excludes soft-deletes) */
+  const journalNotes = ref<JournalEventRecord[]>([]);
 
-  /**
-   * Create a new private journal entry
-   * @param content The journal entry content
-   * @param date ISO date string for organizing entries
-   * @returns boolean success status
-   */
-  const createJournalEntry = async (
-    content: string,
-    date: string,
-    extraTags: string[][] = [] // Optional tags like file attachments
-  ) => {
-    if (!user.value) return false;
-    isLoading.value = true;
+  /** True when there may be older entries not yet loaded */
+  const hasMore = useState<boolean>("journal_hasMore", () => true);
 
-    try {
-      // Encrypt the content using the user's own public key
-      // This way only they can decrypt it
-      const encryptedContent = await nip04.encrypt(
-        user.value.privateKey,
-        user.value.publicKey,
-        content
-      );
+  /** Whether we are currently fetching from relays (not just reading cache) */
+  const isSyncing = ref(false);
 
-      // get the current date timestamp
-      const id = Math.floor(Date.now() / 1000);
+  /** True when the browser is offline */
+  const isOffline = ref(!import.meta.client || !navigator.onLine);
 
-      const eventTemplate = {
-        kind: PRIVATE_NOTE_KIND,
-        created_at: Math.floor(Date.now() / 1000),
-        tags: [
-          ["d", `${id}`], // Use 'd' tag for dates to allow for replacement/editing
-          // ["title", "Journal Entry"],
-          ["date", date],
-          ["t", "journal"], // add a tag for filtering
-          ...extraTags,
-        ],
-        content: encryptedContent,
-      };
+  // ── Online/offline detection ──────────────────────────────────────────────
 
-      const signedEvent = finalizeEvent(
-        eventTemplate,
-        hexToBytes(user.value.privateKey)
-      );
+  if (import.meta.client) {
+    window.addEventListener("online", () => {
+      isOffline.value = false;
+      syncPendingEntries();
+    });
+    window.addEventListener("offline", () => {
+      isOffline.value = true;
+    });
+  }
 
-      await Promise.any(pool.publish(RELAYS, signedEvent));
-      isLoading.value = false;
-      return true;
-    } catch (e) {
-      error.value = e;
-      isLoading.value = false;
-      return false;
-    }
+  // ── Internal helpers ──────────────────────────────────────────────────────
+
+  const encrypt = (plaintext: string) => {
+    if (!user.value) throw new Error("No user");
+    return nip04.encrypt(user.value.privateKey, user.value.publicKey, plaintext);
   };
 
-  /**
-   * Update an existing journal entry
-   * @param id The d-tag identifier (date)
-   * @param content New content for the entry
-   * @returns boolean success status
-   */
-  const updateJournalEntry = async (
-    id: string,
-    content: string,
-    date: string
-  ) => {
-    if (!user.value) return false;
-    isLoading.value = true;
-
-    try {
-      // Encrypt the updated content
-      const encryptedContent = nip04.encrypt(
-        user.value.privateKey,
-        user.value.publicKey,
-        content
-      );
-
-      const eventTemplate = {
-        kind: PRIVATE_NOTE_KIND,
-        created_at: Math.floor(Date.now() / 1000),
-        tags: [
-          ["d", id], // Same 'd' tag value for replacement
-          // ["title", "Journal Entry"],
-          ["date", date],
-          ["t", "journal"],
-        ],
-        content: encryptedContent,
-      };
-
-      const signedEvent = finalizeEvent(
-        eventTemplate,
-        hexToBytes(user.value.privateKey)
-      );
-
-      await Promise.any(pool.publish(RELAYS, signedEvent));
-      isLoading.value = false;
-      return true;
-    } catch (e) {
-      error.value = e;
-      isLoading.value = false;
-      return false;
-    }
+  const decrypt = (ciphertext: string) => {
+    if (!user.value) throw new Error("No user");
+    return nip04.decrypt(user.value.privateKey, user.value.publicKey, ciphertext);
   };
 
+  const publishEvent = async (template: any) => {
+    if (!user.value) throw new Error("No user");
+    const signed = finalizeEvent(template, hexToBytes(user.value.privateKey));
+    await Promise.any(pool.publish(RELAYS, signed));
+    return signed;
+  };
+
+  const mergeRelayEvents = async (events: any[]): Promise<JournalEventRecord[]> => {
+    if (!user.value) return [];
+    const records: JournalEventRecord[] = [];
+
+    for (const event of events) {
+      if (!event.content) continue;
+      try {
+        const decryptedContent = decrypt(event.content);
+        const dTag = event.tags.find((t: string[]) => t[0] === "d")?.[1];
+        if (!dTag) continue;
+
+        const existing = await db.getByNostrId(event.id);
+        if (existing) {
+          if (event.created_at >= existing.created_at) {
+            existing.decryptedContent = decryptedContent;
+            existing.content = event.content;
+            existing.created_at = event.created_at;
+            existing.tags = event.tags;
+            existing.mood = event.tags.find((t: string[]) => t[0] === "mood")?.[1] ?? existing.mood;
+            existing.syncStatus = "synced";
+            existing.nostrId = event.id;
+            existing.updatedAt = new Date().toISOString();
+            await db.upsert(existing);
+            records.push(existing);
+          }
+        } else {
+          const record = db.buildRecord(event, decryptedContent, { syncStatus: "synced" });
+          await db.upsert(record);
+          records.push(record);
+        }
+      } catch {
+        // Skip events we can't decrypt
+      }
+    }
+    return records;
+  };
+
+  // ── Load ──────────────────────────────────────────────────────────────────
+
   /**
-   * Load journal entries with pagination
-   * @param option limit, since (UNIX timestamp), until (optional)
+   * Cache-first load: show IndexedDB data instantly, then sync relay in bg.
    */
-  const loadJournalEntries = async (
-    option: {
-      limit?: number;
-      since?: number;
-      until?: number;
-    } = {}
-  ) => {
+  const loadJournalEntries = async (opts: { limit?: number; reset?: boolean } = {}) => {
     if (!user.value) return;
+    const limit = opts.limit ?? DEFAULT_LIMIT;
+
+    if (opts.reset) {
+      journalNotes.value = [];
+      hasMore.value = true;
+    }
 
     isLoading.value = true;
 
-    const limit = option.limit ?? DEFAULT_LIMIT;
-    const since = option.since ?? 0;
-    const until = option.until;
+    // Step 1 — instant cache read
+    const cached = await db.getByPubkey(user.value.publicKey, { limit });
+    if (cached.length) journalNotes.value = cached;
 
+    // Step 2 — relay sync in background
+    isSyncing.value = true;
     try {
       const filter: any = {
         kinds: [PRIVATE_NOTE_KIND],
         authors: [user.value.publicKey],
         "#t": ["journal"],
-        since,
         limit,
       };
-
-      if (until) filter.until = until;
-
       const events = await pool.querySync(RELAYS, filter);
-      oldItems.value = [...oldItems.value, ...events].sort(
-        (a, b) => b.created_at - a.created_at
-      );
+      await mergeRelayEvents(events);
 
-      const newEntries = [];
-
-      for (const event of events) {
-        if (!event.content) continue;
-
-        try {
-          const content = nip04.decrypt(
-            user.value.privateKey,
-            user.value.publicKey,
-            event.content
-          );
-
-          const dateTag = event.tags.find((tag) => tag[0] === "d");
-          const date = dateTag ? dateTag[1] : "unknown";
-
-          // Avoid duplicates (use 'id' or date as unique key)
-          if (!journalNotes.value.find((e) => e.id === date)) {
-            newEntries.push({
-              ...event,
-              id: date,
-              decryptedContent: content,
-              date,
-            });
-          }
-        } catch (decryptError) {
-          console.error("Failed to decrypt entry:", decryptError);
-        }
-      }
-
-      journalNotes.value.push(...newEntries);
-
-      // Sort descending by date
-      journalNotes.value.sort((a, b) => b.date.localeCompare(a.date));
-
-      // Set hasMore flag
-      if (newEntries.length < limit) {
-        hasMore.value = false;
-      }
+      const fresh = await db.getByPubkey(user.value.publicKey, { limit });
+      journalNotes.value = fresh;
+      hasMore.value = events.length >= limit;
     } catch (e) {
       error.value = e;
     } finally {
+      isSyncing.value = false;
       isLoading.value = false;
     }
-
-    return journalNotes.value;
   };
 
   /**
-   * Load more journal entries based on oldest known entry
+   * Load the next page (infinite scroll).
    */
   const loadMoreJournalEntries = async () => {
-    console.log(journalNotes.value.length, hasMore.value, isLoading.value);
-
-    if (!hasMore.value || isLoading.value) return;
-
-    console.log("Loading more journal entries...");
-    const oldest = oldItems.value[oldItems.value.length - 1];
-    const untilTimestamp = oldest ? oldest.created_at - 1 : 0;
-
-    console.log(untilTimestamp);
-
-    await loadJournalEntries({
-      limit: DEFAULT_LIMIT,
-      until: untilTimestamp,
-    });
-  };
-
-  /**
-   * Get a specific journal entry by date
-   * @param date The date of the entry
-   * @returns Journal entry or null if not found
-   */
-  const getJournalEntryByDate = async (date: string) => {
-    if (!user.value) return null;
-
-    // If we haven't loaded entries yet, do it now
-    if (!journalNotes.value.length) {
-      await loadJournalEntries();
-    }
-
-    // Find the entry for the specified date
-    const entry = journalNotes.value.find((note) => note.date === date);
-    return entry || null;
-  };
-
-  /**
-   * Remove (replace with empty) a journal entry by ID
-   * @param id The 'd' tag value (unique identifier of the entry)
-   * @returns boolean success status
-   */
-  const removeJournalEntry = async (id: string) => {
-    if (!user.value) return false;
+    if (!hasMore.value || isLoading.value || !user.value) return;
     isLoading.value = true;
 
-    console.log("Removing entry:", id);
+    const oldest = journalNotes.value[journalNotes.value.length - 1];
+    const before = oldest ? oldest.created_at - 1 : undefined;
+    const cached = await db.getByPubkey(user.value.publicKey, { limit: DEFAULT_LIMIT, before });
 
+    isSyncing.value = true;
     try {
-      const eventTemplate = {
-        kind: PRIVATE_NOTE_KIND,
-        created_at: Math.floor(Date.now() / 1000),
-        tags: [
-          ["d", id],
-          ["title", "Journal Entry"],
-          ["t", "journal"],
-        ],
-        content: "", // empty to signal deletion
+      const filter: any = {
+        kinds: [PRIVATE_NOTE_KIND],
+        authors: [user.value.publicKey],
+        "#t": ["journal"],
+        limit: DEFAULT_LIMIT,
+        until: before,
       };
+      const events = await pool.querySync(RELAYS, filter);
+      await mergeRelayEvents(events);
 
-      const signedEvent = finalizeEvent(
-        eventTemplate,
-        hexToBytes(user.value.privateKey)
-      );
-
-      await Promise.any(pool.publish(RELAYS, signedEvent));
-
-      // Optionally remove from local list
-      journalNotes.value = journalNotes.value.filter((note) => note.id !== id);
-
+      const page = await db.getByPubkey(user.value.publicKey, { limit: DEFAULT_LIMIT, before });
+      const existingIds = new Set(journalNotes.value.map((n) => n.localId));
+      journalNotes.value.push(...page.filter((e) => !existingIds.has(e.localId)));
+      hasMore.value = events.length >= DEFAULT_LIMIT;
+    } catch {
+      const existingIds = new Set(journalNotes.value.map((n) => n.localId));
+      journalNotes.value.push(...cached.filter((e) => !existingIds.has(e.localId)));
+      hasMore.value = cached.length >= DEFAULT_LIMIT;
+    } finally {
+      isSyncing.value = false;
       isLoading.value = false;
-      return true;
-    } catch (e) {
-      console.error("Failed to remove entry:", e);
-      error.value = e;
-      isLoading.value = false;
-      return false;
     }
   };
 
-  // Encrypt file buffer
-  async function encryptFile(file: File) {
-    const key = randomBytes(32); // 256-bit key
-    const nonce = randomBytes(24); // 192-bit nonce
+  // ── Create ────────────────────────────────────────────────────────────────
 
+  const createJournalEntry = async (
+    content: string,
+    date: string,
+    extraTags: string[][] = []
+  ): Promise<JournalEventRecord | null> => {
+    if (!user.value || !content.trim()) return null;
+
+    const dTag = String(Math.floor(Date.now() / 1000));
+    const created_at = Math.floor(Date.now() / 1000);
+    const encryptedContent = await encrypt(content);
+    const tags: string[][] = [["d", dTag], ["date", date], ["t", "journal"], ...extraTags];
+    const localId = crypto.randomUUID();
+
+    const record = db.buildRecord(
+      { id: null, pubkey: user.value.publicKey, kind: PRIVATE_NOTE_KIND, created_at, tags, content: encryptedContent },
+      content,
+      { syncStatus: "pending", localId }
+    );
+    await db.upsert(record);
+    journalNotes.value = [record, ...journalNotes.value];
+
+    if (!isOffline.value) {
+      try {
+        const signed = await publishEvent({ kind: PRIVATE_NOTE_KIND, created_at, tags, content: encryptedContent });
+        await db.updateSyncStatus(localId, "synced", signed.id);
+        record.syncStatus = "synced";
+        record.nostrId = signed.id;
+        const idx = journalNotes.value.findIndex((n) => n.localId === localId);
+        if (idx !== -1) Object.assign(journalNotes.value[idx], { syncStatus: "synced", nostrId: signed.id });
+      } catch {
+        await db.updateSyncStatus(localId, "failed");
+        record.syncStatus = "failed";
+      }
+    }
+
+    return record;
+  };
+
+  // ── Update ────────────────────────────────────────────────────────────────
+
+  const updateJournalEntry = async (
+    localId: string,
+    newContent: string,
+    newDate: string
+  ): Promise<boolean> => {
+    if (!user.value) return false;
+    const record = await db.getByLocalId(localId);
+    if (!record) return false;
+
+    const encryptedContent = await encrypt(newContent);
+    const created_at = Math.floor(Date.now() / 1000);
+    const tags: string[][] = [
+      ["d", record.dTag],
+      ["date", newDate],
+      ["t", "journal"],
+      ["mood", record.mood],
+    ];
+
+    Object.assign(record, {
+      decryptedContent: newContent,
+      content: encryptedContent,
+      date: newDate,
+      created_at,
+      tags,
+      syncStatus: isOffline.value ? "pending" : record.syncStatus,
+      updatedAt: new Date().toISOString(),
+    });
+    await db.upsert(record);
+
+    const idx = journalNotes.value.findIndex((n) => n.localId === localId);
+    if (idx !== -1) journalNotes.value[idx] = { ...record };
+
+    if (!isOffline.value) {
+      try {
+        const signed = await publishEvent({ kind: PRIVATE_NOTE_KIND, created_at, tags, content: encryptedContent });
+        await db.updateSyncStatus(localId, "synced", signed.id);
+        if (idx !== -1) Object.assign(journalNotes.value[idx], { syncStatus: "synced", nostrId: signed.id });
+      } catch {
+        await db.updateSyncStatus(localId, "failed");
+        if (idx !== -1) journalNotes.value[idx].syncStatus = "failed";
+      }
+    }
+
+    return true;
+  };
+
+  // ── Delete ────────────────────────────────────────────────────────────────
+
+  const removeJournalEntry = async (localId: string): Promise<boolean> => {
+    if (!user.value) return false;
+    const record = await db.getByLocalId(localId);
+    if (!record) return false;
+
+    journalNotes.value = journalNotes.value.filter((n) => n.localId !== localId);
+
+    if (!isOffline.value && record.nostrId) {
+      try {
+        await publishEvent({
+          kind: PRIVATE_NOTE_KIND,
+          created_at: Math.floor(Date.now() / 1000),
+          tags: [["d", record.dTag], ["t", "journal"]],
+          content: "",
+        });
+        await db.hardDelete(localId);
+      } catch {
+        await db.markDeleted(localId);
+      }
+    } else if (record.syncStatus === "pending") {
+      await db.hardDelete(localId);
+    } else {
+      await db.markDeleted(localId);
+    }
+
+    return true;
+  };
+
+  // ── Background sync ───────────────────────────────────────────────────────
+
+  const syncPendingEntries = async () => {
+    if (!user.value) return;
+    const pubkey = user.value.publicKey;
+    const queue = [
+      ...(await db.getByStatus(pubkey, "pending")),
+      ...(await db.getByStatus(pubkey, "failed")),
+    ];
+
+    for (const record of queue) {
+      try {
+        const signed = await publishEvent({
+          kind: PRIVATE_NOTE_KIND,
+          created_at: record.created_at,
+          tags: record.tags,
+          content: record.content,
+        });
+        await db.updateSyncStatus(record.localId, "synced", signed.id);
+        const idx = journalNotes.value.findIndex((n) => n.localId === record.localId);
+        if (idx !== -1) Object.assign(journalNotes.value[idx], { syncStatus: "synced", nostrId: signed.id });
+      } catch {
+        await db.updateSyncStatus(record.localId, "failed");
+      }
+    }
+
+    for (const record of await db.getByStatus(user.value.publicKey, "deleted")) {
+      if (!record.nostrId) { await db.hardDelete(record.localId); continue; }
+      try {
+        await publishEvent({
+          kind: PRIVATE_NOTE_KIND,
+          created_at: Math.floor(Date.now() / 1000),
+          tags: [["d", record.dTag], ["t", "journal"]],
+          content: "",
+        });
+        await db.hardDelete(record.localId);
+      } catch { /* retry later */ }
+    }
+  };
+
+  // ── Computed stats ────────────────────────────────────────────────────────
+
+  const thisMonthCount = computed(() => {
+    const now = new Date();
+    return journalNotes.value.filter((n) => {
+      const d = new Date(n.created_at * 1000);
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    }).length;
+  });
+
+  const streakCount = computed(() => {
+    let streak = 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const uniqueDays = [
+      ...new Set(
+        journalNotes.value.map((n) => {
+          const d = new Date(n.created_at * 1000);
+          d.setHours(0, 0, 0, 0);
+          return d.getTime();
+        })
+      ),
+    ].sort((a, b) => b - a);
+    for (let i = 0; i < uniqueDays.length; i++) {
+      if (uniqueDays[i] === today.getTime() - i * 86_400_000) streak++;
+      else break;
+    }
+    return streak;
+  });
+
+  // ── File encryption (for JournalFileUploader) ─────────────────────────────
+
+  async function encryptFile(file: File) {
+    const key = randomBytes(32);
+    const nonce = randomBytes(24);
     const buffer = await file.arrayBuffer();
     const cipher = xchacha20poly1305(key, nonce);
-    const encrypted = cipher.encrypt(new Uint8Array(buffer));
-
     return {
-      encrypted,
+      encrypted: cipher.encrypt(new Uint8Array(buffer)),
       key: Buffer.from(key).toString("base64"),
       nonce: Buffer.from(nonce).toString("base64"),
       mime: file.type,
@@ -306,38 +404,37 @@ export const useNostrPrivateJournal = () => {
     };
   }
 
-  async function decryptFile(
-    url: string,
-    base64Key: string,
-    base64Nonce: string
-  ) {
+  async function decryptFile(url: string, base64Key: string, base64Nonce: string) {
     const key = Uint8Array.from(atob(base64Key), (c) => c.charCodeAt(0));
     const nonce = Uint8Array.from(atob(base64Nonce), (c) => c.charCodeAt(0));
-
     const response = await fetch(url);
     const buffer = await response.arrayBuffer();
-
-    if (buffer.byteLength < 16) {
-      throw new Error("Encrypted file is too small to contain a valid tag.");
-    }
-
-    const encrypted = new Uint8Array(buffer);
+    if (buffer.byteLength < 16) throw new Error("File too small");
     const cipher = xchacha20poly1305(key, nonce);
-    const decrypted = cipher.decrypt(encrypted);
-
-    return new Blob([decrypted]);
+    return new Blob([cipher.decrypt(new Uint8Array(buffer))]);
   }
+
+  // ── Public API ────────────────────────────────────────────────────────────
 
   return {
     journalNotes,
     hasMore,
+    isLoading,
+    isSyncing,
+    isOffline,
+    thisMonthCount,
+    streakCount,
+
     createJournalEntry,
     updateJournalEntry,
     removeJournalEntry,
+    getJournalEntryByLocalId: db.getByLocalId,
+
     loadJournalEntries,
-    getJournalEntryByDate,
+    loadMoreJournalEntries,
+    syncPendingEntries,
+
     encryptFile,
     decryptFile,
-    loadMoreJournalEntries,
   };
 };
