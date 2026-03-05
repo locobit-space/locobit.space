@@ -2,7 +2,7 @@
   <div class="min-h-screen">
     <!-- Mobile Header -->
     <div
-      class="lg:hidden sticky top-0 z-40 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800"
+      class="lg:hidden sticky top-0 z-40 bg-white/10 backdrop-blur-sm dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800"
     >
       <div class="flex items-center justify-between px-4 py-3">
         <div class="flex items-center gap-3">
@@ -41,7 +41,7 @@
       >
         <div class="p-4 border-b border-gray-100 dark:border-gray-800">
           <div class="flex items-center justify-between mb-3">
-            <h1 class="text-lg font-bold text-gray-900 dark:text-white">
+            <h1 class="text-lg font-bold text-white dark:text-white">
               Settings
             </h1>
             <NuxtLink
@@ -156,6 +156,7 @@
                 v-model="searchQuery"
                 placeholder="Search..."
                 icon="mynaui:search"
+                class="w-full"
               />
             </div>
           </div>
@@ -262,6 +263,12 @@ const sections = [
         icon: "heroicons:computer-desktop",
         to: "/settings/interface",
         description: "Customize appearance and theme",
+      },
+      {
+        label: "Navigation",
+        icon: "heroicons:bars-3",
+        to: "/settings/navigation",
+        description: "Customize sidebar items",
       },
       {
         label: "Preferences",

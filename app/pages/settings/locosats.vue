@@ -1,11 +1,13 @@
 <template>
   <div class="pb-24">
     <!-- Header -->
-    <div class="border-b  border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 sticky top-0 z-10">
+    <div
+      class="border-b border-gray-100 dark:border-gray-800 sticky top-0 z-10"
+    >
       <div class="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
         <NuxtLink
           to="/locosats"
-          class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+          class="text-gray-400 flex items-center hover:text-gray-600 dark:hover:text-gray-200"
         >
           <Icon name="heroicons:arrow-left" class="w-5 h-5" />
         </NuxtLink>

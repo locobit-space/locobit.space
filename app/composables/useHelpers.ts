@@ -27,8 +27,11 @@ export const useHelpers = () => {
     }).format(date);
   }
 
-  function formatDateTime(timestamp: number): string {
+  function formatDateTime(timestamp: number | string): string {
     if (!timestamp) return "Invalid date";
+    if (typeof timestamp === "string") {
+      timestamp = new Date(timestamp).getTime() / 1000;
+    }
     const date = new Date(timestamp * 1000);
     return new Intl.DateTimeFormat("en-US", {
       weekday: "long",
@@ -65,11 +68,16 @@ export const useHelpers = () => {
     return formatDateTime(timestamp); // Fallback to full date format
   }
 
+  function formatCurrency(n: number): string {
+    return new Intl.NumberFormat("en-US", {}).format(n);
+  }
+
   return {
     shortenKey,
     formatDate,
     formatTime,
     formatDateTime,
     timeAgo,
+    formatCurrency,
   };
 };

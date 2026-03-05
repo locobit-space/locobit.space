@@ -1,22 +1,5 @@
 <template>
   <div class="space-y-6">
-    <!-- Header -->
-    <div
-      class="bg-linear-to-br from-primary-500 to-primary-600 dark:from-primary-600 dark:to-primary-700 rounded-xl p-6 text-white"
-    >
-      <div class="flex items-center gap-3 mb-2">
-        <div
-          class="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center"
-        >
-          <Icon name="heroicons:cog-6-tooth" class="w-6 h-6" />
-        </div>
-        <div>
-          <h2 class="text-2xl font-bold">Finance Settings</h2>
-          <p class="text-sm text-white/80">Manage your financial preferences</p>
-        </div>
-      </div>
-    </div>
-
     <!-- General Settings -->
     <div
       class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6"

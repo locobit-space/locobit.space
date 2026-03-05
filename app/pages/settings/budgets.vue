@@ -7,11 +7,11 @@
           <div class="flex items-center gap-3">
             <NuxtLink
               to="/locosats"
-              class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+              class="text-gray-400 flex items-center hover:text-gray-600 dark:hover:text-gray-200"
             >
-              <Icon name="heroicons:arrow-left" class="w-5 h-5" />
+              <Icon name="heroicons:arrow-left" />
             </NuxtLink>
-            <h1 class="text-xl font-semibold text-gray-900 dark:text-white">
+            <h1 class="text-lg font-semibold text-gray-900 dark:text-white">
               Budget Management
             </h1>
           </div>
@@ -36,7 +36,7 @@
         <div
           v-for="budget in finance.settings.value.budgets"
           :key="budget.id"
-          class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm"
+          class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5"
         >
           <div class="flex items-start justify-between mb-4">
             <div class="flex items-center gap-3">
@@ -333,7 +333,8 @@ const getProgressBarColor = (budget: Budget) => {
 // Category Styling — use shared getCategoryMeta from useFinance composable
 const getCategoryIcon = (category: string) => getCategoryMeta(category).icon;
 const getCategoryBg = (category: string) => getCategoryMeta(category).bg;
-const getCategoryIconColor = (category: string) => getCategoryMeta(category).color;
+const getCategoryIconColor = (category: string) =>
+  getCategoryMeta(category).color;
 
 // Actions
 const editBudget = (budget: Budget) => {

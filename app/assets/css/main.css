@@ -1,7 +1,7 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
 
-@theme inline {
+@theme static {
   /* --font-sans: 'Public Sans', sans-serif;
   
     --breakpoint-3xl: 1920px; */

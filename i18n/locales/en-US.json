@@ -30,8 +30,9 @@
     "back_to_dashboard": "Back to Dashboard",
     "export": "Export",
     "all": "All",
-    "actions": "Actions",
     "kg": "kg",
+    "g": "g",
+    "bunch": "bunch",
     "pieces": "pieces",
     "clear": "Clear",
     "load_more": "Load More",
@@ -44,7 +45,11 @@
       "high": "High",
       "medium": "Medium",
       "low": "Low"
-    }
+    },
+    "show_less": "Show less",
+    "show_all": "Show all ({count})",
+    "search_plants": "Search plants...",
+    "no_results": "No results found"
   },
   "journal": {
     "title": "My Journal",
@@ -69,7 +74,10 @@
     "write_placeholder": "Write your thoughts here...",
     "characters": "characters",
     "delete_confirm_title": "Delete Entry?",
-    "delete_confirm_message": "This action cannot be undone. Your entry will be permanently deleted."
+    "delete_confirm_message": "This action cannot be undone. Your entry will be permanently deleted.",
+    "no_results": "No Results Found",
+    "try_different_filter": "Try a different search term or filter",
+    "all_loaded": "All entries loaded"
   },
   "finance": {
     "total_balance": "Total Balance",
@@ -202,16 +210,27 @@
   "dashboard": {
     "title": "Dashboard",
     "total_plants": "Total Plants",
+    "total_harvests": "Total Harvests",
     "active_plots": "Active Plots",
     "pending_care": "Pending Care",
     "monthly_revenue": "Monthly Revenue",
     "recent_plants": "Recent Plants",
     "quick_actions": "Quick Actions",
-    "pending_tasks": "Pending Tasks"
+    "pending_tasks": "Pending Tasks",
+    "total_revenue": "Total Revenue"
   },
   "plants": {
     "title": "Plant Management",
+    "tab_overview": "Overview",
     "register_new": "Register New Plant",
+    "no_plants_yet": "No plants registered yet",
+    "status_short": {
+      "seedling": "Seedling",
+      "growing": "Growing",
+      "flowering": "Flowering",
+      "mature": "Mature",
+      "harvesting": "Harvest"
+    },
     "register": "Register",
     "register_description": "Register new plants into the garden management system",
     "name": "Plant Name",
@@ -247,6 +266,7 @@
     "plot_placeholder": "e.g., A-01",
     "row_placeholder": "e.g., 1",
     "position_placeholder": "e.g., Left",
+    "plot_size": "Plot Size (W × L)",
     "seed_source_placeholder": "e.g., Golden Seeds Shop",
     "cost_placeholder": "Cost amount",
     "notes_placeholder": "Additional notes...",
@@ -293,12 +313,16 @@
       "harvesting": "Harvesting"
     },
     "select_plant": "Select Plant",
+    "not_found": "Plant not found",
+    "update_status": "Update Growth Status",
     "examples": {
       "tomato": "Tomato",
       "mango": "Mango",
       "lettuce": "Lettuce",
       "papaya": "Papaya"
-    }
+    },
+    "view_plant": "View Plant",
+    "unknown": "Unknown Plant"
   },
   "care": {
     "title": "Care Management",
@@ -360,11 +384,30 @@
       "pruning": "Trimmed dead branches, healthy growth visible",
       "pest_control": "Sprayed insecticide, fewer pests observed"
     },
+    "log_success": "Care activity logged",
+    "schedule_success": "Schedule saved",
+    "no_logs": "No care activities recorded yet",
+    "all_done": "All done for today!",
+    "activities_recorded": "activities recorded",
+    "start_logging": "Start by logging your first care activity",
+    "log_first": "Log first activity",
+    "upcoming_schedules": "Upcoming Schedules",
+    "next": "Next",
+    "freq": {
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "biweekly": "Bi-weekly",
+      "monthly": "Monthly"
+    },
+    "cost_optional": "Cost (optional)",
+    "activity_type": "Activity Type",
     "tasks": {
       "watering": "Watering",
       "fertilizing": "Fertilizing",
       "pruning": "Pruning"
-    }
+    },
+    "mark_done": "Mark Done",
+    "overdue": "Overdue"
   },
   "sales": {
     "title": "Sales Management",
@@ -390,7 +433,12 @@
     "last_month": "Last Month"
   },
   "harvest": {
-    "title": "Harvest Management",
+    "total_quantity": "Total Harvested",
+    "batches": "Batches",
+    "total_revenue": "Total Revenue",
+    "no_harvests": "No harvests recorded yet",
+    "start_recording": "Record your first harvest when ready",
+    "revenue_optional": "Revenue (optional)",
     "record": "Record Harvest",
     "quantity": "Harvest Quantity",
     "date": "Harvest Date",
@@ -439,7 +487,28 @@
     "quality": {
       "A": "A - Excellent",
       "B": "B - Good",
-      "C": "C - Average"
-    }
+      "C": "C - Average",
+      "excellent": "Excellent",
+      "good": "Good",
+      "fair": "Fair",
+      "poor": "Poor"
+    },
+    "quality_grade": "Quality Grade"
+  },
+  "stats": {
+    "title": "Stats",
+    "total_cost": "Total Cost",
+    "total_revenue": "Revenue",
+    "net_profit": "Net Profit",
+    "roi": "ROI",
+    "cost_by_activity": "Cost by Activity",
+    "no_cost_data": "No cost data yet",
+    "monthly_revenue": "Monthly Revenue",
+    "no_harvest_data": "No harvest data yet",
+    "activity_summary": "Activity Summary",
+    "times": "times",
+    "no_data": "No stats data yet",
+    "start_logging_for_stats": "Log care & harvests to see stats",
+    "revenue": "Revenue"
   }
 }

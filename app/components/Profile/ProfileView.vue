@@ -331,7 +331,7 @@
 <script setup lang="ts">
 import type { Event } from "nostr-tools";
 import { ref, onMounted, watch } from "vue";
-import type { UserInfo } from "~~/types";
+import type { UserInfo } from "~/types";
 
 // Extend Event to include extra fields
 type ExtendedEvent = Event & {
@@ -435,11 +435,11 @@ onMounted(async () => {
 
     // Remove duplication
     const uniqueNotes = Array.from(
-      new Map(notes.map((note) => [note.id, note])).values()
+      new Map(notes.map((note) => [note.id, note])).values(),
     );
 
     profileNotes.value = uniqueNotes.sort(
-      (a, b) => b.created_at - a.created_at
+      (a, b) => b.created_at - a.created_at,
     );
 
     // Automatically fetch data for the current tab
@@ -476,7 +476,7 @@ const fetchReplies = async () => {
 
     // Filter replies that have at least one 'e' tag
     const replies = replyEvents.filter((event) =>
-      event.tags.some((tag) => tag[0] === "e")
+      event.tags.some((tag) => tag[0] === "e"),
     );
 
     // Load referenced parent notes
@@ -510,7 +510,7 @@ const fetchReplies = async () => {
     }
 
     profileReplies.value = extendedReplies.sort(
-      (a, b) => b.created_at - a.created_at
+      (a, b) => b.created_at - a.created_at,
     ) as ExtendedEvent[];
   } catch (error) {
     console.error("Error fetching replies:", error);
@@ -588,7 +588,7 @@ const fetchMedia = async () => {
 // Helper function to extract media URLs from content
 const extractMediaUrls = (
   content: string,
-  type: "image" | "video" | "audio"
+  type: "image" | "video" | "audio",
 ) => {
   const urls = [];
 
@@ -667,7 +667,7 @@ const fetchFollowers = async () => {
             name: "Unknown User",
           };
         }
-      })
+      }),
     );
 
     followers.value = followerProfiles as UserInfo[];
@@ -725,7 +725,7 @@ const fetchFollowing = async () => {
             name: "Unknown User",
           };
         }
-      })
+      }),
     );
 
     following.value = followingProfiles as UserInfo[];
